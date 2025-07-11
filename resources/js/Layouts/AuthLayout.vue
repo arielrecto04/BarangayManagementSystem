@@ -1,5 +1,5 @@
 <script setup>
-import { Sidebar, NavBar } from "@/Components";
+    import { Sidebar, NavBar } from "@/Components";
 </script>
 
 <template>
