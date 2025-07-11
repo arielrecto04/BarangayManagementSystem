@@ -38,6 +38,7 @@ const routes = [
         },
         component: () => import("@/Pages/Auth/Login.vue"),
     }
+
 ];
 
 const router = createRouter({
@@ -48,13 +49,16 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     const auth = useAuthenticationStore();
-    if (to.meta.requiresAuth && auth.isAuthenticated) {
+
+    console.log(auth.isAuthenticated);
+    if (to.meta.requiresAuth && !auth.isAuthenticated) {
         next({ name: "Login" });
         return;
     }
-
-    //
-
+    if (!to.meta.requiresAuth && auth.isAuthenticated) {
+        next({ name: "Dashboard" });
+        return;
+    }
 
     next();
 });
