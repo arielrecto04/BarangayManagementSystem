@@ -20,8 +20,6 @@
             if (!error.value) {
                 showToast({ icon: 'success', title: 'Login successful' });
             }
-
-            console.log(auth.user);
         } catch (error) {
             showToast({ icon: 'error', title: error.message });
         }
