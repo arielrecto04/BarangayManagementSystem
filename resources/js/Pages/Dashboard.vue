@@ -15,7 +15,7 @@
     <!-- Card 1 -->
     <div class="flex items-center bg-white rounded-lg shadow-md p-5 space-x-4">
         <div class="text-3xl text-green-700">
-            <i class="fas fa-users"></i> <!-- Replace with your own SVG or icon -->
+            <i class="fas fa-users"></i> 
         </div>
         <div>
             <p class="text-sm text-gray-600">Total Residents</p>
