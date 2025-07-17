@@ -48,6 +48,13 @@
             <button type="submit" :disabled="isLoading" class="bg-green-800 text-white p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-800 border-green-800">
                 {{ isLoading ? 'Loading...' : 'Login' }}
             </button>
+            <button
+                type="button"
+                    @click="$router.push('/Registration')"
+                    class="bg-green-800 text-white border border-green-800 p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-800 flex-1">
+                    Register
+                    </button>
+           
         </form>
     </BaseLayout>
 </template>

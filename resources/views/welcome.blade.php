@@ -1520,10 +1520,11 @@
             }
         </style>
     @endif
+
 </head>
 
 <body id="app">
 
 </body>
-
+    
 </html>
