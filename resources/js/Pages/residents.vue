@@ -1,14 +1,12 @@
 <script setup>
     import { AuthLayout } from '@/Layouts'
-    import { Header} from '@/Components'
+
 </script>
 
 <template>
-    <AuthLayout>
+   <AuthLayout>
+    <h1>hi</h1>
+    <h2>ok</h2>
+   </AuthLayout>
     
-   
-    <h1>Hello world</h1>
-    
-   
-    </AuthLayout>
 </template>

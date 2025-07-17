@@ -3,13 +3,13 @@ import { useAuthenticationStore } from "@/Stores";
 
 const routes = [
     {
-        path: "/",
-        name: "Home",
-        meta: {
-            title: "Home",
-            requiresAuth: false,
-        },
-        component: () => import("@/Pages/Home.vue"),
+        // path: "/",
+        // name: "Home",
+        // meta: {
+        //     title: "Home",
+        //     requiresAuth: false,
+        // },
+        // component: () => import("@/Pages/Home.vue"),
     },
     {
         path: "/Registration",
@@ -39,17 +39,62 @@ const routes = [
         },
         component: () => import("@/Pages/Dashboard.vue"),
     },
- {
+    {
         path: "/dashboard/residents",   
         name: "Residents",
         meta: {
             title: "Residents",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/residents.vue"),
+        component: () => import("@/Pages/Residents.vue"),
     },
     {
-        path: "/login",
+        path: "/dashboard/documents",   
+        name: "Documents",
+        meta: {
+            title: "Documents",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/Documents.vue"),
+    },
+    {
+        path: "/dashboard/complaints",   
+        name: "Complaints",
+        meta: {
+            title: "Complaints",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/Complaints.vue"),
+    },
+    {
+        path: "/dashboard/blotter",   
+        name: "Blotter",
+        meta: {
+            title: "Blotter",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/Blotter.vue"),
+    },
+    {
+        path: "/dashboard/projects",   
+        name: "Projects",
+        meta: {
+            title: "Projects",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/Projects.vue"),
+    },
+    {
+        path: "/dashboard/officials",   
+        name: "Officials",
+        meta: {
+            title: "Officials",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/Officials.vue"),
+    },
+    {
+        path: "/",
         name: "Login",
         meta: {
             title: "Login",
