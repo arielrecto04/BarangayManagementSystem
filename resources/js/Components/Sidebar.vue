@@ -7,7 +7,7 @@ const menuLinks = [
         isActive: true,
     },
     {
-        href: '/',
+        href: '/dashboard/residents',
         name: 'Residents',
         icon: 'fi fi-rr-people-group',
         isActive: false,

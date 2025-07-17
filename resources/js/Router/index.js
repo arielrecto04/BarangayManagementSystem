@@ -35,9 +35,18 @@ const routes = [
         name: "Dashboard",
         meta: {
             title: "Dashboard",
-            requiresAuth: true,
+            requiresAuth: false,
         },
         component: () => import("@/Pages/Dashboard.vue"),
+    },
+ {
+        path: "/dashboard/residents",   
+        name: "Residents",
+        meta: {
+            title: "Residents",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/residents.vue"),
     },
     {
         path: "/login",
@@ -48,6 +57,7 @@ const routes = [
         },
         component: () => import("@/Pages/Auth/Login.vue"),
     }
+    
 
 ];
 
