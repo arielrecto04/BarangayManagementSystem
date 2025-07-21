@@ -49,6 +49,15 @@ const routes = [
         component: () => import("@/Pages/Residents.vue"),
     },
     {
+        path: "/dashboard/residents/AddResident",   
+        name: "Add Resident",
+        meta: {
+            title: "Add Resident",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/AddResident.vue"),
+    },
+    {
         path: "/dashboard/documents",   
         name: "Documents",
         meta: {
@@ -94,6 +103,15 @@ const routes = [
         component: () => import("@/Pages/Officials.vue"),
     },
     {
+        path: "/dashboard/health",
+        name: "Health Services",
+        meta: {
+            title: "Health Services",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/HealthServices.vue"),
+    },
+    {
         path: "/",
         name: "Login",
         meta: {
@@ -101,7 +119,8 @@ const routes = [
             requiresAuth: false,
         },
         component: () => import("@/Pages/Auth/Login.vue"),
-    }
+    },
+    
     
 
 ];

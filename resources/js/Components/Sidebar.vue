@@ -43,7 +43,14 @@ const menuLinks = [
         name: 'Officials',
         icon: 'fi fi-rr-shirt',
         isActive: false,
+    },    
+    {
+        href: '/dashboard/health',
+        name: 'Health Services',
+        icon: 'fi fi-rr-heart',
+        isActive: false,
     }
+
 ]
 
 </script>

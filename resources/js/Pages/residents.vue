@@ -14,7 +14,7 @@ import { Header } from '@/Components';
       </div>
 
       <!-- Search Residents -->
-      <div class="flex bg-white shadow-lg rounded-lg w-300 p-7 mt-0 transform -translate-y-10">
+      <div class="flex bg-white shadow-lg rounded-lg p-7 mt-0 transform -translate-y-10">
         <div class="shadow-lg p-3 w-1/2">
             <input type="text" placeholder="Search Residents..." name="Search Residents" class="w-full rounded-lg  "/>      
         </div>
@@ -33,7 +33,7 @@ import { Header } from '@/Components';
             </select>
             <div class="w-1/4 max-w-sm mx-auto ml-2">
                 <!-- Route of Add Resident -->
-                <router-link to="{{}}" class="block"> 
+                <router-link to="/dashboard/residents/AddResident" class="block"> 
                     <div class="bg-green-700 shadow-md rounded-lg p-3  cursor-pointer ">
                     <div class="text-lg font-bold text-center text-white">➕ Add Resident</div>
                     </div>
