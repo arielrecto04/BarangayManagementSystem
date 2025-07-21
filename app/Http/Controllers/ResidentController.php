@@ -1,17 +1,17 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\Resident;
 use Illuminate\Http\Request;
 
-class Resident extends Controller
+class ResidentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        
     }
 
     /**

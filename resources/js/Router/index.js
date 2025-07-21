@@ -28,7 +28,7 @@ const routes = [
             title: "Not Found",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/NotFound.vue"),
+        component: () => import("@/Pages/Dashboard/NotFound.vue"),
     },
     {
         path: "/dashboard",
@@ -37,16 +37,16 @@ const routes = [
             title: "Dashboard",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/Dashboard.vue"),
+        component: () => import("@/Pages/Dashboard/Dashboard.vue"),
     },
     {
         path: "/dashboard/residents",   
         name: "Residents",
         meta: {
             title: "Residents",
-            requiresAuth: false,
+            requiresAuth: false,    
         },
-        component: () => import("@/Pages/Residents.vue"),
+        component: () => import("@/Pages/Dashboard/Residents.vue"),
     },
     {
         path: "/dashboard/residents/AddResident",   
@@ -55,7 +55,7 @@ const routes = [
             title: "Add Resident",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/AddResident.vue"),
+        component: () => import("@/Pages/Resident/AddResident.vue"),
     },
     {
         path: "/dashboard/documents",   
@@ -64,7 +64,7 @@ const routes = [
             title: "Documents",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/Documents.vue"),
+        component: () => import("@/Pages/Dashboard/Documents.vue"),
     },
     {
         path: "/dashboard/complaints",   
@@ -73,7 +73,7 @@ const routes = [
             title: "Complaints",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/Complaints.vue"),
+        component: () => import("@/Pages/Dashboard/Complaints.vue"),
     },
     {
         path: "/dashboard/blotter",   
@@ -82,7 +82,7 @@ const routes = [
             title: "Blotter",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/Blotter.vue"),
+        component: () => import("@/Pages/Dashboard/Blotter.vue"),
     },
     {
         path: "/dashboard/projects",   
@@ -91,7 +91,7 @@ const routes = [
             title: "Projects",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/Projects.vue"),
+        component: () => import("@/Pages/Dashboard/Projects.vue"),
     },
     {
         path: "/dashboard/officials",   
@@ -100,7 +100,7 @@ const routes = [
             title: "Officials",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/Officials.vue"),
+        component: () => import("@/Pages/Dashboard/Officials.vue"),
     },
     {
         path: "/dashboard/health",
@@ -109,7 +109,7 @@ const routes = [
             title: "Health Services",
             requiresAuth: false,
         },
-        component: () => import("@/Pages/HealthServices.vue"),
+        component: () => import("@/Pages/Dashboard/HealthServices.vue"),
     },
     {
         path: "/",
