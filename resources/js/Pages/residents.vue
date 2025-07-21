@@ -16,7 +16,9 @@ import { Header } from '@/Components';
       <!-- Search Residents -->
       <div class="flex bg-white shadow-lg rounded-lg p-7 mt-0 transform -translate-y-10">
         <div class="shadow-lg p-3 w-1/2">
-            <input type="text" placeholder="Search Residents..." name="Search Residents" class="w-full rounded-lg  "/>      
+          <form>
+            <input type="text" placeholder="Search Residents..." name="Search Residents" class="w-full rounded-lg  ">      
+          </form>
         </div>
             <select class="ml-2 bg-white shadow-lg rounded-lg w-1/8 p-3 text-center" placeholder="Age Range">
                 <option value="" disabled selected hidden>Age Range</option>
