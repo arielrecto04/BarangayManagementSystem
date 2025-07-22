@@ -35,21 +35,21 @@ const routes = [
         name: "Dashboard",
         meta: {
             title: "Dashboard",
-            requiresAuth: false,
+            requiresAuth: true,
         },
         component: () => import("@/Pages/Dashboard/Dashboard.vue"),
     },
     {
-        path: "/dashboard/residents",   
+        path: "/dashboard/residents",
         name: "Residents",
         meta: {
             title: "Residents",
-            requiresAuth: false,    
+            requiresAuth: false,
         },
         component: () => import("@/Pages/Dashboard/Residents.vue"),
     },
     {
-        path: "/dashboard/residents/AddResident",   
+        path: "/dashboard/residents/AddResident",
         name: "Add Resident",
         meta: {
             title: "Add Resident",
@@ -58,7 +58,7 @@ const routes = [
         component: () => import("@/Pages/Resident/AddResident.vue"),
     },
     {
-        path: "/dashboard/documents",   
+        path: "/dashboard/documents",
         name: "Documents",
         meta: {
             title: "Documents",
@@ -67,7 +67,7 @@ const routes = [
         component: () => import("@/Pages/Dashboard/Documents.vue"),
     },
     {
-        path: "/dashboard/complaints",   
+        path: "/dashboard/complaints",
         name: "Complaints",
         meta: {
             title: "Complaints",
@@ -76,7 +76,7 @@ const routes = [
         component: () => import("@/Pages/Dashboard/Complaints.vue"),
     },
     {
-        path: "/dashboard/blotter",   
+        path: "/dashboard/blotter",
         name: "Blotter",
         meta: {
             title: "Blotter",
@@ -85,7 +85,7 @@ const routes = [
         component: () => import("@/Pages/Dashboard/Blotter.vue"),
     },
     {
-        path: "/dashboard/projects",   
+        path: "/dashboard/projects",
         name: "Projects",
         meta: {
             title: "Projects",
@@ -94,7 +94,7 @@ const routes = [
         component: () => import("@/Pages/Dashboard/Projects.vue"),
     },
     {
-        path: "/dashboard/officials",   
+        path: "/dashboard/officials",
         name: "Officials",
         meta: {
             title: "Officials",
@@ -120,8 +120,8 @@ const routes = [
         },
         component: () => import("@/Pages/Auth/Login.vue"),
     },
-    
-    
+
+
 
 ];
 
