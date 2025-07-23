@@ -6,8 +6,11 @@ import { Header } from '@/Components';
 
 <template>
 <AuthLayout>
-<Header></Header>
+    <div>
+        <button>
+            
+        </button>
+    </div>
 
-    <h1>Officials</h1>
 </AuthLayout>
 </template>
