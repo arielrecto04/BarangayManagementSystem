@@ -14,6 +14,7 @@ const menuLinks = [
         icon: 'fi fi-rr-people-group',
         isActive: false,
     },
+    
     {
         href: '/documents',
         name: 'Documents',
@@ -69,6 +70,17 @@ const menuLinks = [
         </div>
         <template v-for="(menuLink, index) in menuLinks" :key="index">
             <router-link
+                :to="menuLink.href"
+                :class="[
+                    'flex items-center p-2 text-base font-normal mt-5 duration-700 rounded-lg',
+                    route.path.startsWith(menuLink.href)
+                    ? 'text-white bg-green-700 scale-105'
+                    : 'text-gray-700 hover:bg-green-700 hover:text-white hover:scale-105']">
+                <i :class="menuLink.icon"></i>
+                <span class="ml-3 uppercase">{{ menuLink.name }}</span>
+            </router-link>
+
+            <!-- <router-link
             :to="menuLink.href"
             :class="[
                 'flex items-center p-2 text-base font-normal mt-5 duration-700 rounded-lg',
@@ -81,15 +93,8 @@ const menuLinks = [
             <span class="ml-3 uppercase">
                 {{ menuLink.name }}
             </span>
-            </router-link>
-            <!-- <router-link
-                :to="menuLink.href"
-                :class="`flex items-center p-2 text-base font-normal mt-5  ${menuLink.isActive ? 'text-white bg-green-700 scale-105 ' : 'text-gray-700 hover:bg-green-700 hover:text-white hover:scale-105'} duration-700 rounded-lg`">
-                <i :class="menuLink.icon"></i>
-                <span class="ml-3 uppercase">
-                    {{ menuLink.name }}
-                </span>
             </router-link> -->
+            
         </template>
     </aside>
 </template>
