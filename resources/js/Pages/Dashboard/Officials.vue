@@ -7,9 +7,7 @@ import { Header } from '@/Components';
 <template>
 <AuthLayout>
     <div>
-        <button>
-            
-        </button>
+        <button></button>
     </div>
 
 </AuthLayout>
