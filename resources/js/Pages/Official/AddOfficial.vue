@@ -1,5 +1,5 @@
 <script setup>
-import { useResidentStore } from '@/Stores'
+import { useOfficialStore } from '@/Stores'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
@@ -7,31 +7,27 @@ import useToast from '@/Utils/useToast';
 const router = useRouter();
 const { showToast } = useToast();
 
-const residentStore = useResidentStore();
+const officialStore = useOfficialStore();
 
 
 
-const residentDataForm = ref({
-    first_name: '',
-    last_name: '',
-    birthday: '',
-    age: '',
-    gender: '',
-    address: '',
-    contact_number: '',
-    family_member: '',
-    emergency_contact: '',
+const officialDataForm = ref({
+    name: '',
+    position: '',
+    description: '',
+    term: '',
+    
 });
 
 
 
-const createResident = async () => {
+const createOfficial = async () => {
 
-    console.log(residentDataForm.value);
+    console.log(officialDataForm.value);
     try {
-        await residentStore.addResident(residentDataForm.value);
-        showToast({ icon: 'success', title: 'Resident created successfully' });
-        router.push('/residents');
+        await officialStore.addOfficial(officialDataForm.value);
+        showToast({ icon: 'success', title: 'Official created successfully' });
+        router.push('/officials');
 
     } catch (error) {
         showToast({ icon: 'error', title: error.message });
