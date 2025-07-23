@@ -1,5 +1,8 @@
 <script setup>
 import { ref } from 'vue';
+import { useAuthenticationStore } from '@/Stores';
+
+const authStore = useAuthenticationStore();
 
 const isProfileOpen = ref(false);
 
@@ -59,7 +62,7 @@ const toggleProfileDropdown = () => {
                             class="origin-top-right z-50 absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 focus:outline-none">
                             <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
                             <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                            <a href="#" @click="authStore.logout()"
+                            <a @click="authStore.logout"
                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
                         </div>
                     </transition>

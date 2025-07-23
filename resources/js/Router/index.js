@@ -19,16 +19,6 @@ const routes = [
             requiresAuth: false,
         },
         component: () => import("@/Pages/Auth/Registration.vue"),
-
-    },
-    {
-        path: "/:pathMatch(.*)*",
-        name: "NotFound",
-        meta: {
-            title: "Not Found",
-            requiresAuth: false,
-        },
-        component: () => import("@/Pages/Dashboard/NotFound.vue"),
     },
     {
         path: "/dashboard",
@@ -40,74 +30,86 @@ const routes = [
         component: () => import("@/Pages/Dashboard/Dashboard.vue"),
     },
     {
-        path: "/dashboard/residents",
+        path: "/residents",
         name: "Residents",
         meta: {
             title: "Residents",
-            requiresAuth: false,
+            requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Residents.vue"),
+        redirect: { name: "List Residents" },
+        component: () => import("@/Pages/Resident/ParentResidentView.vue"),
+        children: [
+            {
+                path: "list-residents",
+                name: "List Residents",
+                meta: {
+                    title: "List Residents",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Resident/ListResidents.vue"),
+            },
+            {
+                path: "add-resident",
+                name: "Add Resident",
+                meta: {
+                    title: "Add Resident",
+                    requiresAuth: true,
+                },  
+                component: () => import("@/Pages/Resident/AddResident.vue"),
+            },
+        ],
     },
     {
-        path: "/dashboard/residents/AddResident",
-        name: "Add Resident",
-        meta: {
-            title: "Add Resident",
-            requiresAuth: false,
-        },
-        component: () => import("@/Pages/Resident/AddResident.vue"),
-    },
-    {
-        path: "/dashboard/documents",
+        path: "/documents",
         name: "Documents",
         meta: {
             title: "Documents",
-            requiresAuth: false,
+            requiresAuth: true,
         },
         component: () => import("@/Pages/Dashboard/Documents.vue"),
     },
     {
-        path: "/dashboard/complaints",
+        path: "/complaints",
         name: "Complaints",
         meta: {
             title: "Complaints",
-            requiresAuth: false,
+            requiresAuth: true,
         },
         component: () => import("@/Pages/Dashboard/Complaints.vue"),
     },
     {
-        path: "/dashboard/blotter",
+        path: "/blotter",
         name: "Blotter",
         meta: {
             title: "Blotter",
-            requiresAuth: false,
+            requiresAuth: true,
         },
         component: () => import("@/Pages/Dashboard/Blotter.vue"),
     },
     {
-        path: "/dashboard/projects",
+        path: "/projects",
         name: "Projects",
         meta: {
             title: "Projects",
-            requiresAuth: false,
+            requiresAuth: true,
         },
         component: () => import("@/Pages/Dashboard/Projects.vue"),
     },
     {
-        path: "/dashboard/officials",
+        path: "/officials",
         name: "Officials",
         meta: {
             title: "Officials",
-            requiresAuth: false,
+            requiresAuth: true,
         },
         component: () => import("@/Pages/Dashboard/Officials.vue"),
     },
     {
-        path: "/dashboard/health",
+        path: "/health",
         name: "Health Services",
         meta: {
             title: "Health Services",
-            requiresAuth: false,
+            requiresAuth: true,
         },
         component: () => import("@/Pages/Dashboard/HealthServices.vue"),
     },
@@ -120,9 +122,15 @@ const routes = [
         },
         component: () => import("@/Pages/Auth/Login.vue"),
     },
-
-
-
+    {
+        path: "/:pathMatch(.*)*",
+        name: "NotFound",
+        meta: {
+            title: "Not Found",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/Dashboard/NotFound.vue"),
+    },
 ];
 
 const router = createRouter({
@@ -130,11 +138,9 @@ const router = createRouter({
     routes,
 });
 
-
 router.beforeEach((to, from, next) => {
     const auth = useAuthenticationStore();
 
-    console.log(auth.isAuthenticated);
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
         next({ name: "Login" });
         return;

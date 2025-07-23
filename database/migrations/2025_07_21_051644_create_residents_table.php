@@ -13,16 +13,15 @@ return new class extends Migration
     {
         Schema::create('residents', function (Blueprint $table) {
             $table->id();
-            $table->string('First_Name')->required();
-            $table->string('Last_Name')->required();
-            $table->string('Birthday')->required();
-            $table->string('Age')->required();
-            $table->string('Gender')->required();
-            $table->string('Address')->required();
-            $table->string('Contact_Number')->required();
-            $table->string('Family_Member')->nullable();
-            $table->string('Emergency_Contact')->required;
-
+            $table->string('first_name')->required();
+            $table->string('last_name')->required();
+            $table->string('birthday')->required();
+            $table->string('age')->required();
+            $table->string('gender')->required();
+            $table->string('address')->required();
+            $table->string('contact_number')->required();
+            $table->string('family_member')->nullable();
+            $table->string('emergency_contact')->required;
             $table->timestamps();
         });
     }

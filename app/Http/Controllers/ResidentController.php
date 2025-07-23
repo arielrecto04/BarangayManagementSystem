@@ -11,7 +11,7 @@ class ResidentController extends Controller
      */
     public function index()
     {
-        
+        return Resident::paginate(10);
     }
 
     /**
@@ -27,7 +27,24 @@ class ResidentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'birthday' => 'required',
+            'age' => 'required',
+            'gender' => 'required',
+            'address' => 'required',
+            'contact_number' => 'required',
+            'family_member' => 'required',
+            'emergency_contact' => 'required',
+        ]);
+
+        $resident = Resident::create($request->all());
+
+        return response()->json([
+            'message' => 'Resident created successfully',
+            'data' => $resident,
+        ], 201);
     }
 
     /**

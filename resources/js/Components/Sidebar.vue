@@ -9,43 +9,43 @@ const menuLinks = [
         isActive: true,
     },
     {
-        href: '/dashboard/residents',
+        href: '/residents',
         name: 'Residents',
         icon: 'fi fi-rr-people-group',
         isActive: false,
     },
     {
-        href: '/dashboard/documents',
+        href: '/documents',
         name: 'Documents',
         icon: 'fi fi-rr-document-signed',
         isActive: false,
     },
     {
-        href: '/dashboard/complaints',
+        href: '/complaints',
         name: 'Complaints',
         icon: 'fi fi-rr-triangle-warning',
         isActive: false,
     },
     {
-        href: '/dashboard/blotter',
+        href: '/blotter',
         name: 'Blotter',
         icon: 'fi fi-rr-shield',
         isActive: false,
     },
     {
-        href: '/dashboard/projects',
+        href: '/projects',
         name: 'Projects',
         icon: 'fi fi-rr-chart-pie-alt',
         isActive: false,
     },
     {
-        href: '/dashboard/officials',
+        href: '/officials',
         name: 'Officials',
         icon: 'fi fi-rr-shirt',
         isActive: false,
-    },    
+    },
     {
-        href: '/dashboard/health',
+        href: '/health',
         name: 'Health Services',
         icon: 'fi fi-rr-heart',
         isActive: false,
@@ -56,7 +56,7 @@ const menuLinks = [
 </script>
 
 <template>
-    <aside class="w-64 bg-white text-gray-500 flex flex-col p-4 flex-shrink-0 shadow-sm">
+    <aside class="w-64 bg-white text-gray-500 flex flex-col p-4 flex-shrink-0 shadow-sm sticky top-0">
         <!-- Logo -->
         <div class="flex items-center space-x-3 p-2 mb-6">
             <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"

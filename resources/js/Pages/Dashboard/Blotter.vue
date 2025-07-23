@@ -5,8 +5,8 @@ import { Header } from '@/Components'
 </script>
 
 <template>
-<AuthLayout>
-<Header></Header>
-<h1>HI</h1>
-</AuthLayout>
+    <AuthLayout>
+
+        <h1>HI</h1>
+    </AuthLayout>
 </template>

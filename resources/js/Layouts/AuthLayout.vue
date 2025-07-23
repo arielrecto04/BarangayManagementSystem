@@ -1,5 +1,5 @@
 <script setup>
-    import { Sidebar, NavBar } from "@/Components";
+    import { Sidebar, NavBar, Header } from "@/Components";
 </script>
 
 <template>
@@ -7,6 +7,7 @@
         <Sidebar />
         <div class="flex flex-col gap-2 grow p-5">
             <NavBar />
+            <Header />
             <slot />
         </div>
     </div>
