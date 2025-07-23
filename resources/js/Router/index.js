@@ -111,7 +111,7 @@ const routes = [
             title: "Officials",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Officials.vue"),
+        component: () => import("@/Pages/Officials/Officials.vue"),
     },
     {
         path: "/health",
