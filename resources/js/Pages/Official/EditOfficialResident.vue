@@ -1,5 +1,5 @@
 <script setup>
-import { useResidentStore } from '@/Stores'
+import { useOfficialStore } from '@/Stores'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
@@ -8,19 +8,19 @@ import { storeToRefs } from 'pinia';
 const router = useRouter();
 const { showToast } = useToast();
 
-const residentStore = useResidentStore();
+const officialStore = useOfficialStore();
 
-const { resident, isLoading } = storeToRefs(residentStore);
+const { official, isLoading } = storeToRefs(officialStore);
 
-const residentId = router.currentRoute.value.params.id;
+const officialId = router.currentRoute.value.params.id;
 
 
 
-const updateResidentData  = async () => {
+const updateOfficialData  = async () => {
     try {
-        await residentStore.updateResident();
-        showToast({ icon: 'success', title: 'Resident updated successfully' });
-        router.push('/residents');
+        await officialStore.updateOfficial();
+        showToast({ icon: 'success', title: 'Official updated successfully' });
+        router.push('/officials');
     } catch (error) {
         showToast({ icon: 'error', title: error.message });
     }
@@ -28,7 +28,7 @@ const updateResidentData  = async () => {
 
 
 onMounted(() => {
-    residentStore.getResidentById(residentId);
+    officialStore.getOfficialById(officialId);
 });
 
 
