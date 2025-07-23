@@ -35,9 +35,10 @@
       
       <div class="flex justify-center mt-10 gap-4">
         <form action="" method="post" >
+          @csrf
           <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">Save</button>
-          <router-link to="/dashboard/residents" class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200">Cancel</router-link>
         </form>
+          <router-link to="/dashboard/residents" class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200">Cancel</router-link>
       </div>
     </div>
   </div>

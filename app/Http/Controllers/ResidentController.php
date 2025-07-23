@@ -27,7 +27,17 @@ class ResidentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'First_Name'=> 'required',
+            'Last_Name'=> 'required',
+            'Birthday' => 'required',
+            'Age' => 'required',
+            'Gender' => 'required',
+            'Address' => 'required',
+            'Contact_Number' => 'required',
+            'Family_Member' => 'required',
+            'Emergency_Contact'=> 'required',
+        ]);
     }
 
     /**

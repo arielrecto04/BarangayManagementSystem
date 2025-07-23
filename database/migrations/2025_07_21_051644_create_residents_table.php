@@ -20,8 +20,8 @@ return new class extends Migration
             $table->string('Gender')->required();
             $table->string('Address')->required();
             $table->string('Contact_Number')->required();
-            $table->string('Family_Member')->nullable();
-            $table->string('Emergency_Contact')->required;
+            $table->string('Family_Member')->required();
+            $table->string('Emergency_Contact')->required();
 
             $table->timestamps();
         });
