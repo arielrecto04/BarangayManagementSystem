@@ -39,7 +39,7 @@ const createOfficial = async () => {
 
 <template>
     <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
-        <form @submit.prevent="createResident">
+        <form @submit.prevent="createOfficial">
             <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-5xl">
                 <h1 class="text-2xl font-bold mb-6">Add New Resident</h1>
                 <h2 class="text-lg font-semibold mb-4">Resident Profile</h2>
