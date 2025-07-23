@@ -38,7 +38,21 @@ export const useResidentStore = defineStore('resident', {
             finally {
                 this._isLoading = false;
             }
-        }      
+        },
+        async editResident(id, residentData) {
+            try {
+                this._isLoading = true;
+                const response = await axios.put(`/residents/${id}`, residentData);
+                const index = this._residents.findIndex(resident => resident.id === id);
+                if (index !== -1) {
+                    this._residents[index] = response.data;
+                }
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this._isLoading = false;
+            }
+        }
     },
 
 });
