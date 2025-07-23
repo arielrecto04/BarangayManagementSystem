@@ -52,7 +52,7 @@ class ResidentController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return Resident::findOrFail($id);
     }
 
     /**
@@ -68,7 +68,25 @@ class ResidentController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'birthday' => 'required',
+            'age' => 'required',
+            'gender' => 'required',
+            'address' => 'required',
+            'contact_number' => 'required',
+            'family_member' => 'required',
+            'emergency_contact' => 'required',
+        ]);
+
+        $resident = Resident::findOrFail($id);
+        $resident->update($request->all());
+
+        return response()->json([
+            'message' => 'Resident updated successfully',
+            'data' => $resident,
+        ], 200);
     }
 
     /**
@@ -76,6 +94,11 @@ class ResidentController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $resident = Resident::findOrFail($id); 
+        $resident->delete();
+
+        return response()->json([
+            'message' => 'Resident deleted successfully',
+        ], 200);
     }
 }

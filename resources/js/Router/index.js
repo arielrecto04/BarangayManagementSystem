@@ -54,8 +54,17 @@ const routes = [
                 meta: {
                     title: "Add Resident",
                     requiresAuth: true,
-                },  
+                },
                 component: () => import("@/Pages/Resident/AddResident.vue"),
+            },
+            {
+                path: "edit-resident/:id",
+                name: "Edit Resident",
+                meta: {
+                    title: "Edit Resident",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Resident/EditResident.vue"),
             },
         ],
     },
