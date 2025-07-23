@@ -81,5 +81,6 @@ const officials = [
         </button>
       </div>
     </div>
+    <router-view></router-view>
   </AuthLayout>
 </template>
