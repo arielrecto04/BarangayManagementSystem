@@ -111,7 +111,28 @@ const routes = [
             title: "Officials",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Officials/Officials.vue"),
+        component: () => import("@/Pages/Official/ParentOfficialView.vue"),
+        children: [
+            {
+                path: "add-official",
+                name: "Add Official",
+                meta:{
+                    title: "Add Official",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Official/AddOfficial.vue"),
+            },
+            {
+                path: "edit-official/:id",
+                name: "Edit Official",
+                meta: {
+                    title: "Edit Official",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Official/EditOfficial.vue"), 
+            },
+
+        ]
     },
     {
         path: "/health",
