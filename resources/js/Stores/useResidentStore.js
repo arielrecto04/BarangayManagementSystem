@@ -39,17 +39,20 @@ export const useResidentStore = defineStore('resident', {
                 this._isLoading = false;
             }
         },
-        async deleteResident(id) {
+        async editResident(id, residentData) {
             try {
                 this._isLoading = true;
-                await axios.delete(`/residents/${id}`);
-                this._residents = this._residents.filter(resident => resident.id !== id);
+                const response = await axios.put(`/residents/${id}`, residentData);
+                const index = this._residents.findIndex(resident => resident.id === id);
+                if (index !== -1) {
+                    this._residents[index] = response.data;
+                }
             } catch (error) {
                 console.log(error);
             } finally {
                 this._isLoading = false;
             }
-        }      
+        }
     },
 
 });
