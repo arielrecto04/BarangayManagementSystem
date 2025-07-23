@@ -7,7 +7,7 @@ import { Header } from '@/Components';
 
 <template>
 <AuthLayout>
-<Header></Header>
+
     <h1>Projects</h1>
 </AuthLayout>
 </template>
