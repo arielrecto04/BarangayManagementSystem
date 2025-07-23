@@ -38,6 +38,19 @@ class ResidentController extends Controller
             'Family_Member' => 'required',
             'Emergency_Contact'=> 'required',
         ]);
+
+        Resident::create([
+            'First_Name'=> $request->First_Name,
+            'Last_Name' => $request->Last_Name,
+            'Birthday'  => $request->Birthday,
+            'Age'  => $request->Age,
+            'Gender'  => $request->Gender,
+            'Address'  => $request->Address,
+            'Contact_Number' => $request->Contact_Number,
+            'Family_Member' => $request->Family_Member,
+            'Emergency_Contact'=> $request->Emergency_Contact,
+        ]);
+        
     }
 
     /**
