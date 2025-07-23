@@ -38,6 +38,17 @@ export const useResidentStore = defineStore('resident', {
             finally {
                 this._isLoading = false;
             }
+        },
+        async deleteResident(id) {
+            try {
+                this._isLoading = true;
+                await axios.delete(`/residents/${id}`);
+                this._residents = this._residents.filter(resident => resident.id !== id);
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this._isLoading = false;
+            }
         }      
     },
 
