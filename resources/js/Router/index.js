@@ -123,7 +123,7 @@ const routes = [
                 component: () => import("@/Pages/Official/AddOfficial.vue"),
             },
             {
-                path: "edit-official/:id",
+                path: "edit-official/",
                 name: "Edit Official",
                 meta: {
                     title: "Edit Official",
