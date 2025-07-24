@@ -26,24 +26,22 @@ class OfficialController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required',
-            'description' => 'required',
-            'position' => 'required',
-            'term' => 'required',
-            
-        ]);
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string',
+        'position' => 'required|string',
+        'description' => 'required|string',
+        'term' => 'required|string', // ✅ Keep it as string
+    ]);
 
-        $official = Official::create($request->all());
+    $official = Official::create($validated);
 
-        return response()->json([
-            'message' => 'official created successfully',
-            'data' => $official,
-        ], 201);
-    }
-
+    return response()->json([
+        'message' => 'Official created successfully',
+        'data' => $official,
+    ], 201); // ✅ Send success response
+}
     /**
      * Display the specified resource.
      */

@@ -10,7 +10,6 @@ export const useOfficialStore = defineStore('official', {
     getters: {
         officials: (state) => state._officials,
         isLoading: (state) => state._isLoading,
-        officials: (state) => state._officials,
     },
 
     actions: {
@@ -18,7 +17,7 @@ export const useOfficialStore = defineStore('official', {
 
         selectOfficialById(OfficialId){
 
-            this._official = this._officials.find((official) => official.id == officialId);
+            this._official = this._officials.find((official) => official.id == OfficialId);
         },
 
         async getOfficials() {
@@ -39,7 +38,7 @@ export const useOfficialStore = defineStore('official', {
             try {
                 this._isLoading = true;
                 const response = await axios.post('/officials', official);
-                this._officials.push(response.data);
+                this._officials.push(response.data,data);
             } catch (error) {
                 console.log(error);
             }
@@ -53,8 +52,8 @@ export const useOfficialStore = defineStore('official', {
 
                 const response = await axios.put(`/officials/${this._official.id}`, this._official);
                 this._officials = this._officials.map((official) => {
-                    if (official.id === response.data.id) {
-                        return response.data;
+                    if (official.id === response.data.data.id) {
+                        return response.data.data;
                     }
                     return official;
                 });

@@ -19,5 +19,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::apiResource('residents', ResidentController::class);
-    Route::apiResource('officials', ResidentController::class);
+    Route::apiResource('officials', OfficialController::class);
 });

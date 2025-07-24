@@ -47,12 +47,12 @@ const createOfficial = async () => {
         <div class="grid grid-cols-3 gap-4">
           <!-- First Row -->
           <div class="flex flex-col gap-2">
-            <label for="first_name" class="text-sm font-semibold text-gray-600">First Name</label>
+            <label for="name" class="text-sm font-semibold text-gray-600">First Name</label>
             <input
-              id="first_name"
+              id="name"
               type="text"
               placeholder="First Name"
-              v-model="officialDataForm.first_name"
+              v-model="officialDataForm.name"
               required
               class="col-span-1 border border-gray-200 rounded-md px-4 py-2"
             />
@@ -91,7 +91,7 @@ const createOfficial = async () => {
             <label for="term" class="text-sm font-semibold text-gray-600">Term</label>
             <input
               id="term"
-              type="number"
+              type="text"
               placeholder="Term"
               v-model="officialDataForm.term"
               class="col-span-1 border border-gray-200 rounded-md px-4 py-2"
