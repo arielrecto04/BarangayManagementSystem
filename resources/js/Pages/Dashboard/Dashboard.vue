@@ -1,13 +1,11 @@
 <script setup>
     import { AuthLayout } from '@/Layouts'
-    import { Header} from '@/Components'
-    
+  
 </script>
 
 <template>
     <AuthLayout>
-    <Header>
-    </Header>
+  
     <div class='mt-5'>
         <h1 class='text-2xl uppercase'>Dashboard Overview</h1>
         <!-- USE MESSAGE -->
