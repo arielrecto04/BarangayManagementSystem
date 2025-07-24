@@ -111,8 +111,18 @@ const routes = [
             title: "Officials",
             requiresAuth: true,
         },
+        redirect: { name: "List Officials" },
         component: () => import("@/Pages/Official/ParentOfficialView.vue"),
         children: [
+            {
+                path: "list-officials",
+                name: "List Officials",
+                meta: {
+                    title: "List Officials",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Official/CardOfficial.vue"),
+            },
             {
                 path: "add-official",
                 name: "Add Official",
