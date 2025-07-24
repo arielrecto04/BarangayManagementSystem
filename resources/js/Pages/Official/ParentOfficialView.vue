@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { PlusIcon, PencilIcon } from '@heroicons/vue/24/outline';
 const router = useRouter();
 
-// Sample data — in real use, load from your backend
+// Data for Officials
 const officials = [
   { name: 'ADAM S. APPLE', position: 'Barangay Captain', image: '/avatar1.svg' },
   { name: 'Marion Santos', position: 'Kagawad', image: '/avatar2.svg' },
@@ -25,7 +25,7 @@ const officials = [
               <PlusIcon class="w-5 h-5" /> Add Official
             </div>
           </router-link>
-          <router-link to="/officials" class="block">
+          <router-link to="/officials/edit-official" class="block">
             <div class="shadow-md rounded-lg p-3 cursor-pointer flex items-center gap-2 font-bold">
               <PencilIcon class="w-5 h-5" /> Edit Official
             </div>
@@ -45,18 +45,26 @@ const officials = [
 
       <!-- Second Row -->
       <div class="flex flex-wrap justify-center gap-6">
-        <div v-for="(official, index) in officials.slice(1, 4)" :key="index" class="bg-white rounded-xl shadow-md px-6 py-4 w-60 text-center">
+        <div
+          v-for="(official, index) in officials.slice(1, 4)"
+          :key="'mid-' + index"
+          class="bg-white rounded-xl shadow-md px-6 py-4 w-60 text-center"
+        >
           <img :src="official.image" alt="avatar" class="w-14 h-14 rounded-full mx-auto mb-2" />
-          <h2 class="text-md font-bold">{{ official.name }}</h2>
+          <h2 class="text-base font-bold">{{ official.name }}</h2>
           <p class="text-sm text-gray-600">{{ official.position }}</p>
         </div>
       </div>
 
       <!-- Bottom Row -->
       <div class="flex flex-wrap justify-center gap-6">
-        <div v-for="(official, index) in officials.slice(4)" :key="index" class="bg-white rounded-xl shadow-md px-6 py-4 w-60 text-center">
+        <div
+          v-for="(official, index) in officials.slice(4)"
+          :key="'bot-' + index"
+          class="bg-white rounded-xl shadow-md px-6 py-4 w-60 text-center"
+        >
           <img :src="official.image" alt="avatar" class="w-14 h-14 rounded-full mx-auto mb-2" />
-          <h2 class="text-md font-bold">{{ official.name }}</h2>
+          <h2 class="text-base font-bold">{{ official.name }}</h2>
           <p class="text-sm text-gray-600">{{ official.position }}</p>
         </div>
       </div>
@@ -70,7 +78,9 @@ const officials = [
           Expand All
         </button>
         <button class="flex items-center gap-2 px-4 py-2 bg-gray-300 rounded shadow">
-          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a1 1 0 00-1 1v2h2V5h2v2h2V5h2v2h2V5h2v1h2V4a1 1 0 00-1-1H4zM3 9a1 1 0 011-1h12a1 1 0 011 1v7a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 3a1 1 0 00-1 1v2h2V5h2v2h2V5h2v2h2V5h2v1h2V4a1 1 0 00-1-1H4zM3 9a1 1 0 011-1h12a1 1 0 011 1v7a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          </svg>
           Adjust Card
         </button>
         <button class="flex items-center gap-2 px-4 py-2 bg-gray-300 rounded shadow">
@@ -81,6 +91,7 @@ const officials = [
         </button>
       </div>
     </div>
+
     <router-view></router-view>
   </AuthLayout>
 </template>
