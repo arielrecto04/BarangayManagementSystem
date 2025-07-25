@@ -93,7 +93,37 @@ const routes = [
             title: "Blotter",
             requiresAuth: true,
         },
+        redirect:{ name: "List Blotter" },
         component: () => import("@/Pages/Blotter/ParentBlotterView.vue"),
+        children: [
+            {
+                path: "list-blotter",
+                name: "List Blotter",
+                meta: {
+                    title: "List Blotter",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Blotter/ListBlotter.vue"),
+            },
+            {
+                path: "add-blotter",
+                name: "Add Blotter",
+                meta: {
+                    title: "Add Blotter",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Blotter/AddBlotter.vue"),
+            },
+            {
+                path: "edit-blotter/:id",
+                name: "Edit Blotter",
+                meta: {
+                    title: "Edit Blotter",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Blotter/EditBlotter.vue"),
+            },
+        ]
     },
     {
         path: "/projects",
