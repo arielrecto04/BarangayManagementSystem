@@ -10,6 +10,12 @@ class Official extends Model
         'name',
         'description',
         'position',
-        'term',
+        'terms',
+        'no_of_per_term',
+        'elected_date',
+        'start_date',
+        'end_date',
+        'resident_id',
+
     ]);
 }
