@@ -53,7 +53,7 @@ export const useResidentStore = defineStore('resident', {
 
                 const response = await axios.put(`/residents/${this._resident.id}`, this._resident);
                 this._residents = this._residents.map((resident) => {
-                    if (resident.id === response.data.id) {
+                    if (resident.id === response.data.data.id) {
                         return response.data;
                     }
                     return resident;

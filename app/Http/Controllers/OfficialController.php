@@ -32,7 +32,7 @@ public function store(Request $request)
         'name' => 'required|string',
         'position' => 'required|string',
         'description' => 'required|string',
-        'term' => 'required|string', // ✅ Keep it as string
+        'term' => 'required|string',
     ]);
 
     $official = Official::create($validated);
