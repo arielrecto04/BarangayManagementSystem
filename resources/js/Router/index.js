@@ -93,7 +93,7 @@ const routes = [
             title: "Blotter",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Blotter.vue"),
+        component: () => import("@/Pages/Blotter/ParentBlotterView.vue"),
     },
     {
         path: "/projects",
@@ -133,7 +133,7 @@ const routes = [
                 component: () => import("@/Pages/Official/AddOfficial.vue"),
             },
             {
-                path: "edit-official/",
+                path: "edit-official/:id",
                 name: "Edit Official",
                 meta: {
                     title: "Edit Official",
