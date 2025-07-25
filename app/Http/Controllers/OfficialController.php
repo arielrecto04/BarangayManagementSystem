@@ -12,7 +12,10 @@ class OfficialController extends Controller
      */
     public function index()
     {
-        //
+            $officials = Official::all();
+    return response()->json([
+        'data' => $officials
+    ]);
     }
 
     /**
