@@ -18,11 +18,6 @@ const router = useRouter();
               <PlusIcon class="w-5 h-5" /> Add Official
             </div>
           </router-link>
-          <router-link to="/officials/edit-official/${official.id}" class="block">
-            <div class="shadow-md rounded-lg p-3 cursor-pointer flex items-center gap-2 font-bold">
-              <PencilIcon class="w-5 h-5" /> Edit Official
-            </div>
-          </router-link>
         </div>
       </div>
     </div>

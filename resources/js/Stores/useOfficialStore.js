@@ -22,18 +22,23 @@ export const useOfficialStore = defineStore('official', {
         },
 
         async getOfficials() {
-            try {
-                this._isLoading = true;
-                const response = await axios.get('/officials');
-
-                this._officials = response.data.data;
-            } catch (error) {
-                console.log(error);
-            }
-            finally {
-                this._isLoading = false;
-            }
-        },
+    try {
+        this._isLoading = true;
+        const response = await axios.get('/officials');
+        console.log('API Response:', response); // Debugging: Log the response
+        if (response.data && response.data.data) {
+            this._officials = response.data.data;
+        } else {
+            console.error('Invalid response format:', response);
+            this._officials = [];
+        }
+    } catch (error) {
+        console.error('Error fetching officials:', error);
+        this._officials = []; // Ensure the UI doesn't break
+    } finally {
+        this._isLoading = false;
+    }
+},
 
          async addOfficial(official) {
             try {
