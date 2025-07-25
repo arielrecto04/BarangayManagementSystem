@@ -93,7 +93,7 @@ const routes = [
             title: "Blotter",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Blotter.vue"),
+        component: () => import("@/Pages/Blotter/ParentBlotterView.vue"),
     },
     {
         path: "/projects",
