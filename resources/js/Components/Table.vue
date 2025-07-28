@@ -261,7 +261,7 @@ const clearFilters = () => {
 
                             <!-- Actions Header -->
                             <th scope="col"
-                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -295,8 +295,8 @@ const clearFilters = () => {
                             </td>
 
                             <!-- Actions Cell -->
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end space-x-2" @click.stop>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <div class="flex justify-center space-x-2" @click.stop>
                                     <slot name="actions" :row="row"></slot>
                                 </div>
                             </td>

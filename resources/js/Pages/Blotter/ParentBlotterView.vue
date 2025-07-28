@@ -1,135 +1,61 @@
 <script setup>
 import { AuthLayout } from "@/Layouts";
-import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-
+import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 const router = useRouter();
-
-const totalCases = ref(0);
-const openCases = ref(0);
-const inProgressCases = ref(0);
-const resolvedCases = ref(0);
-
-onMounted(() => {
-  // Placeholder: Fetch data from the database and update the counts
-  // Example:
-  // axios.get('/api/blotter-stats').then(response => {
-  //   totalCases.value = response.data.totalCases;
-  //   openCases.value = response.data.openCases;
-  //   inProgressCases.value = response.data.inProgressCases;
-  //   resolvedCases.value = response.data.resolvedCases;
-  // });
-});
-
-const navigateToNewBlotter = () => {
-  router.push("/blotter/new");
-};
 </script>
 
 <template>
-  <AuthLayout>
-    <div class="m-3 flex flex-col relative">
-      <!-- Blotter & Crime Management Header -->
-      <div class="bg-gray-100 p-5 shadow-lg rounded-lg">
-        <h1 class="text-xl font-bold">Blotter & Crime Management</h1>
-      </div>
-
-      <!-- "New" Button -->
-      <button
-        @click="navigateToNewBlotter"
-        class="absolute top-5 right-5 bg-black text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800"
-      >
-        + New
-      </button>
-
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-5">
-        <!-- Total Cases -->
-        <div class="bg-white shadow-md rounded-lg p-5 flex items-center gap-4">
-          <div class="text-3xl font-bold">{{ totalCases }}</div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold">Total Cases</span>
-            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
-              </svg>
+    <AuthLayout>
+        <div class="m-3 flex flex-col">
+            <!-- Blotter Manager -->
+            <div class="bg-white p-5 shadow-lg rounded-lg w-1/4">
+                <h1 class="uppercase font-bold">Blotter Manager</h1>
+                <p>Manage and View Blotter information</p>
             </div>
-          </div>
-        </div>
 
-        <!-- Open Cases -->
-        <div class="bg-white shadow-md rounded-lg p-5 flex items-center gap-4">
-          <div class="text-3xl font-bold">{{ openCases }}</div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold">Open Cases</span>
-            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- In Progress -->
-        <div class="bg-white shadow-md rounded-lg p-5 flex items-center gap-4">
-          <div class="text-3xl font-bold">{{ inProgressCases }}</div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold">In Progress</span>
-            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Resolved -->
-        <div class="bg-white shadow-md rounded-lg p-5 flex items-center gap-4">
-          <div class="text-3xl font-bold">{{ resolvedCases }}</div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold">Resolved</span>
-            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filters -->
-      <div class="flex items-center gap-4 mt-5">
-        <!-- Search Bar -->
-        <input
-          type="text"
-          placeholder="Search complaints..."
-          class="w-full sm:w-1/2 rounded-lg border border-gray-300 px-4 py-2 shadow-md"
-        />
-
-        <!-- Category Filter -->
-        <select class="rounded-lg border border-gray-300 px-4 py-2 shadow-md">
-          <option value="" disabled selected hidden>All Categories</option>
-          <option>Category 1</option>
-          <option>Category 2</option>
-          <option>Category 3</option>
-        </select>
-
-        <!-- Status Filter -->
-        <select class="rounded-lg border border-gray-300 px-4 py-2 shadow-md">
-          <option value="" disabled selected hidden>All Status</option>
-          <option>Open</option>
-          <option>In Progress</option>
-          <option>Resolved</option>
-        </select>
-
-        <!-- More Filters -->
-        <button class="bg-gray-200 rounded-lg px-4 py-2 shadow-md flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M3 6h18" />
-          </svg>
-          More Filters
-        </button>
-      </div>
+            <!-- Search Blotters -->
+            <div class="flex bg-white shadow-lg rounded-lg p-7 mt-0 transform -translate-y-10">
+                <div class="shadow-lg p-3 w-1/2">
+                    <form>
+                        <input type="text" placeholder="Search Blotters..." name="Search Blotters"
+                            class="w-full rounded-lg  ">
+                    </form>
+                </div>
+                <select class="ml-2 bg-white shadow-lg rounded-lg w-1/8 p-3 text-center" placeholder="Case Type">
+                    <option value="" disabled selected hidden>Case Type</option>
+                    <option>Theft</option>
+                    <option>Assault</option>
+                    <option>Other</option>
+                </select>
+                <select class="flex items-center ml-2 bg-white shadow-lg rounded-lg w-1/8 p-3 text-center "
+                    placeholder="Status">
+                    <option value="" disabled selected hidden>Status</option>
+                    <option>Open</option>
+                    <option>In Progress</option>
+                    <option>Resolved</option>
+                </select>
+                <div class="w-1/4 max-w-sm mx-auto ml-2">
+                    <!-- Route of Add Blotter -->
+                    <template v-if="router.currentRoute.value.path == '/blotter/list-blotter'">
+                       <router-link to="/blotter/add-blotter" class="block">
+  <div class="bg-green-700 shadow-md rounded-lg p-3 cursor-pointer flex justify-center items-center">
+    <div class="flex items-center gap-2 text-lg font-bold text-white">
+      <PlusIcon class="w-6 h-6" /> Add Blotter
     </div>
-  </AuthLayout>
+  </div>
+</router-link>
+                    </template>
+                    <template v-else>
+                        <router-link to="/blotter" class="block">
+                            <div class="shadow-md rounded-lg p-3  cursor-pointer flex justify-center items-center">
+                                <div class="flex items-center gap-2 text-lg font-bold text-center"><XMarkIcon class="w-6 h-6" /> Cancel</div>
+                            </div>
+                        </router-link>
+                    </template>
+                </div>
+            </div>
+        </div>
+        <router-view></router-view>
+    </AuthLayout>
 </template>
