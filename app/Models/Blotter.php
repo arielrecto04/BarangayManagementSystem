@@ -24,10 +24,14 @@ class Blotter extends Model
         'in_progress',
         'resolved',
     ];
-    public function resident()
+  
+    public function complainants()
     {
-        return $this->belongsToMany(Resident::class, 'complainant');
+        return $this->morphToMany(Resident::class, 'complainant');
     }
-    
+
+    public function respondents()
+    {
+        return $this->morphToMany(Resident::class, 'respondent');
+    }
 }
-    
