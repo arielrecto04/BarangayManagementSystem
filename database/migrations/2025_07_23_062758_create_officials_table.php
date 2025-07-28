@@ -17,9 +17,10 @@ return new class extends Migration
             $table->string('position')->required();
             $table->longtext('description')->required();
             $table->string('terms')->required();
-            $table->string('no_of_per_term')->required();
-            $table->string('elected_date')->required();
-            $table->string('end_date')->required();
+            $table->integer('no_of_per_term')->required();
+            $table->date('elected_date')->required();
+            $table->date('start_date')->required();
+            $table->date('end_date')->required();
             $table->string('resident_id')->required();
             $table->timestamps();
         });

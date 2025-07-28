@@ -35,7 +35,12 @@ public function store(Request $request)
         'name' => 'required|string',
         'position' => 'required|string',
         'description' => 'required|string',
-        'term' => 'required|string',
+        'terms' => 'required|string',
+        'no_of_per_term' => 'required|integer',
+        'elected_date' => 'required|date',
+        'start_date' => 'required|date',
+        'end_date' => 'required|date',
+        'resident_id' => 'required|string',
     ]);
 
     $official = Official::create($validated);
@@ -70,7 +75,11 @@ public function store(Request $request)
             'name' => 'required',
             'description' => 'required',
             'position' => 'required',
-            'term' => 'required',
+            'terms' => 'required',
+            'no_of_per_term' => 'required',
+            'elected_date' => 'required',
+            'end_date' => 'required',
+            'resident_id' => 'required',
             
         ]);
 

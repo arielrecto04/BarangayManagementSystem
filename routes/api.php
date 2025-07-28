@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthenticationController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\OfficialController;
+use App\Http\Controllers\BlotterController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -20,4 +21,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);
+    Route::apiResource('blotters', BlotterController::class);
 });

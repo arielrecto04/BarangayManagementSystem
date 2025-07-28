@@ -9,32 +9,35 @@ const { showToast } = useToast();
 
 const officialStore = useOfficialStore();
 
-
-
 const officialDataForm = ref({
     name: '',
     position: '',
     description: '',
-    term: '',
-    
+    terms: '',
+    no_of_per_term: '',
+    elected_date: '',
+    start_date: '',
+    end_date: '',
+    resident_id: '',
 });
 
-
-
 const createOfficial = async () => {
-
-    console.log(officialDataForm.value);
     try {
         await officialStore.addOfficial(officialDataForm.value);
         showToast({ icon: 'success', title: 'Official created successfully' });
         router.push('/officials');
-
     } catch (error) {
-        showToast({ icon: 'error', title: error.message });
+        // Improved error handling
+        const errorMsg = error.response?.data?.message || 
+                        error.response?.data?.errors?.join(', ') || 
+                        error.message;
+        showToast({ 
+            icon: 'error', 
+            title: 'Failed to create official',
+            text: errorMsg 
+        });
     }
 }
-
-
 </script>
 
 <template>
@@ -44,58 +47,107 @@ const createOfficial = async () => {
         <h1 class="text-2xl font-bold mb-6">Add New Official</h1>
         <h2 class="text-lg font-semibold mb-4">Official Profile</h2>
 
-        <div class="grid grid-cols-3 gap-4">
-          <!-- First Row -->
-          <div class="flex flex-col gap-2">
-            <label for="name" class="text-sm font-semibold text-gray-600">First Name</label>
+        <div class="grid grid-cols-12 gap-4">
+          <!-- Full Name -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Full Name</label>
             <input
-              id="name"
               type="text"
-              placeholder="First Name"
               v-model="officialDataForm.name"
+              placeholder="Juan Dela Cruz"
               required
-              class="col-span-1 border border-gray-200 rounded-md px-4 py-2"
+              class="border border-gray-200 rounded-md px-4 py-2"
             />
           </div>
 
-          <div class="flex flex-col gap-2">
-            <label for="position" class="text-sm font-semibold text-gray-600">Position</label>
+          <!-- Position -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Position</label>
             <input
-              id="position"
               type="text"
-              placeholder="Position"
               v-model="officialDataForm.position"
+              placeholder="Barangay Captain"
               required
-              class="col-span-1 border border-gray-200 rounded-md px-4 py-2"
+              class="border border-gray-200 rounded-md px-4 py-2"
             />
           </div>
 
-          <div class="row-span-3 flex justify-center items-center">
-            <!-- Image placeholder (adjust w/h values to match Tailwind sizes) -->
+          <!-- Image Placeholder -->
+          <div class="col-span-4 row-span-2 flex justify-center items-center">
             <div class="w-40 h-40 bg-gray-200 rounded-md"></div>
           </div>
 
-          <!-- Second Row -->
-          <div class="flex flex-col gap-2">
-            <label for="description" class="text-sm font-semibold text-gray-600">Description</label>
+          <!-- terms -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Terms</label>
+            <input
+              type="text"
+              v-model="officialDataForm.terms"
+              placeholder="YY-YY"
+              class="border border-gray-200 rounded-md px-4 py-2"
+            />
+          </div>
+
+          <!-- Resident ID -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Resident ID</label>
+            <input
+              type="text"
+              v-model="officialDataForm.resident_id"
+              placeholder="Resident ID"
+              class="border border-gray-200 rounded-md px-4 py-2"
+            />
+          </div>
+
+          <!-- Number of term -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Number of Term</label>
+            <input
+              type="number"
+              v-model="officialDataForm.no_of_per_term"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm"
+            />
+          </div>
+
+          <!-- Elected Date -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Elected Date</label>
+            <input
+              type="date"
+              v-model="officialDataForm.elected_date"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm"
+            />
+          </div>
+
+          <!-- Start Date -->
+<div class="col-span-4 flex flex-col gap-2">
+  <label class="text-sm font-semibold text-gray-600">Start Date</label>
+  <input
+    type="date"
+    v-model="officialDataForm.start_date"
+    class="border border-gray-300 rounded-md px-4 py-2 text-sm"
+  />
+</div>
+
+          <!-- End Date -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">End Date</label>
+            <input
+              type="date"
+              v-model="officialDataForm.end_date"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm"
+            />
+          </div>
+
+          <!-- Description (full width) -->
+          <div class="col-span-12 flex flex-col gap-2 mt-4">
+            <label class="text-sm font-semibold text-gray-600">Description</label>
             <textarea
-              id="description"
-              placeholder="Enter a detailed description..."
               v-model="officialDataForm.description"
+              placeholder="Enter a detailed description..."
               rows="4"
               class="resize-y border border-gray-200 rounded-md px-4 py-2"
             ></textarea>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="term" class="text-sm font-semibold text-gray-600">Term</label>
-            <input
-              id="term"
-              type="text"
-              placeholder="Term"
-              v-model="officialDataForm.term"
-              class="col-span-1 border border-gray-200 rounded-md px-4 py-2"
-            />
           </div>
         </div>
 

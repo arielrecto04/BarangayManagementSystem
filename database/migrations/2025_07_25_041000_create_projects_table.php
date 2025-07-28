@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('title')->required();
             $table->longText('description')->required();
-            $table->file('attachments')->required();
-            $table->date_timestamp_set('start_date')->required();
-            $table->date_timestamp_set('end_date')->required();
+            $table->string('attachments')->required();
+            $table->dateTime('start_date')->required();
+            $table->dateTime('end_date')->required();
             $table->timestamps();
         });
     }
