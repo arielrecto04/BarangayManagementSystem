@@ -23,6 +23,11 @@ return new class extends Migration
             $table->string('datetime_of_incident')->required();
             $table->longText('blotter_type')->required();
             $table->string('barangay_case_no')->required();
+            $table->string('total_cases')->required();
+            $table->string('open_cases')->required();
+            $table->string('in_progress')->required();
+            $table->string('resolved')->required();
+
             $table->timestamps();
         });
     }

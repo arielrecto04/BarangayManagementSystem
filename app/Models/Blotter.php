@@ -17,5 +17,14 @@ class Blotter extends Model
         'datetime_of_incident',  
         'blotter_type',  
         'barangay_case_no',
+        'total_cases',
+        'Open_cases',
+        'in_progress',
+        'resolved',
     ];
+    public function resident()
+    {
+        return $this->belongsToMany(Resident::class, 'complainant');
+    }
 }
+    
