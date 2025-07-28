@@ -1,12 +1,6 @@
 import axios from "axios";
 
-const instance = axios.create({
-    baseURL: 'http://127.0.0.1:8000/api', // Updated to match your backend URL
-    headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-    },
-});
+import { useAuthenticationStore } from "@/Stores";
 
 
 const base = axios.create({
@@ -16,20 +10,33 @@ const base = axios.create({
     },
 });
 
-if (localStorage.getItem("token") ) {
 
-    base.interceptors.request.use(
-        (config) => {
-            const token = localStorage.getItem("token");
-            if (token) {
-                config.headers.Authorization = `bearer ${token}`;
-            }
-            return config;
-        },
-        (error) => {
-            return Promise.reject(error);
+
+base.interceptors.request.use(
+    (config) => {
+
+        const { token } = useAuthenticationStore();
+
+        if (token) {
+            config.headers.Authorization = `bearer ${token}`;
         }
-    );
-}
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+
+base.interceptors.response.use((response) => {
+    return response;
+}, (error) => {
+    if (error.response.status === 401) {
+        const authStore = useAuthenticationStore();
+        authStore.logout();
+    }
+    return Promise.reject(error);
+});
+
 
 export default base;

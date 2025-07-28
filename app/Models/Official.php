@@ -18,4 +18,9 @@ class Official extends Model
         'resident_id',
 
     ]);
+    public function firstName()
+    {
+        return $this->belongsTo(Resident::class,'resident_id');
+    }
 }
+

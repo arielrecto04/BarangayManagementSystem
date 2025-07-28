@@ -17,4 +17,13 @@ class Complaint extends Model
         'filing_date',
 
     ];
+    public function respondent_complaint()
+    {
+        return $this->belongsTo(Complaint::class,'respondent_id');
+
+    }
+    public function complainant_complaint()
+    {
+        return $this->belongsTo(Complaint::class,'complainant_id');
+    }
 }
