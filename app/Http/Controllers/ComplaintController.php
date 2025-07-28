@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Complaint;
+
+class ComplaintController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        return Complaint::paginate(10);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'complaint_name',
+            'respondent_name',
+            'case_no',
+            'title',
+            'description',
+            'resolution',
+            'date',
+            'filing_date',
+        ]);
+        $complaint = Complaint::create($request->all());
+
+        return response()->json([
+            'message' => 'Resident created successfully',
+            'data' => $complaint,
+        ], 201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        return Complaint::findOrFail($id);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        $request->validate([
+            'complaint_name',
+            'respondent_name',
+            'case_no',
+            'title',
+            'description',
+            'resolution',
+            'date',
+            'filing_date',
+        ]);
+        $complaint = Complaint::findOrFail($id);
+        $complaint->update($request->all());
+
+        return response()->json([
+            'message' => 'Complaint updated successfully',
+            'data' => $complaint,
+        ], 200);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $complaint = Complaint::findOrFail($id);
+        $complaint->delete();
+
+        return response()->json([
+            'message' => 'Complaint deleted successfully',
+        ], 200);
+    }
+}
