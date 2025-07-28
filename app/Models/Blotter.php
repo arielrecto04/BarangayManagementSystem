@@ -11,8 +11,10 @@ class Blotter extends Model
         'filing_date',  
         'title_case',  
         'nature_of_case',  
-        'complainants',  
-        'respondents',  
+        'complainant_type',
+        'complainant_id',
+        'respondent_type',
+        'respondent_id',  
         'place',  
         'datetime_of_incident',  
         'blotter_type',  
@@ -26,5 +28,6 @@ class Blotter extends Model
     {
         return $this->belongsToMany(Resident::class, 'complainant');
     }
+    
 }
     

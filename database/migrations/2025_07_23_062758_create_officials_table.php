@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use App\Models\Document;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -20,7 +21,7 @@ return new class extends Migration
             $table->string('no_of_per_term')->required();
             $table->string('elected_date')->required();
             $table->string('end_date')->required();
-            $table->string('resident_id')->required();
+            $table->foreignIdFor(Document::class, 'resident_id')->constrained('resident_id')->required();
             $table->timestamps();
         });
     }

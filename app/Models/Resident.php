@@ -21,6 +21,7 @@ class Resident extends Model
     {
         return $this->hasMany(Blotter::class,'complainant');
     }
+
     public function residentIdOfficial()
     {
         return $this->hasMany(Official::class,'resident_id');
@@ -37,4 +38,5 @@ class Resident extends Model
     {
         return $this->morphTo();
     }
+    
 }

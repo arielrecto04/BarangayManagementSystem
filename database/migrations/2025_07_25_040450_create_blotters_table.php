@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('filing_date')->required();
             $table->string('title_case')->required();
             $table->string('nature_of_case')->required();
-            $table->string('complainants')->required();
-            $table->string('respondents')->required();
+            $table->morphs('complainants');
+            $table->morphs('respondents');
             $table->string('place')->required();
             $table->string('datetime_of_incident')->required();
             $table->longText('blotter_type')->required();
