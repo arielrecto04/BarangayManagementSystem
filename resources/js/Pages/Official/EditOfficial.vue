@@ -10,21 +10,21 @@ const { showToast } = useToast();
 const officialStore = useOfficialStore();
 const { official, isLoading } = storeToRefs(officialStore);
 
-// Get ID from the route
 const officialId = router.currentRoute.value.params.id;
 
-// Save/update action
 const updateOfficialData = async () => {
   try {
     await officialStore.updateOfficial();
     showToast({ icon: 'success', title: 'Official updated successfully' });
     router.push('/officials');
   } catch (error) {
-    showToast({ icon: 'error', title: error.message || 'Failed to update official' });
+    const errorMsg = error.response?.data?.message ||
+                    error.response?.data?.errors?.join(', ') ||
+                    error.message;
+    showToast({ icon: 'error', title: 'Failed to update official', text: errorMsg });
   }
 };
 
-// Fetch data on load
 onMounted(() => {
   officialStore.getOfficialById(officialId);
 });
@@ -37,34 +37,122 @@ onMounted(() => {
     </template>
 
     <template v-else>
-      <form @submit.prevent="updateOfficialData" class="bg-white p-10 rounded-xl shadow-lg max-w-3xl w-full">
+      <form @submit.prevent="updateOfficialData" class="bg-white p-10 rounded-xl shadow-lg max-w-5xl w-full">
         <h1 class="text-2xl font-bold mb-6">Edit Official</h1>
+        <h2 class="text-lg font-semibold mb-4">Official Profile</h2>
 
-        <div class="grid gap-4 grid-cols-2">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">First Name</label>
-            <input v-model="official.first_name" type="text" required class="mt-1 w-full border rounded p-2" />
+        <div class="grid grid-cols-12 gap-4">
+          <!-- Full Name -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Full Name</label>
+            <input
+              type="text"
+              v-model="official.name"
+              class="border border-gray-200 rounded-md px-4 py-2"
+              required
+            />
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Position</label>
-            <input v-model="official.position" type="text" required class="mt-1 w-full border rounded p-2" />
+          <!-- Position -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Position</label>
+            <input
+              type="text"
+              v-model="official.position"
+              class="border border-gray-200 rounded-md px-4 py-2"
+              required
+            />
           </div>
 
-          <div class="col-span-2">
-            <label class="block text-sm font-medium text-gray-700">Description</label>
-            <textarea v-model="official.description" rows="4" class="w-full border rounded p-2"></textarea>
+          <!-- Placeholder -->
+          <div class="col-span-4 row-span-2 flex justify-center items-center">
+            <div class="w-40 h-40 bg-gray-200 rounded-md"></div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Term</label>
-            <input v-model="official.term" type="number" class="w-full border rounded p-2" />
+          <!-- Terms -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Terms</label>
+            <input
+              type="text"
+              v-model="official.terms"
+              class="border border-gray-200 rounded-md px-4 py-2"
+            />
+          </div>
+
+          <!-- Resident ID -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Resident ID</label>
+            <input
+              type="text"
+              v-model="official.resident_id"
+              class="border border-gray-200 rounded-md px-4 py-2"
+            />
+          </div>
+
+          <!-- Number of Term -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Number of Term</label>
+            <input
+              type="number"
+              v-model="official.no_of_per_term"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm"
+            />
+          </div>
+
+          <!-- Elected Date -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Elected Date</label>
+            <input
+              type="date"
+              v-model="official.elected_date"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm"
+            />
+          </div>
+
+          <!-- Start Date -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Start Date</label>
+            <input
+              type="date"
+              v-model="official.start_date"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm"
+            />
+          </div>
+
+          <!-- End Date -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">End Date</label>
+            <input
+              type="date"
+              v-model="official.end_date"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm"
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="col-span-12 flex flex-col gap-2 mt-4">
+            <label class="text-sm font-semibold text-gray-600">Description</label>
+            <textarea
+              v-model="official.description"
+              rows="4"
+              class="resize-y border border-gray-200 rounded-md px-4 py-2"
+            ></textarea>
           </div>
         </div>
 
-        <div class="mt-6 flex justify-center gap-4">
-          <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Save</button>
-          <router-link to="/officials" class="px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">Cancel</router-link>
+        <div class="flex justify-center mt-10 gap-4">
+          <button
+            type="submit"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl"
+          >
+            Save
+          </button>
+          <router-link
+            to="/officials"
+            class="bg-gray-200 px-6 py-2 rounded-xl font-bold hover:bg-gray-300"
+          >
+            Cancel
+          </router-link>
         </div>
       </form>
     </template>
