@@ -11,9 +11,9 @@ class ProjectController extends Controller
      */
     public function index()
     {
-       $projects = project::all();
+       $projects = project::paginate(9);
          return response()->json([
-        'data' => $projects
+        'projects' => $projects
     ]);
     }
 
@@ -33,7 +33,6 @@ class ProjectController extends Controller
           $validated = $request->validate([
             'title'=> 'required|string',
             'description'=> 'required|string',
-            'attachments'=> 'required|file',
             'start_date'=> 'required|date',
             'end_date'=> 'required|date',
             'status'=> 'required|string',
@@ -41,6 +40,17 @@ class ProjectController extends Controller
 
         $project = Project::create($validated);
 
+        if($request->hasFile('attachments')){
+
+            $file = $request->file('attachments');
+
+            $file_name = time() . '.' . $file->getClientOriginalExtension();
+
+            $request->attachments->storeAs('projects', $file_name);
+            $project->update([
+                'attachments' => asset('storage/projects/' . $file_name)
+            ]);
+        }
         return response()->json([
             'message' => 'Project created successfully',
             'data' => $project,
