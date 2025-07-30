@@ -58,11 +58,19 @@ public function store(Request $request)
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'blotter_id' => 'required',
-            'title' => 'required',
-            'resident' => 'required',
-            'status' => 'required',
-            'date' => 'required',
+        'blotter_no' => 'required',
+        'filing_date' => 'required|date',
+        'title_case' => 'required',
+        'nature_of_case' => 'required',
+        'complainant_type' => 'required',
+        'complainant_id' => 'required',
+        'respondent_type' => 'required',
+        'respondent_id' => 'required',
+        'place' => 'required',
+        'datetime_of_incident' => 'required|date',
+        'blotter_type' => 'required',
+        'barangay_case_no' => 'required',
+        'status' => 'required|in:Open,In Progress,Resolved'
         ]);
 
         $blotter = Blotter::findOrFail($id);

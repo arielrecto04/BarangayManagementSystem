@@ -14,14 +14,15 @@ const blotterDataForm = ref({
     filing_date: '',
     title_case: '',
     nature_of_case: '',
-    complainant_type: '',
-    complainant_id: '',
-    respondent_type: '',
-    respondent_id: '',
+    complainants_type: '',
+    complainants_id: '',
+    respondents_type: '',
+    respondents_id: '',
     place: '',
     datetime_of_incident: '',
     blotter_type: '',
     barangay_case_no: '',
+    total_cases: '0',
     status: ''
 });
 
@@ -49,55 +50,55 @@ const createBlotter = async () => {
                 <div class="grid grid-cols-2 gap-4">
                     <div class="flex flex-col gap-2">
                         <label for="blotter_no" class="text-sm font-semibold text-gray-600">Blotter No</label>
-                        <input type="text" placeholder="Enter Blotter No" v-model="blotterDataForm.blotter_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="blotter_no" type="text" placeholder="Enter Blotter No" v-model="blotterDataForm.blotter_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="filing_date" class="text-sm font-semibold text-gray-600">Filing Date</label>
-                        <input type="date" v-model="blotterDataForm.filing_date" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="filing_date" type="date" v-model="blotterDataForm.filing_date" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="title_case" class="text-sm font-semibold text-gray-600">Title Case</label>
-                        <input type="text" placeholder="Enter Title Case" v-model="blotterDataForm.title_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="title_case" type="text" placeholder="Enter Title Case" v-model="blotterDataForm.title_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of Case</label>
-                        <input type="text" placeholder="Enter Nature of Case" v-model="blotterDataForm.nature_of_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="nature_of_case" type="text" placeholder="Enter Nature of Case" v-model="blotterDataForm.nature_of_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="complainant_type" class="text-sm font-semibold text-gray-600">Complainant Type</label>
-                        <input type="text" placeholder="Enter Complainant Type" v-model="blotterDataForm.complainant_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <label for="complainants_type" class="text-sm font-semibold text-gray-600">Complainant Type</label>
+                        <input id="complainants_type" type="text" placeholder="Enter Complainant Type" v-model="blotterDataForm.complainants_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="complainant_id" class="text-sm font-semibold text-gray-600">Complainant ID</label>
-                        <input type="text" placeholder="Enter Complainant ID" v-model="blotterDataForm.complainant_id" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant ID</label>
+                        <input id="complainants_id" type="text" placeholder="Enter Complainant ID" v-model="blotterDataForm.complainants_id" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="respondent_type" class="text-sm font-semibold text-gray-600">Respondent Type</label>
-                        <input type="text" placeholder="Enter Respondent Type" v-model="blotterDataForm.respondent_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <label for="respondents_type" class="text-sm font-semibold text-gray-600">Respondent Type</label>
+                        <input id="respondents_type" type="text" placeholder="Enter Respondent Type" v-model="blotterDataForm.respondents_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="respondent_id" class="text-sm font-semibold text-gray-600">Respondent ID</label>
-                        <input type="text" placeholder="Enter Respondent ID" v-model="blotterDataForm.respondent_id" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent ID</label>
+                        <input id="respondents_id" type="text" placeholder="Enter Respondent ID" v-model="blotterDataForm.respondents_id" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="place" class="text-sm font-semibold text-gray-600">Place</label>
-                        <input type="text" placeholder="Enter Place" v-model="blotterDataForm.place" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="place" type="text" placeholder="Enter Place" v-model="blotterDataForm.place" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="datetime_of_incident" class="text-sm font-semibold text-gray-600">Date/Time of Incident</label>
-                        <input type="datetime-local" v-model="blotterDataForm.datetime_of_incident" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="datetime_of_incident" type="datetime-local" v-model="blotterDataForm.datetime_of_incident" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="blotter_type" class="text-sm font-semibold text-gray-600">Blotter Type</label>
-                        <input type="text" placeholder="Enter Blotter Type" v-model="blotterDataForm.blotter_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="blotter_type" type="text" placeholder="Enter Blotter Type" v-model="blotterDataForm.blotter_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="barangay_case_no" class="text-sm font-semibold text-gray-600">Barangay Case No</label>
-                        <input type="text" placeholder="Enter Case No" v-model="blotterDataForm.barangay_case_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="barangay_case_no" type="text" placeholder="Enter Case No" v-model="blotterDataForm.barangay_case_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="status" class="text-sm font-semibold text-gray-600">Status</label>
-                        <select v-model="blotterDataForm.status" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2">
+                        <select id="status" v-model="blotterDataForm.status" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2">
                             <option value="" disabled selected>Select Status</option>
                             <option value="Open">Open</option>
                             <option value="In Progress">In Progress</option>

@@ -64,7 +64,7 @@ onMounted(() => {
 onMounted(() => {
     blotterStore.getBlotters();
 })
-</script>
+</script>   
 
 <template>
     <div class="flex flex-col gap-2">
