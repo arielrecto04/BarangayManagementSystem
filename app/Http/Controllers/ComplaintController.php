@@ -43,7 +43,7 @@ class ComplaintController extends Controller
          $complaint = Complaint::create($validated);
 
         return response()->json([
-            'message' => 'Resident created successfully',
+            'message' => 'Complaint created successfully',
             'data' => $complaint,
         ], 201);
     }
