@@ -22,8 +22,8 @@ return new class extends Migration
             $table->longText('resolution');
             $table->string('date');
             $table->string('filing_date');
-            $table->foreignIdFor(Complaint::class, 'respondent_id')->constrained('respondent_id')->nullOnDelete();
-            $table->foreignIdFor(Complaint::class, 'complainant_id')->constrained('complainant_id')->nullOnDelete();
+            $table->foreignId('respondent_id')->constrained('residents')->nullOnDelete();
+            $table->foreignId('complainant_id')->constrained('residents')->nullOnDelete();
             $table->timestamps();
         });
     }

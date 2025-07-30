@@ -35,5 +35,33 @@ export const useComplaintStore = defineStore('complaint', {
                 this._isLoading = false;
             }
         },
+
+        async addComplaint(complaintData) {
+            try {
+                this._isLoading = true;
+                const response = await axios.post('/complaints', complaintData);
+                this._complaints.push(response.data.data);
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        async updateComplaint(id, complaintData) {
+            try {
+                this._isLoading = true;
+                const response = await axios.put(`/complaints/${id}`, complaintData);
+                const index = this._complaints.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    this._complaints[index] = response.data.data;
+                }
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
     },
 }); 

@@ -84,7 +84,37 @@ const routes = [
             title: "Complaints",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Complaints.vue"),
+        redirect: { name: "List Complaints" },
+        component: () => import("@/Pages/Complaint/ParentComplaintView.vue"),
+        children: [
+            {
+                path: "list-complaints",
+                name: "List Complaints",
+                meta: {
+                    title: "List Complaints",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/ListComplaints.vue"),
+            },
+            {
+                path: "add-complaint",
+                name: "Add Complaint",
+                meta: {
+                    title: "Add Complaint",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/AddComplaint.vue"),
+            },
+            {
+                path: "edit-complaint/:id",
+                name: "Edit Complaint",
+                meta: {
+                    title: "Edit Complaint",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/EditComplaint.vue"),
+            }
+        ]
     },
     {
         path: "/blotter",
