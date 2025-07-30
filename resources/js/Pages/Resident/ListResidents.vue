@@ -1,47 +1,62 @@
 <script setup>
 import { AuthLayout } from "@/Layouts";
-import { Table } from '@/Components'
+import { Table, Paginate } from '@/Components'
 import { useResidentStore } from '@/Stores'
 import { storeToRefs } from 'pinia';
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import useToast from '@/Utils/useToast';
-
+import { useRoute } from 'vue-router';
 const { showToast } = useToast();
-
+const route = useRoute();
 const residentStore = useResidentStore();
-const { residents , isLoading } = storeToRefs(residentStore);
+const { residents, isLoading, paginate } = storeToRefs(residentStore);
+
+
+const currentPage = ref(route.query.page || 1);
+
+const handlePageChange = (page) => {
+
+    currentPage.value = page;
+    residentStore.getResidents(page);
+
+    route.replace({
+        query: {
+            page: page
+        }
+    })
+}
 
 
 const columns = [
     {
-        key : "avatar" , label : "Image"
+        key: "avatar", label: "Image"
     },
     {
-        key : "last_name" , label : "Last Name"
+        key: "last_name", label: "Last Name"
     },
     {
-        key : "first_name" , label : "First Name"
+        key: "first_name", label: "First Name"
     },
     {
-        key : "birthday" , label : "Birthday"
+        key: "birthday", label: "Birthday"
     },
     {
-        key : "age" , label : "Age"
+        key: "age", label: "Age"
     },
     {
-        key : "gender" , label : "Gender"
+        key: "gender", label: "Gender"
     },
     {
-        key : "address" , label : "Address"
+        key: "address", label: "Address"
     },
     {
-        key : "contact_number" , label : "Contact Number"
+        key: "contact_number", label: "Contact Number"
     },
     {
-        key : "family_member" , label : "Family Member"
+        key: "family_member", label: "Family Member"
     },
     {
-        key : "emergency_contact" , label : "Emergency Contact"
+        key: "emergency_contact", label: "Emergency Contact"
     },
 ]
 
@@ -79,11 +94,14 @@ onMounted(() => {
                 <img :src="row.avatar" alt="image" srcset="" class="w-10 h-10 rounded-full">
             </template>
 
-            <template  #actions="{ row }">
-                <router-link :to="`/residents/edit-resident/${row.id}`" class="bg-blue-500 text-white px-2 py-1 rounded">Edit</router-link>
+            <template #actions="{ row }">
+                <router-link :to="`/residents/edit-resident/${row.id}`"
+                    class="bg-blue-500 text-white px-2 py-1 rounded">Edit</router-link>
                 <button @click="deleteResident(row.id)" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
             </template>
         </Table>
+        <Paginate @page-changed="handlePageChange" :maxVisibleButtons="5" :totalPages="paginate.last_page" :totalItems="paginate.total"
+            :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
     </div>
 
 
