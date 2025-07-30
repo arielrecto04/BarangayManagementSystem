@@ -61,7 +61,7 @@ onMounted(() => {
             <h2 class="text-lg font-bold truncate">{{ barangayCaptain.name }}</h2>
             <p class="text-sm text-gray-600 truncate">{{ barangayCaptain.position }}</p>
             <p class="text-xs text-gray-500 mt-2 line-clamp-3 break-words">{{ barangayCaptain.description }}</p>
-            <p class="text-xs text-gray-500 break-words">Term: {{ barangayCaptain.term }}</p>
+            <p class="text-xs text-gray-500 break-words">Term: {{ barangayCaptain.terms }}</p>
 
             <!-- Action Buttons (Visible on Hover) -->
             <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -92,7 +92,7 @@ onMounted(() => {
             <h2 class="text-lg font-bold truncate">{{ official.name }}</h2>
             <p class="text-sm text-gray-600 truncate">{{ official.position }}</p>
             <p class="text-xs text-gray-500 mt-2 line-clamp-3 break-words">{{ official.description }}</p>
-            <p class="text-xs text-gray-500 break-words">Term: {{ official.term }}</p>
+            <p class="text-xs text-gray-500 break-words">Term: {{ official.terms }}</p>
 
             <!-- Action Buttons (Visible on Hover) -->
             <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

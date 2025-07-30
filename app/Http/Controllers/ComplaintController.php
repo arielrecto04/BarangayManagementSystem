@@ -28,17 +28,19 @@ class ComplaintController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'complaint_name',
-            'respondent_name',
-            'case_no',
-            'title',
-            'description',
-            'resolution',
-            'date',
-            'filing_date',
+        $validated = $request->validate([
+            'complainant_name' => 'required|string',
+            'respondent_name' => 'required|string',
+            'case_no' => 'required|string',
+            'title' => 'required|string',
+            'description' => 'required|string',
+            'resolution' => 'nullable|string',
+            'date' => 'required|date',
+            'filing_date' => 'required|date',
+            'complainant_id' => 'required|exists:residents,id',
+            'respondent_id' => 'required|exists:residents,id',
         ]);
-        $complaint = Complaint::create($request->all());
+         $complaint = Complaint::create($validated);
 
         return response()->json([
             'message' => 'Resident created successfully',

@@ -7,16 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class Complaint extends Model
 {
     protected $fillable = [
-        'complaint_name',
-        'respondent_name',
-        'case_no',
-        'title',
-        'description',
-        'resolution',
-        'date',
-        'filing_date',
-
-    ];
+    'complainant_name',
+    'respondent_name',
+    'case_no',
+    'title',
+    'description',
+    'resolution',
+    'date',
+    'filing_date',
+    'respondent_id',
+    'complainant_id'
+];
     public function respondent_complaint()
     {
         return $this->belongsTo(Complaint::class,'respondent_id');
