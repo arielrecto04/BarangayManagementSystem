@@ -13,15 +13,17 @@ return new class extends Migration
     {
         Schema::create('residents', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name')->required();
-            $table->string('last_name')->required();
-            $table->string('birthday')->required();
-            $table->string('age')->required();
-            $table->string('gender')->required();
-            $table->string('address')->required();
-            $table->string('contact_number')->required();
+            $table->string('avatar')->default('https://ionicframework.com/docs/img/demos/avatar.svg');
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('middle_name')->nullable();
+            $table->string('birthday')->nullable();
+            $table->integer('age')->required();
+            $table->string('gender')->nullable()->default('Not Specified');
+            $table->string('address')->nullable();
+            $table->string('contact_number')->nullable();
             $table->string('family_member')->nullable();
-            $table->string('emergency_contact')->required;
+            $table->string('emergency_contact')->nullable();
             $table->timestamps();
         });
     }

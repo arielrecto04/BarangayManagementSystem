@@ -20,7 +20,7 @@ class Official extends Model
     ]);
     public function firstName()
     {
-        return $this->belongsTo(Resident::class,'resident_id');
+        return $this->belongsTo(Resident::class);
     }
 }
 

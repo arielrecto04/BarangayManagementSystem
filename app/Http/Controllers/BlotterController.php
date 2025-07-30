@@ -25,12 +25,15 @@ public function store(Request $request)
         'filing_date' => 'required|date',
         'title_case' => 'required',
         'nature_of_case' => 'required',
-        'complainants' => 'required',
-        'respondents' => 'required',
+        'complainant_type' => 'required',
+        'complainant_id' => 'required',
+        'respondent_type' => 'required',
+        'respondent_id' => 'required',
         'place' => 'required',
         'datetime_of_incident' => 'required|date',
         'blotter_type' => 'required',
         'barangay_case_no' => 'required',
+        'status' => 'required|in:Open,In Progress,Resolved'
     ]);
 
     $blotter = Blotter::create($request->all());

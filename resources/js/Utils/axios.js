@@ -17,6 +17,8 @@ base.interceptors.request.use(
 
         const { token } = useAuthenticationStore();
 
+        console.log(token);
+
         if (token) {
             config.headers.Authorization = `bearer ${token}`;
         }

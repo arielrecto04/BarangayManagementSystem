@@ -14,7 +14,7 @@ class ProjectController extends Controller
        $projects = project::all();
          return response()->json([
         'data' => $projects
-    ]); 
+    ]);
     }
 
     /**
@@ -36,6 +36,7 @@ class ProjectController extends Controller
             'attachments'=> 'required|file',
             'start_date'=> 'required|date',
             'end_date'=> 'required|date',
+            'status'=> 'required|string',
         ]);
 
         $project = Project::create($validated);
@@ -73,6 +74,7 @@ class ProjectController extends Controller
             'attachments'=> 'required|file',
             'start_date'=> 'required|date',
             'end_date'=> 'required|date',
+            'status'=> 'required|string',
         ]);
 
         $project = Project::findOrFail($id);

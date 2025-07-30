@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Resident extends Model
 {
+
+    use HasFactory;
+
     protected $fillable = [
         'first_name',
         'last_name',
@@ -21,15 +25,15 @@ class Resident extends Model
     {
         return $this->hasMany(Blotter::class,'complainant');
     }
-    public function residentIdOfficial()
+    public function officialRecords()
     {
-        return $this->hasMany(Official::class,'resident_id');
+        return $this->hasMany(Official::class);
     }
-    public function respondentIdComplaint()
+    public function respondentComplaints()
     {
         return $this->hasMany(Complaint::class,'respondent_id');
     }
-    public function complainantIdComplaint()
+    public function complainantComplaints()
     {
         return $this->hasMany(Complaint::class,'complainant_id');
     }
@@ -37,5 +41,5 @@ class Resident extends Model
     {
         return $this->morphTo();
     }
-    
+
 }

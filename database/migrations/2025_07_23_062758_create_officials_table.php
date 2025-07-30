@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Document;
+use App\Models\Resident;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
@@ -14,19 +15,15 @@ return new class extends Migration
     {
         Schema::create('officials', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->required();
-            $table->string('position')->required();
-            $table->longtext('description')->required();
-            $table->string('terms')->required();
-            $table->integer('no_of_per_term')->required();
-            $table->date('elected_date')->required();
-            $table->date('start_date')->required();
-            $table->date('end_date')->required();
-            $table->string('resident_id')->required();
-            $table->string('no_of_per_term')->required();
-            $table->string('elected_date')->required();
-            $table->string('end_date')->required();
-            $table->foreignIdFor(Document::class, 'resident_id')->constrained('resident_id')->required();
+            $table->string('name');
+            $table->string('position');
+            $table->longText('description')->nullable();
+            $table->string('terms')->nullable();
+            $table->integer('no_of_per_term')->nullable();
+            $table->date('elected_date')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->foreignIdFor(Resident::class)->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
     }

@@ -13,21 +13,18 @@ return new class extends Migration
     {
         Schema::create('blotters', function (Blueprint $table) {
             $table->id();
-            $table->string('blotter_no')->required();
-            $table->string('filing_date')->required();
-            $table->string('title_case')->required();
-            $table->string('nature_of_case')->required();
+            $table->string('blotter_no');
+            $table->date('filing_date');
+            $table->string('title_case');
+            $table->string('nature_of_case');
             $table->morphs('complainants');
             $table->morphs('respondents');
-            $table->string('place')->required();
-            $table->string('datetime_of_incident')->required();
-            $table->longText('blotter_type')->required();
-            $table->string('barangay_case_no')->required();
-            $table->string('total_cases')->required();
-            $table->string('open_cases')->required();
-            $table->string('in_progress')->required();
-            $table->string('resolved')->required();
-
+            $table->string('place');
+            $table->date('datetime_of_incident');
+            $table->longText('blotter_type');
+            $table->string('barangay_case_no');
+            $table->string('total_cases');
+            $table->string('status')->default('Open');
             $table->timestamps();
         });
     }
