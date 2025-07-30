@@ -12,7 +12,29 @@ class BlotterController extends Controller
      */
     public function index()
     {
-        return Blotter::paginate(10); // Return paginated blotters
+        $blotters = Blotter::with(['complainant', 'respondent'])->paginate(10);
+        return response()->json([
+            'data' => $blotters->map(function ($blotter) {
+                return [
+                    'id' => $blotter->id,
+                    'blotter_no' => $blotter->blotter_no,
+                    'filing_date' => $blotter->filing_date,
+                    'title_case' => $blotter->title_case,
+                    'nature_of_case' => $blotter->nature_of_case,
+                    'complainants_id' => $blotter->complainants_id,
+                    'respondents_id' => $blotter->respondents_id,
+                    'place' => $blotter->place,
+                    'datetime_of_incident' => $blotter->datetime_of_incident,
+                    'blotter_type' => $blotter->blotter_type,
+                    'barangay_case_no' => $blotter->barangay_case_no,
+                    'status' => $blotter->status
+                ];
+            }),
+            'current_page' => $blotters->currentPage(),
+            'last_page' => $blotters->lastPage(),
+            'per_page' => $blotters->perPage(),
+            'total' => $blotters->total()
+        ]);
     }
 
     /**
@@ -20,23 +42,24 @@ class BlotterController extends Controller
      */
 public function store(Request $request)
 {
-    $request->validate([
+    $validated = $request->validate([
         'blotter_no' => 'required',
         'filing_date' => 'required|date',
         'title_case' => 'required',
         'nature_of_case' => 'required',
-        'complainant_type' => 'required',
-        'complainant_id' => 'required',
-        'respondent_type' => 'required',
-        'respondent_id' => 'required',
+        'complainants_type' => 'required',
+        'complainants_id' => 'required',
+        'respondents_type' => 'required',
+        'respondents_id' => 'required',
         'place' => 'required',
         'datetime_of_incident' => 'required|date',
         'blotter_type' => 'required',
         'barangay_case_no' => 'required',
+        'total_cases' => 'required',
         'status' => 'required|in:Open,In Progress,Resolved'
     ]);
 
-    $blotter = Blotter::create($request->all());
+    $blotter = Blotter::create($validated);
 
     return response()->json([
         'message' => 'Blotter created successfully',
@@ -57,24 +80,25 @@ public function store(Request $request)
      */
     public function update(Request $request, string $id)
     {
-        $request->validate([
-        'blotter_no' => 'required',
-        'filing_date' => 'required|date',
-        'title_case' => 'required',
-        'nature_of_case' => 'required',
-        'complainant_type' => 'required',
-        'complainant_id' => 'required',
-        'respondent_type' => 'required',
-        'respondent_id' => 'required',
-        'place' => 'required',
-        'datetime_of_incident' => 'required|date',
-        'blotter_type' => 'required',
-        'barangay_case_no' => 'required',
-        'status' => 'required|in:Open,In Progress,Resolved'
+        $validated = $request->validate([
+            'blotter_no' => 'required',
+            'filing_date' => 'required',
+            'title_case' => 'required',
+            'nature_of_case' => 'required',
+            'complainants_type' => 'required',
+            'complainants_id' => 'required',
+            'respondents_type' => 'required',
+            'respondents_id' => 'required',
+            'place' => 'required',
+            'datetime_of_incident' => 'required',
+            'blotter_type' => 'required',
+            'barangay_case_no' => 'required',
+            'total_cases' => 'nullable',
+            'status' => 'required|in:Open,In Progress,Resolved'
         ]);
 
         $blotter = Blotter::findOrFail($id);
-        $blotter->update($request->all());
+        $blotter->update($validated);
 
         return response()->json([
             'message' => 'Blotter updated successfully',

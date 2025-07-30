@@ -23,13 +23,20 @@ class Blotter extends Model
         'status'
     ];
 
-    public function complainants()
+    protected $casts = [
+        'filing_date' => 'date',
+        'datetime_of_incident' => 'date'
+    ];
+
+    public function complainant()
     {
-        return $this->morphToMany(Resident::class, 'complainant');
+        return $this->morphTo('complainant', 'complainants_type', 'complainants_id');
     }
 
-    public function respondents()
+    public function respondent()
     {
-        return $this->morphToMany(Resident::class, 'respondent');
+        return $this->morphTo('respondent', 'respondents_type', 'respondents_id');
     }
+
+    protected $with = ['complainant', 'respondent'];
 }

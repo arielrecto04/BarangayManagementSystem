@@ -19,7 +19,45 @@ export const useBlotterStore = defineStore('blotter', {
                 const response = await axios.get('/blotters');
                 this._blotters = response.data.data;
             } catch (error) {
-                console.log(error);
+                console.error('Error fetching blotters:', error);
+                throw error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+        
+        async getBlotterById(blotterId) {
+            try {
+                this._isLoading = true;
+                const response = await axios.get(`/blotters/${blotterId}`);
+                this._blotter = response.data;
+            } catch (error) {
+                console.error('Error fetching blotter:', error);
+                throw error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        async updateBlotter(blotterId, blotterData) {
+            try {
+                this._isLoading = true;
+                const formattedData = {
+                    ...blotterData,
+                    complainants_type: 'App\\Models\\Resident',
+                    respondents_type: 'App\\Models\\Resident',
+                    total_cases: blotterData.total_cases || '0'
+                };
+                const response = await axios.put(`/blotters/${blotterId}`, formattedData);
+                const updatedBlotter = response.data.data;
+                const index = this._blotters.findIndex(b => b.id === blotterId);
+                if (index !== -1) {
+                    this._blotters[index] = updatedBlotter;
+                }
+                return updatedBlotter;
+            } catch (error) {
+                console.error('Error updating blotter:', error);
+                throw error;
             } finally {
                 this._isLoading = false;
             }
@@ -38,11 +76,21 @@ export const useBlotterStore = defineStore('blotter', {
         async addBlotter(blotter) {
             try {
                 this._isLoading = true;
-                const response = await axios.post('/blotters', blotter);
-                this._blotters.push(response.data.data);
-                return response.data;
+                // Format dates to match database expectations
+                const formattedData = {
+                    ...blotter,
+                    filing_date: blotter.filing_date,
+                    datetime_of_incident: new Date(blotter.datetime_of_incident).toISOString().split('T')[0],
+                    total_cases: '0'
+                };
+                const response = await axios.post('/blotters', formattedData);
+                if (response.data && response.data.data) {
+                    this._blotters.push(response.data.data);
+                    return response.data;
+                }
+                throw new Error('Invalid server response');
             } catch (error) {
-                throw error;
+                console.error('Error adding blotter:', error.response?.data || error);
             } finally {
                 this._isLoading = false;
             }

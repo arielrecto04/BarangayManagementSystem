@@ -11,13 +11,28 @@ const { showToast } = useToast();
 const blotterStore = useBlotterStore();
 const { blotters, isLoading } = storeToRefs(blotterStore);
 
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+};
+
 const columns = [
     { key: "blotter_no", label: "Blotter ID" },
     { key: "title_case", label: "Title" },
-    { key: "resident", label: "Resident" }, // This should be a computed/display field in your data
+    { key: "complainants_id", label: "Complainant" },
+    { key: "respondents_id", label: "Respondent" },
     { key: "status", label: "Status" },
-    { key: "filing_date", label: "Date" },
-    { key: "actions", label: "Actions", class: "text-center" },
+    { 
+        key: "filing_date", 
+        label: "Date",
+        formatter: (value) => formatDate(value)
+    },
+    
 ];
 
 const deleteBlotter = async (blotterId) => {
@@ -43,8 +58,8 @@ onMounted(() => {
         <Table v-else :columns="columns" :rows="blotters">
             <template #actions="{ row }">
                 <div class="flex justify-center gap-2">
-                    <router-link :to="`/blotter/edit-blotter/${row.id}`" class="bg-blue-500 text-white px-2 py-1 rounded">Edit</router-link>
-                    <button @click="deleteBlotter(row.id)" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+                    <router-link :to="`/blotter/edit-blotter/${row.id}`" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Edit</router-link>
+                    <button @click="deleteBlotter(row.id)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
                 </div>
             </template>
         </Table>
