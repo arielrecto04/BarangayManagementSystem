@@ -8,46 +8,46 @@ const router = useRouter();
 <template>
     <AuthLayout>
         <div class="m-3 flex flex-col">
-            <!-- Blotter Manager -->
+            <!-- Resident Manager -->
             <div class="bg-white p-5 shadow-lg rounded-lg w-1/4">
-                <h1 class="uppercase font-bold">Blotter Manager</h1>
-                <p>Manage and View Blotter information</p>
+                <h1 class="uppercase font-bold">Resident Manager</h1>
+                <p>Manage and View Resident information</p>
             </div>
 
-            <!-- Search Blotters -->
+            <!-- Search Residents -->
             <div class="flex bg-white shadow-lg rounded-lg p-7 mt-0 transform -translate-y-10">
                 <div class="shadow-lg p-3 w-1/2">
                     <form>
-                        <input type="text" placeholder="Search Blotters..." name="Search Blotters"
+                        <input type="text" placeholder="Search Residents..." name="Search Residents"
                             class="w-full rounded-lg  ">
                     </form>
                 </div>
-                <select class="ml-2 bg-white shadow-lg rounded-lg w-1/8 p-3 text-center" placeholder="Case Type">
-                    <option value="" disabled selected hidden>Case Type</option>
-                    <option>Theft</option>
-                    <option>Assault</option>
-                    <option>Other</option>
+                <select class="ml-2 bg-white shadow-lg rounded-lg w-1/8 p-3 text-center" placeholder="Age Range">
+                    <option value="" disabled selected hidden>Age Range</option>
+                    <!-- Age Range -->
+                    <option>18 - 25</option>
+                    <option>26 - 35</option>
+                    <option>36 - 45</option>
                 </select>
                 <select class="flex items-center ml-2 bg-white shadow-lg rounded-lg w-1/8 p-3 text-center "
-                    placeholder="Status">
-                    <option value="" disabled selected hidden>Status</option>
-                    <option>Open</option>
-                    <option>In Progress</option>
-                    <option>Resolved</option>
+                    placeholder="Age Range">
+                    <option value="" disabled selected hidden>Sex</option>
+                    <!-- Gender -->
+                    <option>Male</option>
+                    <option>Female</option>
                 </select>
                 <div class="w-1/4 max-w-sm mx-auto ml-2">
-                    <!-- Route of Add Blotter -->
-                    <template v-if="router.currentRoute.value.path == '/blotter/list-blotter'">
-                       <router-link to="/blotter/add-blotter" class="block">
-  <div class="bg-green-700 shadow-md rounded-lg p-3 cursor-pointer flex justify-center items-center">
-    <div class="flex items-center gap-2 text-lg font-bold text-white">
-      <PlusIcon class="w-6 h-6" /> Add Blotter
-    </div>
-  </div>
-</router-link>
+                    <!-- Route of Add Resident -->
+
+                    <template v-if="router.currentRoute.value.path == '/residents/list-residents'">
+                        <router-link to="/residents/add-resident" class="block">
+                            <div class="bg-green-700 shadow-md rounded-lg p-3  cursor-pointer flex justify-center items-center ">
+                                <div class="flex items-center gap-2 text-lg font-bold text-center text-white"><PlusIcon class="w-6 h-6" /> Add Resident</div>
+                            </div>
+                        </router-link>
                     </template>
                     <template v-else>
-                        <router-link to="/blotter" class="block">
+                        <router-link to="/residents" class="block">
                             <div class="shadow-md rounded-lg p-3  cursor-pointer flex justify-center items-center">
                                 <div class="flex items-center gap-2 text-lg font-bold text-center"><XMarkIcon class="w-6 h-6" /> Cancel</div>
                             </div>
@@ -56,6 +56,9 @@ const router = useRouter();
                 </div>
             </div>
         </div>
+
         <router-view></router-view>
+
+
     </AuthLayout>
 </template>

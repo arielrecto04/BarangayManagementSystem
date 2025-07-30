@@ -14,7 +14,7 @@ const { blotters, isLoading } = storeToRefs(blotterStore);
 const columns = [
     { key: "blotter_no", label: "Blotter ID" },
     { key: "title_case", label: "Title" },
-    { key: "resident", label: "Resident" }, // This should be a computed/display field in your data
+    { key: "resident", label: "Resident" },
     { key: "status", label: "Status" },
     { key: "filing_date", label: "Date" },
     { key: "actions", label: "Actions", class: "text-center" },
