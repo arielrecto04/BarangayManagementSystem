@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watchEffect } from 'vue';
 import { AuthLayout } from '@/Layouts';
 import { useRouter, useRoute } from 'vue-router'
 import { Modal, Loader, Paginate, Table } from '@/Components'
 import { debounce } from '@/Utils';
+import Mark from 'mark.js';
 
 import {
     CalendarIcon,
@@ -26,6 +27,7 @@ const projectStore = useProjectStore();
 
 const viewMode = ref(route.query.viewMode || 'grid');
 const createModal = ref(false);
+const markRef = ref(null);
 const { error, isLoading, projects, paginate } = storeToRefs(projectStore);
 const handleViewModeChange = (mode) => {
 
@@ -116,7 +118,9 @@ function getStatusColor(status) {
         'planning': 'bg-blue-100 text-blue-800',
         'in_progress': 'bg-yellow-100 text-yellow-800',
         'on_hold': 'bg-red-100 text-red-800',
-        'completed': 'bg-green-100 text-green-800'
+        'completed': 'bg-green-100 text-green-800',
+        'approved': 'bg-green-100 text-green-800',
+        'rejected': 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
 }
@@ -151,6 +155,26 @@ const createProject = async () => {
 }
 
 
+
+watchEffect(() => {
+    const instance = new Mark(markRef.value);
+    console.log(search.value, 'watch');
+    if (markRef.value && search.value && projects.value.length > 0) {
+
+        instance.mark(search.value);
+
+
+        instance.unmark({
+            done: () => {
+                instance.mark(search.value);
+            }
+        })
+    } else if (markRef.value && !search.value) {
+        instance.unmark();
+    }
+})
+
+
 onMounted(async () => {
     await projectStore.getProjects();
 })
@@ -159,7 +183,7 @@ onMounted(async () => {
 
 
 <template>
-    <AuthLayout>
+    <AuthLayout @search="handleSearch">
 
         <div class="flex justify-between items-center p-2">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -205,7 +229,7 @@ onMounted(async () => {
                 <div v-if="viewMode === 'grid'">
                     <!-- Projects Grid -->
 
-                    <div v-if="filteredProjects.length > 0"
+                    <div ref="markRef" v-if="filteredProjects.length > 0"
                         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div v-for="project in filteredProjects" :key="project.id"
                             class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -278,7 +302,7 @@ onMounted(async () => {
                     </div>
                 </div>
                 <div v-if="viewMode === 'list'">
-                    <Table :columns="columns" :rows="projects" :searchable="false" :selectable="false">
+                    <Table ref="markRef" :columns="columns" :rows="projects" :searchable="false" :selectable="false">
 
                         <template #cell(description)="{ row }">
                             <p class="truncate w-52">{{ row.description }}</p>
