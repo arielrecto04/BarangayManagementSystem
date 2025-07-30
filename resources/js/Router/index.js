@@ -162,7 +162,7 @@ const routes = [
             title: "Projects",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Projects.vue"),
+        component: () => import("@/Pages/Project/ListProject.vue"),
     },
     {
         path: "/officials",
@@ -199,7 +199,7 @@ const routes = [
                     title: "Edit Official",
                     requiresAuth: true,
                 },
-                component: () => import("@/Pages/Official/EditOfficial.vue"), 
+                component: () => import("@/Pages/Official/EditOfficial.vue"),
             },
 
         ]
