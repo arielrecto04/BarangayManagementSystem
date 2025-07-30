@@ -14,18 +14,16 @@ return new class extends Migration
     {
         Schema::create('complaints', function (Blueprint $table) {
             $table->id();
-            $table->string('complainant_name')->required();
-            $table->string('respondent_name')->required();
+            $table->string('complainant_name');
+            $table->string('respondent_name');
             $table->string('case_no');
             $table->string('title');
             $table->longText('description');
             $table->longText('resolution');
             $table->string('date');
             $table->string('filing_date');
-            $table->foreignIdFor(Complaint::class, 'respondent_id')->constrained('respondent_id')->nullable();
-            $table->foreignIdFor(Complaint::class, 'complainant_id')->constrained('complainant_id')->required();
-            
-
+            $table->foreignIdFor(Complaint::class, 'respondent_id')->constrained('respondent_id')->nullOnDelete();
+            $table->foreignIdFor(Complaint::class, 'complainant_id')->constrained('complainant_id')->nullOnDelete();
             $table->timestamps();
         });
     }

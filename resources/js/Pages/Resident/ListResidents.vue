@@ -14,6 +14,9 @@ const { residents , isLoading } = storeToRefs(residentStore);
 
 const columns = [
     {
+        key : "avatar" , label : "Image"
+    },
+    {
         key : "last_name" , label : "Last Name"
     },
     {
@@ -72,6 +75,9 @@ onMounted(() => {
             <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
         </div>
         <Table v-else :columns="columns" :rows="residents">
+            <template #cell(avatar)="{ row }">
+                <img :src="row.avatar" alt="image" srcset="" class="w-10 h-10 rounded-full">
+            </template>
 
             <template  #actions="{ row }">
                 <router-link :to="`/residents/edit-resident/${row.id}`" class="bg-blue-500 text-white px-2 py-1 rounded">Edit</router-link>

@@ -7,24 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class Blotter extends Model
 {
     protected $fillable = [
-        'blotter_no',  
-        'filing_date',  
-        'title_case',  
-        'nature_of_case',  
+        'blotter_no',
+        'filing_date',
+        'title_case',
+        'nature_of_case',
         'complainant_type',
         'complainant_id',
         'respondent_type',
-        'respondent_id',  
-        'place',  
-        'datetime_of_incident',  
-        'blotter_type',  
+        'respondent_id',
+        'place',
+        'datetime_of_incident',
+        'blotter_type',
         'barangay_case_no',
         'total_cases',
-        'Open_cases',
-        'in_progress',
-        'resolved',
+        'status',
     ];
-  
+
     public function complainants()
     {
         return $this->morphToMany(Resident::class, 'complainant');
