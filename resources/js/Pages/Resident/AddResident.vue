@@ -126,7 +126,7 @@ const createResident = async () => {
                     <button type="submit"
                         class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">Save</button>
                     <router-link to="/residents"
-                        class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200">Cancel</router-link>
+                        class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200 flex justify-center items-center">Cancel</router-link>
 
                 </div>
             </div>

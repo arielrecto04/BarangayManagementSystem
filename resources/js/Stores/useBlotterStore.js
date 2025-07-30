@@ -35,5 +35,17 @@ export const useBlotterStore = defineStore('blotter', {
                 this._isLoading = false;
             }
         },
+        async addBlotter(blotter) {
+            try {
+                this._isLoading = true;
+                const response = await axios.post('/blotters', blotter);
+                this._blotters.push(response.data.data);
+                return response.data;
+            } catch (error) {
+                throw error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
     },
 });

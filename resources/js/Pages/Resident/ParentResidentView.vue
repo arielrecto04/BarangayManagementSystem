@@ -41,14 +41,14 @@ const router = useRouter();
 
                     <template v-if="router.currentRoute.value.path == '/residents/list-residents'">
                         <router-link to="/residents/add-resident" class="block">
-                            <div class="bg-green-700 shadow-md rounded-lg p-3  cursor-pointer ">
+                            <div class="bg-green-700 shadow-md rounded-lg p-3  cursor-pointer flex justify-center items-center ">
                                 <div class="flex items-center gap-2 text-lg font-bold text-center text-white"><PlusIcon class="w-6 h-6" /> Add Resident</div>
                             </div>
                         </router-link>
                     </template>
                     <template v-else>
                         <router-link to="/residents" class="block">
-                            <div class="shadow-md rounded-lg p-3  cursor-pointer ">
+                            <div class="shadow-md rounded-lg p-3  cursor-pointer flex justify-center items-center">
                                 <div class="flex items-center gap-2 text-lg font-bold text-center"><XMarkIcon class="w-6 h-6" /> Cancel</div>
                             </div>
                         </router-link>
