@@ -11,16 +11,16 @@ class Blotter extends Model
         'filing_date',
         'title_case',
         'nature_of_case',
-        'complainant_type',
-        'complainant_id',
-        'respondent_type',
-        'respondent_id',
+        'complainants_type',
+        'complainants_id',
+        'respondents_type',
+        'respondents_id',
         'place',
         'datetime_of_incident',
         'blotter_type',
         'barangay_case_no',
         'total_cases',
-        'status',
+        'status'
     ];
 
     public function complainants()

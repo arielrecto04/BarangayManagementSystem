@@ -17,8 +17,10 @@ return new class extends Migration
             $table->date('filing_date');
             $table->string('title_case');
             $table->string('nature_of_case');
-            $table->morphs('complainants');
-            $table->morphs('respondents');
+            $table->string('complainant_type');
+            $table->string('complainant_id');
+            $table->string('respondent_type');
+            $table->string('respondent_id');
             $table->string('place');
             $table->date('datetime_of_incident');
             $table->longText('blotter_type');
