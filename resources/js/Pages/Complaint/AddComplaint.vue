@@ -29,8 +29,45 @@ const complaintForm = ref({
   respondent_id: ''
 });
 
+const formErrors = ref({});
+
 const submitForm = async () => {
+  formErrors.value = {}; // reset
+
+  // Basic frontend validation
+  const requiredFields = [
+    'complainant_id',
+    'respondent_id',
+    'case_no',
+    'title',
+    'description',
+    'resolution',
+    'date',
+    'filing_date'
+  ];
+
+  requiredFields.forEach(field => {
+    if (!complaintForm.value[field]) {
+      formErrors.value[field] = 'Please fill out this field';
+    }
+  });
+
+  if (Object.keys(formErrors.value).length > 0) {
+    showToast({ icon: 'error', title: 'Please fill in all required fields.' });
+    return;
+  }
+
   try {
+    const complainant = residents.value.find(r => r.id === complaintForm.value.complainant_id);
+    const respondent = residents.value.find(r => r.id === complaintForm.value.respondent_id);
+
+    complaintForm.value.complainant_name = complainant
+      ? `${complainant.first_name} ${complainant.last_name}`
+      : '';
+    complaintForm.value.respondent_name = respondent
+      ? `${respondent.first_name} ${respondent.last_name}`
+      : '';
+
     await complaintStore.createComplaint(complaintForm.value);
     showToast({ icon: 'success', title: 'Complaint submitted successfully.' });
     router.push('/complaints');
@@ -43,6 +80,7 @@ const submitForm = async () => {
     }
   }
 };
+
 </script>
 
 <template>
