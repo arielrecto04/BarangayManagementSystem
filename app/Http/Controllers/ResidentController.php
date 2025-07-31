@@ -11,7 +11,10 @@ class ResidentController extends Controller
      */
     public function index()
     {
-        return Resident::paginate(10);
+            return response()->json([
+        'data' => Resident::all()
+    ]);
+
     }
 
     /**
