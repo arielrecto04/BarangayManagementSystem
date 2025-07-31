@@ -178,7 +178,7 @@ function isActive(page) {
             <div v-if="totalPages > maxVisibleButtons" class="hidden lg:flex items-center gap-2">
                 <span class="text-sm text-gray-600">Go to</span>
                 <input type="number" :value="currentPage" @change="handleGoToPage" min="1" :max="totalPages"
-                    class="w-16 rounded-md border-gray-300 text-center text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-16 p-2 bg-white rounded-md border-gray-300 text-center text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     aria-label="Go to page number" />
             </div>
 
