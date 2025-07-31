@@ -93,22 +93,49 @@ onMounted(() => {
                     &times;
                 </button>
                 <h2 class="text-lg font-bold mb-4 text-gray-700">Blotter Details</h2>
-                <div class="grid grid-cols-2 gap-4 text-sm text-gray-800">
-                    <div><strong>Title:</strong> {{ selectedBlotter?.title_case }}</div>
-                    <div><strong>Blotter ID:</strong> {{ selectedBlotter?.blotter_no }}</div>
-                    <div><strong>Blotter Type:</strong> <strong>{{ selectedBlotter?.blotter_type }}</strong></div>
-                    <div><strong>Nature of Case:</strong> {{ selectedBlotter?.nature_of_case }}</div>
-                    <div><strong>Filing Date:</strong> {{ formatDate(selectedBlotter?.filing_date) }}</div>
-                    <div><strong>Place:</strong> {{ selectedBlotter?.place }}</div>
-                    <div><strong>Date of Incident:</strong> {{ formatDate(selectedBlotter?.datetime_of_incident) }}</div>
-                    <div><strong>Complainant:</strong> {{ selectedBlotter?.complainants_id }}</div>
-                    <div><strong>Respondent:</strong> {{ selectedBlotter?.respondents_id }}</div>
-                    <div><strong>Status:</strong> {{ selectedBlotter?.status }}</div>
-                    <div><strong>Date:</strong> {{ formatDate(selectedBlotter?.filing_date) }}</div>
+                <!-- View Modal -->
+<div
+    v-if="showModal"
+    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20"
+>
+    <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <button
+            @click="closeModal"
+            class="absolute top-2 right-3 text-gray-600 hover:text-black text-2xl"
+        >
+            &times;
+        </button>
 
-                    
+        <h2 class="text-lg font-bold mb-4 text-gray-700">Blotter Details</h2>
+
+        <div class="grid grid-cols-2 gap-4 text-sm text-gray-800">
+            <div><strong>Title:</strong> {{ selectedBlotter?.title_case }}</div>
+            <div><strong>Blotter ID:</strong> {{ selectedBlotter?.blotter_no }}</div>
+            <div><strong>Blotter Type:</strong> {{ selectedBlotter?.blotter_type }}</div>
+            <div><strong>Nature of Case:</strong> {{ selectedBlotter?.nature_of_case }}</div>
+            <div><strong>Filing Date:</strong> {{ formatDate(selectedBlotter?.filing_date) }}</div>
+            <div><strong>Place:</strong> {{ selectedBlotter?.place }}</div>
+            <div><strong>Date of Incident:</strong> {{ formatDate(selectedBlotter?.datetime_of_incident) }}</div>
+            <div><strong>Complainant:</strong> {{ selectedBlotter?.complainants_id }}</div>
+            <div><strong>Respondent:</strong> {{ selectedBlotter?.respondents_id }}</div>
+            <div><strong>Status:</strong> {{ selectedBlotter?.status }}</div>
+            <div><strong>Date:</strong> {{ formatDate(selectedBlotter?.filing_date) }}</div>
+
+            <!-- Description Full Width and Scrollable -->
+            <div class="col-span-2">
+                <strong>Description:</strong>
+                <div
+                    class="mt-1 border border-gray-300 rounded-md p-3 bg-gray-50 text-gray-700 break-words overflow-y-auto"
+                    style="height: 8rem; white-space: pre-wrap;"
+                >
+                    {{ selectedBlotter?.description }}
                 </div>
+
             </div>
+        </div>
+    </div>
+</div>
+   </div> 
         </div>
     </div>
 </template>
