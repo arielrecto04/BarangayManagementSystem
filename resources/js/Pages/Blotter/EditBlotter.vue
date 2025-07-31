@@ -61,8 +61,16 @@ onMounted(() => {
                             <input id="title_case" type="text" v-model="blotter.title_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of Case</label>
-                            <input id="nature_of_case" type="text" v-model="blotter.nature_of_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of Case</label>
+                            <select 
+                                id="nature_of_case" 
+                                v-model="blotter.nature_of_case" 
+                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2"
+                            >
+                                <option value="" disabled selected>Select Nature of Case</option>
+                                <option value="Civil case">Civil Case</option>
+                                <option value="Criminal case">Criminal Case</option>
+                            </select>
                         </div>
                         <div class="flex flex-col gap-2">
                             <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant ID</label>
@@ -87,6 +95,10 @@ onMounted(() => {
                         <div class="flex flex-col gap-2">
                             <label for="barangay_case_no" class="text-sm font-semibold text-gray-600">Barangay Case No</label>
                             <input id="barangay_case_no" type="text" v-model="blotter.barangay_case_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        </div>
+                        <div class="col-span-2 flex flex-col gap-2">
+                            <label for="description" class="text-sm font-semibold text-gray-600">Description</label>
+                            <textarea id="description" v-model="blotter.description" class="input-style col-span-2 border border-gray-200 rounded-md px-4 py-2" rows="4"></textarea>
                         </div>
                         <div class="flex flex-col gap-2">
                             <label for="status" class="text-sm font-semibold text-gray-600">Status</label>
