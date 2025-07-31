@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('barangay_case_no');
             $table->string('total_cases');
             $table->string('status')->default('Open');
+            $table->longText('description');
             $table->timestamps();
         });
     }

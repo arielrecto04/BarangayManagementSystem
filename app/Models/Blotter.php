@@ -20,7 +20,8 @@ class Blotter extends Model
         'blotter_type',
         'barangay_case_no',
         'total_cases',
-        'status'
+        'status',
+        'description'
     ];
 
     public function complainants()
