@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useComplaintStore, useResidentStore } from '@/Stores';
 import useToast from '@/Utils/useToast';
+import { axios } from '@/utils';
 
 const router = useRouter();
 const route = useRoute();
@@ -12,6 +13,7 @@ const complaintStore = useComplaintStore();
 const residentStore = useResidentStore();
 const residents = ref([]);
 const complaintId = route.params.id;
+const isLoading = ref(true);
 
 const complaintForm = ref({
   complainant_name: '',
@@ -23,21 +25,27 @@ const complaintForm = ref({
   date: '',
   filing_date: '',
   complainant_id: '',
-  respondent_id: ''
+  respondent_id: '',
+  status: '',
 });
 
 const formErrors = ref({});
 
 onMounted(async () => {
-  await residentStore.getResidents();
-  residents.value = residentStore.residents;
+  try {
+    await residentStore.getResidents();
+    residents.value = residentStore.residents;
 
-  // Load the existing complaint
-  const existingComplaint = await complaintStore.getComplaintById(complaintId);
-  if (existingComplaint) {
-    Object.assign(complaintForm.value, existingComplaint);
+    const response = await axios.get(`/api/complaints/${complaintId}`);
+    Object.assign(complaintForm.value, response.data);
+  } catch (error) {
+    console.error(error);
+    showToast({ icon: 'error', title: 'Error loading complaint data' });
+  } finally {
+    isLoading.value = false;
   }
 });
+
 
 const submitForm = async () => {
   formErrors.value = {}; // reset
@@ -91,6 +99,7 @@ const submitForm = async () => {
 
 <template>
   <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
+    <div v-if="isLoading">Loading...</div>
     <form @submit.prevent="submitForm" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
       <h1 class="text-2xl font-bold mb-6">Edit Complaint</h1>
 
@@ -143,6 +152,15 @@ const submitForm = async () => {
           <label class="font-semibold text-sm">Date</label>
           <input type="date" v-model="complaintForm.date" class="border rounded-md p-2" />
         </div>
+        
+<div class="flex flex-col">
+  <label class="font-semibold text-sm">Status</label>
+  <select v-model="complaintForm.status" class="border rounded-md p-2">
+    <option value="Open">Open</option>
+    <option value="In Progress">In Progress</option>
+    <option value="Resolved">Resolved</option>
+  </select>
+</div>
 
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Filing Date</label>
