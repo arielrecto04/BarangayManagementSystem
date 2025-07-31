@@ -35,9 +35,10 @@ const resolved = computed(() => complaints.value.filter(c => c.resolution === 'R
         <h1 class="text-2xl font-semibold">Complaint Management</h1>
         <router-link
           to="/complaints/add-complaint"
-          class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+          class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 flex items-center gap-2"
         >
-          + New
+    <PlusIcon class="w-5 h-5" />
+  <span>New</span>
         </router-link>
       </div>
 

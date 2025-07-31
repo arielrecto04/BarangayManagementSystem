@@ -1,7 +1,10 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useComplaintStore, useResidentStore } from '@/Stores'
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
+
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useComplaintStore, useResidentStore } from '@/Stores';
 import useToast from '@/Utils/useToast';
 
 const router = useRouter();
@@ -13,7 +16,10 @@ const residents = ref([]);
 
 onMounted(async () => {
   await residentStore.getResidents();
-  residents.value = residentStore.residents;
+  residents.value = residentStore.residents.map(r => ({
+    ...r,
+    full_name: `${r.first_name} ${r.last_name}`
+  }));
 });
 
 const complaintForm = ref({
@@ -32,9 +38,8 @@ const complaintForm = ref({
 const formErrors = ref({});
 
 const submitForm = async () => {
-  formErrors.value = {}; // reset
+  formErrors.value = {};
 
-  // Basic frontend validation
   const requiredFields = [
     'complainant_id',
     'respondent_id',
@@ -61,18 +66,14 @@ const submitForm = async () => {
     const complainant = residents.value.find(r => r.id === complaintForm.value.complainant_id);
     const respondent = residents.value.find(r => r.id === complaintForm.value.respondent_id);
 
-    complaintForm.value.complainant_name = complainant
-      ? `${complainant.first_name} ${complainant.last_name}`
-      : '';
-    complaintForm.value.respondent_name = respondent
-      ? `${respondent.first_name} ${respondent.last_name}`
-      : '';
+    complaintForm.value.complainant_name = complainant ? complainant.full_name : '';
+    complaintForm.value.respondent_name = respondent ? respondent.full_name : '';
 
     await complaintStore.createComplaint(complaintForm.value);
     showToast({ icon: 'success', title: 'Complaint submitted successfully.' });
     router.push('/complaints');
   } catch (error) {
-    if (error.response && error.response.status === 422) {
+    if (error.response?.status === 422) {
       const messages = Object.values(error.response.data.errors).flat().join(' ');
       showToast({ icon: 'error', title: messages });
     } else {
@@ -80,7 +81,6 @@ const submitForm = async () => {
     }
   }
 };
-
 </script>
 
 <template>
@@ -90,25 +90,27 @@ const submitForm = async () => {
 
       <div class="grid grid-cols-2 gap-4">
         <!-- Complainant dropdown -->
-        <div class="flex flex-col">
-          <label class="font-semibold text-sm">Complainant</label>
-          <select v-model="complaintForm.complainant_id" class="border rounded-md p-2">
-            <option disabled value="">Select Complainant</option>
-            <option v-for="resident in residents" :key="resident.id" :value="resident.id">
-              {{ resident.first_name }} {{ resident.last_name }}
-            </option>
-          </select>
+   <div class="flex flex-col">
+          <label class="font-semibold text-sm mb-1">Complainant</label>
+          <Multiselect
+            v-model="complaintForm.complainant_id"
+            :options="residents"
+            :custom-label="r => r.full_name"
+            track-by="id"
+            placeholder="Select Complainant"
+          />
         </div>
 
         <!-- Respondent dropdown -->
         <div class="flex flex-col">
-          <label class="font-semibold text-sm">Respondent</label>
-          <select v-model="complaintForm.respondent_id" class="border rounded-md p-2">
-            <option disabled value="">Select Respondent</option>
-            <option v-for="resident in residents" :key="resident.id" :value="resident.id">
-              {{ resident.first_name }} {{ resident.last_name }}
-            </option>
-          </select>
+          <label class="font-semibold text-sm mb-1">Respondent</label>
+          <Multiselect
+            v-model="complaintForm.respondent_id"
+            :options="residents"
+            :custom-label="r => r.full_name"
+            track-by="id"
+            placeholder="Select Respondent"
+          />
         </div>
 
         <div class="flex flex-col">
