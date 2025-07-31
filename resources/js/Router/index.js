@@ -75,7 +75,7 @@ const routes = [
             title: "Documents",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Documents.vue"),
+        component: () => import("@/Pages/Document/ListDocument.vue"),
     },
     {
         path: "/complaints",

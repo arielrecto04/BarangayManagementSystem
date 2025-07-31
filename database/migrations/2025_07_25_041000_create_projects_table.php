@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('attachments')->nullable();
             $table->dateTime('start_date');
             $table->dateTime('end_date');
-            $table->string('status')->default('Pending');
+            $table->string('status')->default('pending');
             $table->timestamps();
         });
     }

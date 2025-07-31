@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BlotterController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\ComplaintController;
@@ -29,5 +30,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('blotters', BlotterController::class);
     Route::apiResource('complaints', ComplaintController::class);
     Route::apiResource('projects', ProjectController::class);
+    Route::apiResource('documents', DocumentController::class);
 
 });
