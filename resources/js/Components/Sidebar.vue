@@ -45,13 +45,7 @@ const menuLinks = [
         icon: 'fi fi-rr-shirt',
         isActive: false,
     },
-    {
-        href: '/health',
-        name: 'Health Services',
-        icon: 'fi fi-rr-heart',
-        isActive: false,
-    }
-
+ 
 ]
 
 </script>

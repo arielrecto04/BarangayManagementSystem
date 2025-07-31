@@ -174,15 +174,7 @@ const routes = [
 
         ]
     },
-    {
-        path: "/health",
-        name: "Health Services",
-        meta: {
-            title: "Health Services",
-            requiresAuth: true,
-        },
-        component: () => import("@/Pages/Dashboard/HealthServices.vue"),
-    },
+  
     {
         path: "/",
         name: "Login",
