@@ -99,6 +99,7 @@ export const useComplaintStore = defineStore('complaint', {
 },
 
 
+
         async deleteComplaint(id) {
             this._isLoading = true;
             this._error = null;

@@ -2,7 +2,7 @@
 import { AuthLayout } from "@/Layouts";
 import { useComplaintStore } from "@/Stores";
 import { storeToRefs } from "pinia";
-import { onMounted, computed } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import {
   FolderIcon,
@@ -15,16 +15,30 @@ import {
 const router = useRouter();
 const complaintStore = useComplaintStore();
 const { complaints } = storeToRefs(complaintStore);
+const totalCases = computed(() => complaints.value.length);
+
+
+// Navigate to list view with filter
+const filterByStatus = async (status) => {
+  await complaintStore.getComplaints(); // Refresh complaints
+  router.push({ path: "/complaints/list", query: { status } });
+};
 
 onMounted(() => {
   complaintStore.getComplaints();
 });
 
-// Placeholder counts from complaints
-const totalCases = computed(() => complaints.value.length);
-const inProgress = computed(() => complaints.value.filter(c => c.resolution === 'In Progress').length);
-const openCases = computed(() => complaints.value.filter(c => c.resolution === 'Open').length);
-const resolved = computed(() => complaints.value.filter(c => c.resolution === 'Resolved').length);
+// Complaint statistics
+const inProgress = computed(() =>
+  complaints.value.filter((c) => c.status === "In Progress").length
+);
+const openCases = computed(() =>
+  complaints.value.filter((c) => c.status === "Open").length
+);
+const resolved = computed(() =>
+  complaints.value.filter((c) => c.status === "Resolved").length
+);
+
 </script>
 
 <template>
@@ -37,16 +51,20 @@ const resolved = computed(() => complaints.value.filter(c => c.resolution === 'R
           to="/complaints/add-complaint"
           class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 flex items-center gap-2"
         >
-    <PlusIcon class="w-5 h-5" />
-  <span>New</span>
+          <PlusIcon class="w-5 h-5" />
+          <span>New</span>
         </router-link>
       </div>
 
       <!-- Cards -->
-      <div class="bg-gray-100 p-5 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div
+        class="bg-gray-100 p-5 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4"
+      >
         <!-- Total Cases -->
         <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
-          <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
+          <div
+            class="text-sm text-gray-600 font-semibold flex justify-between items-center"
+          >
             Total Cases
             <FolderIcon class="w-5 h-5 text-gray-500" />
           </div>
@@ -54,8 +72,13 @@ const resolved = computed(() => complaints.value.filter(c => c.resolution === 'R
         </div>
 
         <!-- In Progress -->
-        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
-          <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
+        <div
+          @click="filterByStatus('In Progress')"
+          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition"
+        >
+          <div
+            class="text-sm text-gray-600 font-semibold flex justify-between items-center"
+          >
             In Progress
             <ArrowPathIcon class="w-5 h-5 text-gray-500 animate-spin" />
           </div>
@@ -63,8 +86,13 @@ const resolved = computed(() => complaints.value.filter(c => c.resolution === 'R
         </div>
 
         <!-- Open Cases -->
-        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
-          <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
+        <div
+          @click="filterByStatus('Open')"
+          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition"
+        >
+          <div
+            class="text-sm text-gray-600 font-semibold flex justify-between items-center"
+          >
             Open Cases
             <ChartPieIcon class="w-5 h-5 text-gray-500" />
           </div>
@@ -72,8 +100,13 @@ const resolved = computed(() => complaints.value.filter(c => c.resolution === 'R
         </div>
 
         <!-- Resolved -->
-        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
-          <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
+        <div
+          @click="filterByStatus('Resolved')"
+          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition"
+        >
+          <div
+            class="text-sm text-gray-600 font-semibold flex justify-between items-center"
+          >
             Resolved
             <CheckCircleIcon class="w-5 h-5 text-gray-500" />
           </div>
