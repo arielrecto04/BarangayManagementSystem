@@ -1,6 +1,7 @@
 <script setup>
-import { useBlotterStore } from '@/Stores'
-import { ref } from 'vue'
+import Multiselect from 'vue-multiselect';
+import { useBlotterStore, useResidentStore } from '@/Stores'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
 
@@ -8,6 +9,22 @@ const router = useRouter();
 const { showToast } = useToast();
 
 const blotterStore = useBlotterStore();
+const residentStore = useResidentStore();
+const residents = ref([]);
+
+const errors = ref({});
+const selectedComplainant = ref(null);
+const selectedRespondent = ref(null);
+
+watch(selectedComplainant, (val) => {
+    blotterDataForm.value.complainants_id = val?.id ?? '';
+});
+
+watch(selectedRespondent, (val) => {
+    blotterDataForm.value.respondents_id = val?.id ?? '';
+});
+
+
 
 const blotterDataForm = ref({
     blotter_no: '',
