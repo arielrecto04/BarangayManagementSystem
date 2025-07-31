@@ -108,4 +108,18 @@ class ProjectController extends Controller
             'message' => 'Project deleted successfully',
         ], 200);
     }
+
+    public function search(Request $request)
+    {
+        $search = $request->search;
+        $projects = Project::where('title', 'like', "%{$search}%")
+        ->orWhere('description', 'like', "%{$search}%")
+        ->orWhere('status', 'like', "%{$search}%")
+        ->orWhere('start_date', 'like', "%{$search}%")
+        ->orWhere('end_date', 'like', "%{$search}%")
+        ->paginate(9);
+        return response()->json([
+            'projects' => $projects
+        ]);
+    }
 }

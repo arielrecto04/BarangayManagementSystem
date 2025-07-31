@@ -1,9 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, defineEmits } from 'vue';
 import { useAuthenticationStore } from '@/Stores';
 
 const authStore = useAuthenticationStore();
 
+const emit = defineEmits([
+    'search'
+])
 const isProfileOpen = ref(false);
 
 const toggleProfileDropdown = () => {
@@ -28,6 +31,7 @@ const toggleProfileDropdown = () => {
                     </div>
                     <input id="search" name="search"
                         class="block w-full bg-gray-100 border border-transparent rounded-lg py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-blue-500"
+                        @input="emit('search', $event.target.value)"
                         placeholder="Search for projects or tasks..." type="search">
                 </div>
             </div>

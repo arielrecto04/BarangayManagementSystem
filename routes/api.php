@@ -20,11 +20,14 @@ Route::post('/login', [AuthenticationController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',  [AuthenticationController::class, 'logout']);
 
+    Route::prefix('projects')->group(function () {
+        Route::get('/search', [ProjectController::class, 'search']);
+    });
 
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);
     Route::apiResource('blotters', BlotterController::class);
     Route::apiResource('complaints', ComplaintController::class);
     Route::apiResource('projects', ProjectController::class);
-    
+
 });

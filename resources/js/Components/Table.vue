@@ -290,7 +290,8 @@ const clearFilters = () => {
                                     'text-center': column.align === 'center'
                                 }">
                                 <slot :name="`cell(${column.key})`" :row="row" :value="getObjectValue(row, column.key)">
-                                    {{ getObjectValue(row, column.key) }}
+                                    {{ column.formatter ? column.formatter(getObjectValue(row, column.key)) : getObjectValue(row, column.key) }}
+
                                 </slot>
                             </td>
 

@@ -1,8 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watchEffect } from 'vue';
 import { AuthLayout } from '@/Layouts';
 import { useRouter, useRoute } from 'vue-router'
-import { Modal, Loader, Paginate } from '@/Components'
+import { Modal, Loader, Paginate, Table } from '@/Components'
+import { debounce } from '@/Utils';
+import Mark from 'mark.js';
 
 import {
     CalendarIcon,
@@ -25,6 +27,7 @@ const projectStore = useProjectStore();
 
 const viewMode = ref(route.query.viewMode || 'grid');
 const createModal = ref(false);
+const markRef = ref(null);
 const { error, isLoading, projects, paginate } = storeToRefs(projectStore);
 const handleViewModeChange = (mode) => {
 
@@ -32,10 +35,16 @@ const handleViewModeChange = (mode) => {
     viewMode.value = mode;
     router.replace({
         query: {
-            viewMode: viewMode.value
+            viewMode: viewMode.value,
+            page: currentPage.value
         }
     })
 }
+
+const handleSearch = debounce((query) => {
+    projectStore.searchProjects(query);
+}, 300);
+
 const handleCreateModalAction = () => {
     createModal.value = !createModal.value;
 }
@@ -48,7 +57,8 @@ const handlePageChange = (page) => {
 
     router.replace({
         query: {
-            page: currentPage.value
+            page: currentPage.value,
+            viewMode: viewMode.value
         }
     })
 }
@@ -58,6 +68,24 @@ const search = ref('');
 const statusFilter = ref('');
 const createForm = ref(null);
 const isSubmitting = ref(false);
+
+const columns = [
+    {
+        key: "title", label: "Title"
+    },
+    {
+        key: "description", label: "Description"
+    },
+    {
+        key: "start_date", label: "Start Date"
+    },
+    {
+        key: "end_date", label: "End Date"
+    },
+    {
+        key: "status", label: "Status"
+    },
+]
 
 const filteredProjects = computed(() => {
 
@@ -90,7 +118,9 @@ function getStatusColor(status) {
         'planning': 'bg-blue-100 text-blue-800',
         'in_progress': 'bg-yellow-100 text-yellow-800',
         'on_hold': 'bg-red-100 text-red-800',
-        'completed': 'bg-green-100 text-green-800'
+        'completed': 'bg-green-100 text-green-800',
+        'approved': 'bg-green-100 text-green-800',
+        'rejected': 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
 }
@@ -125,6 +155,26 @@ const createProject = async () => {
 }
 
 
+
+watchEffect(() => {
+    const instance = new Mark(markRef.value);
+    console.log(search.value, 'watch');
+    if (markRef.value && search.value && projects.value.length > 0) {
+
+        instance.mark(search.value);
+
+
+        instance.unmark({
+            done: () => {
+                instance.mark(search.value);
+            }
+        })
+    } else if (markRef.value && !search.value) {
+        instance.unmark();
+    }
+})
+
+
 onMounted(async () => {
     await projectStore.getProjects();
 })
@@ -133,7 +183,7 @@ onMounted(async () => {
 
 
 <template>
-    <AuthLayout>
+    <AuthLayout @search="handleSearch">
 
         <div class="flex justify-between items-center p-2">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -150,7 +200,7 @@ onMounted(async () => {
             <!-- Search and Filter -->
             <div class="mb-6 flex justify-between items-center">
                 <div class="w-1/3">
-                    <input v-model="search" type="search" placeholder="Search projects..."
+                    <input v-model="search" @input="handleSearch(search)" type="search" placeholder="Search projects..."
                         class="w-full border border-gray-300 rounded-md p-2 bg-white" />
                 </div>
                 <div class="flex item-center gap-2">
@@ -172,16 +222,14 @@ onMounted(async () => {
                     </button>
                 </div>
             </div>
+            <template v-if="isLoading && projects.length === 0">
+                <Loader />
+            </template>
+            <template v-else>
+                <div v-if="viewMode === 'grid'">
+                    <!-- Projects Grid -->
 
-            <div v-if="viewMode === 'grid'">
-                <!-- Projects Grid -->
-
-                <template v-if="isLoading && projects.length === 0">
-                    <Loader />
-                </template>
-
-                <template v-else>
-                    <div v-if="filteredProjects.length > 0"
+                    <div ref="markRef" v-if="filteredProjects.length > 0"
                         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div v-for="project in filteredProjects" :key="project.id"
                             class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -252,18 +300,21 @@ onMounted(async () => {
                             </PrimaryButton>
                         </div>
                     </div>
-                </template>
+                </div>
+                <div v-if="viewMode === 'list'">
+                    <Table ref="markRef" :columns="columns" :rows="projects" :searchable="false" :selectable="false">
 
-            </div>
-            <div v-if="viewMode === 'list'">
-
-                <h1> List View</h1>
-            </div>
+                        <template #cell(description)="{ row }">
+                            <p class="truncate w-52">{{ row.description }}</p>
+                        </template>
+                    </Table>
+                </div>
+            </template>
 
         </div>
 
-        <Paginate  @page-changed="handlePageChange" :maxVisibleButtons="5" :totalPages="paginate.last_page" :totalItems="paginate.total"
-        :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
+        <Paginate @page-changed="handlePageChange" :maxVisibleButtons="5" :totalPages="paginate.last_page"
+            :totalItems="paginate.total" :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
 
         <Modal title="Create New Project" :show="createModal" @close="handleCreateModalAction">
 

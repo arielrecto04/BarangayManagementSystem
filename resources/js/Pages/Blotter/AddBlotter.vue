@@ -8,28 +8,60 @@ const router = useRouter();
 const { showToast } = useToast();
 
 const blotterStore = useBlotterStore();
+const errors = ref({});
 
 const blotterDataForm = ref({
     blotter_no: '',
     filing_date: '',
     title_case: '',
     nature_of_case: '',
-    complainants_type: '',
     complainants_id: '',
-    respondents_type: '',
     respondents_id: '',
+    complainants_type: 'App\\Models\\Resident',
+    respondents_type: 'App\\Models\\Resident',
     place: '',
     datetime_of_incident: '',
     blotter_type: '',
     barangay_case_no: '',
     total_cases: '0',
+    open_cases: '0',
+    in_progress: '0',
+    resolved: '0',
     status: ''
 });
 
+const validateForm = () => {
+    errors.value = {};
+    let isValid = true;
+
+    const fields = {
+        blotter_no: 'Blotter No',
+        filing_date: 'Filing Date',
+        title_case: 'Title Case',
+        nature_of_case: 'Nature of Case',
+        complainants_id: 'Complainant ID',
+        respondents_id: 'Respondent ID',
+        place: 'Place',
+        datetime_of_incident: 'Date/Time of Incident',
+        blotter_type: 'Blotter Type',
+        barangay_case_no: 'Barangay Case No',
+        status: 'Status'
+    };
+
+    for (const [field, label] of Object.entries(fields)) {
+        if (!blotterDataForm.value[field]) {
+            errors.value[field] = `${label} is required`;
+            isValid = false;
+        }
+    }
+
+    return isValid;
+};
+
 const createBlotter = async () => {
     try {
-        if (!blotterDataForm.value.status) {
-            showToast({ icon: 'error', title: 'Please select a status' });
+        if (!validateForm()) {
+            showToast({ icon: 'error', title: 'Please fill in all required fields' });
             return;
         }
         await blotterStore.addBlotter(blotterDataForm.value);
@@ -50,11 +82,24 @@ const createBlotter = async () => {
                 <div class="grid grid-cols-2 gap-4">
                     <div class="flex flex-col gap-2">
                         <label for="blotter_no" class="text-sm font-semibold text-gray-600">Blotter No</label>
-                        <input id="blotter_no" type="text" placeholder="Enter Blotter No" v-model="blotterDataForm.blotter_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input 
+                            id="blotter_no" 
+                            type="text" 
+                            placeholder="Enter Blotter No" 
+                            v-model="blotterDataForm.blotter_no" 
+                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.blotter_no ? 'border-red-500' : 'border-gray-200']"
+                        />
+                        <span v-if="errors.blotter_no" class="text-red-500 text-xs mt-1">{{ errors.blotter_no }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="filing_date" class="text-sm font-semibold text-gray-600">Filing Date</label>
-                        <input id="filing_date" type="date" v-model="blotterDataForm.filing_date" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input 
+                            id="filing_date" 
+                            type="date" 
+                            v-model="blotterDataForm.filing_date" 
+                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.filing_date ? 'border-red-500' : 'border-gray-200']"
+                        />
+                        <span v-if="errors.filing_date" class="text-red-500 text-xs mt-1">{{ errors.filing_date }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="title_case" class="text-sm font-semibold text-gray-600">Title Case</label>
@@ -65,20 +110,12 @@ const createBlotter = async () => {
                         <input id="nature_of_case" type="text" placeholder="Enter Nature of Case" v-model="blotterDataForm.nature_of_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="complainants_type" class="text-sm font-semibold text-gray-600">Complainant Type</label>
-                        <input id="complainants_type" type="text" placeholder="Enter Complainant Type" v-model="blotterDataForm.complainants_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                    </div>
-                    <div class="flex flex-col gap-2">
                         <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant ID</label>
-                        <input id="complainants_id" type="text" placeholder="Enter Complainant ID" v-model="blotterDataForm.complainants_id" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="respondents_type" class="text-sm font-semibold text-gray-600">Respondent Type</label>
-                        <input id="respondents_type" type="text" placeholder="Enter Respondent Type" v-model="blotterDataForm.respondents_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="complainants_id" type="text" placeholder="Enter Resident ID of Complainant" v-model="blotterDataForm.complainants_id" class="input-style col-span-1 border text-sm border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent ID</label>
-                        <input id="respondents_id" type="text" placeholder="Enter Respondent ID" v-model="blotterDataForm.respondents_id" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="respondents_id" type="text" placeholder="Enter Resident ID of Respondent" v-model="blotterDataForm.respondents_id" class="input-style col-span-1 border text-sm border-gray-200 rounded-md px-4 py-2" />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="place" class="text-sm font-semibold text-gray-600">Place</label>
@@ -98,7 +135,11 @@ const createBlotter = async () => {
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="status" class="text-sm font-semibold text-gray-600">Status</label>
-                        <select id="status" v-model="blotterDataForm.status" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2">
+                        <select 
+                            id="status" 
+                            v-model="blotterDataForm.status" 
+                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.status ? 'border-red-500' : 'border-gray-200']"
+                        >
                             <option value="" disabled selected>Select Status</option>
                             <option value="Open">Open</option>
                             <option value="In Progress">In Progress</option>

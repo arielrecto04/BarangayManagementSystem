@@ -120,5 +120,17 @@ export const useProjectStore = defineStore("project", {
                 this._isLoading = false;
             }
         },
+
+        async searchProjects(search) {
+            try {
+                this._isLoading = true;
+                const response = await axios.get(`/projects/search?search=${search}`);
+                this._projects = response.data.projects.data;
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this._isLoading = false;
+            }
+        },
     },
 });
