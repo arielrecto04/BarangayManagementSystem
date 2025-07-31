@@ -63,5 +63,34 @@ export const useComplaintStore = defineStore('complaint', {
             }
         },
 
+        async createComplaint(data) {
+    this._isLoading = true;
+    this._error = null;
+    try {
+        const response = await axios.post('/complaints', data);
+        this._complaints.push(response.data.data);
+    } catch (error) {
+        console.error('Error creating complaint:', error);
+        this._error = error;
+    } finally {
+        this._isLoading = false;
+    }
+},
+
+
+
+        async deleteComplaint(id) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                await axios.delete(`/complaints/${id}`);
+                this._complaints = this._complaints.filter((c) => c.id !== id);
+            } catch (error) {
+                console.error(`Error deleting complaint ID ${id}:`, error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
     },
-}); 
+});

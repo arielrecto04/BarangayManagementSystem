@@ -1,64 +1,114 @@
 <script setup>
 import { AuthLayout } from "@/Layouts";
+import { useComplaintStore } from "@/Stores";
+import { storeToRefs } from "pinia";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 const router = useRouter();
+const complaintStore = useComplaintStore();
+const { complaints } = storeToRefs(complaintStore);
+const totalCases = computed(() => complaints.value.length);
+
+
+// Navigate to list view with filter
+const filterByStatus = async (status) => {
+  await complaintStore.getComplaints(); // Refresh complaints
+  router.push({ path: "/complaints/list", query: { status } });
+};
+
+onMounted(() => {
+  complaintStore.getComplaints();
+});
+
+// Complaint statistics
+const inProgress = computed(() =>
+  complaints.value.filter((c) => c.status === "In Progress").length
+);
+const openCases = computed(() =>
+  complaints.value.filter((c) => c.status === "Open").length
+);
+const resolved = computed(() =>
+  complaints.value.filter((c) => c.status === "Resolved").length
+);
+
 </script>
 
 <template>
-    <AuthLayout>
-        <div class="m-3 flex flex-col">
-            <!-- Resident Manager -->
-            <div class="bg-white p-5 shadow-lg rounded-lg w-1/4">
-                <h1 class="uppercase font-bold">Resident Manager</h1>
-                <p>Manage and View Resident information</p>
-            </div>
+  <AuthLayout>
+    <div class="m-5">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold">Complaint Management</h1>
+        <router-link
+          to="/complaints/add-complaint"
+          class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 flex items-center gap-2"
+        >
+          <PlusIcon class="w-5 h-5" />
+          <span>New</span>
+        </router-link>
+      </div>
 
-            <!-- Search Residents -->
-            <div class="flex bg-white shadow-lg rounded-lg p-7 mt-0 transform -translate-y-10">
-                <div class="shadow-lg p-3 w-1/2">
-                    <form>
-                        <input type="text" placeholder="Search Residents..." name="Search Residents"
-                            class="w-full rounded-lg  ">
-                    </form>
-                </div>
-                <select class="ml-2 bg-white shadow-lg rounded-lg w-1/8 p-3 text-center" placeholder="Age Range">
-                    <option value="" disabled selected hidden>Age Range</option>
-                    <!-- Age Range -->
-                    <option>18 - 25</option>
-                    <option>26 - 35</option>
-                    <option>36 - 45</option>
-                </select>
-                <select class="flex items-center ml-2 bg-white shadow-lg rounded-lg w-1/8 p-3 text-center "
-                    placeholder="Age Range">
-                    <option value="" disabled selected hidden>Sex</option>
-                    <!-- Gender -->
-                    <option>Male</option>
-                    <option>Female</option>
-                </select>
-                <div class="w-1/4 max-w-sm mx-auto ml-2">
-                    <!-- Route of Add Resident -->
-
-                    <template v-if="router.currentRoute.value.path == '/residents/list-residents'">
-                        <router-link to="/residents/add-resident" class="block">
-                            <div class="bg-green-700 shadow-md rounded-lg p-3  cursor-pointer flex justify-center items-center ">
-                                <div class="flex items-center gap-2 text-lg font-bold text-center text-white"><PlusIcon class="w-6 h-6" /> Add Resident</div>
-                            </div>
-                        </router-link>
-                    </template>
-                    <template v-else>
-                        <router-link to="/residents" class="block">
-                            <div class="shadow-md rounded-lg p-3  cursor-pointer flex justify-center items-center">
-                                <div class="flex items-center gap-2 text-lg font-bold text-center"><XMarkIcon class="w-6 h-6" /> Cancel</div>
-                            </div>
-                        </router-link>
-                    </template>
-                </div>
-            </div>
+      <!-- Cards -->
+      <div
+        class="bg-gray-100 p-5 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4"
+      >
+        <!-- Total Cases -->
+        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
+          <div
+            class="text-sm text-gray-600 font-semibold flex justify-between items-center"
+          >
+            Total Cases
+            <FolderIcon class="w-5 h-5 text-gray-500" />
+          </div>
+          <div class="text-3xl font-bold">{{ totalCases }}</div>
         </div>
 
-        <router-view></router-view>
+        <!-- In Progress -->
+        <div
+          @click="filterByStatus('In Progress')"
+          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition"
+        >
+          <div
+            class="text-sm text-gray-600 font-semibold flex justify-between items-center"
+          >
+            In Progress
+            <ArrowPathIcon class="w-5 h-5 text-gray-500 animate-spin" />
+          </div>
+          <div class="text-3xl font-bold">{{ inProgress }}</div>
+        </div>
 
+        <!-- Open Cases -->
+        <div
+          @click="filterByStatus('Open')"
+          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition"
+        >
+          <div
+            class="text-sm text-gray-600 font-semibold flex justify-between items-center"
+          >
+            Open Cases
+            <ChartPieIcon class="w-5 h-5 text-gray-500" />
+          </div>
+          <div class="text-3xl font-bold">{{ openCases }}</div>
+        </div>
 
-    </AuthLayout>
+        <!-- Resolved -->
+        <div
+          @click="filterByStatus('Resolved')"
+          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition"
+        >
+          <div
+            class="text-sm text-gray-600 font-semibold flex justify-between items-center"
+          >
+            Resolved
+            <CheckCircleIcon class="w-5 h-5 text-gray-500" />
+          </div>
+          <div class="text-3xl font-bold">{{ resolved }}</div>
+        </div>
+      </div>
+
+      <!-- Nested List Complaint View -->
+      <router-view />
+    </div>
+  </AuthLayout>
 </template>

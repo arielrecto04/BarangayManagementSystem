@@ -39,6 +39,7 @@ class ComplaintController extends Controller
             'filing_date' => 'required|date',
             'complainant_id' => 'required|exists:residents,id',
             'respondent_id' => 'required|exists:residents,id',
+            'status' => 'nullable|string',
         ]);
          $complaint = Complaint::create($validated);
 
@@ -70,14 +71,15 @@ class ComplaintController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'complaint_name',
-            'respondent_name',
-            'case_no',
-            'title',
-            'description',
-            'resolution',
-            'date',
-            'filing_date',
+    'complainant_name' => 'sometimes|string',
+    'respondent_name' => 'sometimes|string',
+    'case_no' => 'sometimes|string',
+    'title' => 'sometimes|string',
+    'description' => 'sometimes|string',
+    'resolution' => 'nullable|string',
+    'date' => 'sometimes|date',
+    'filing_date' => 'sometimes|date',
+    'status' => 'nullable|string',
         ]);
         $complaint = Complaint::findOrFail($id);
         $complaint->update($request->all());

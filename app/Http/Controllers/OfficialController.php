@@ -32,15 +32,15 @@ class OfficialController extends Controller
 public function store(Request $request)
 {
     $validated = $request->validate([
-        'name' => 'required|string',
-        'position' => 'required|string',
-        'description' => 'required|string',
-        'terms' => 'required|string',
-        'no_of_per_term' => 'required|integer',
-        'elected_date' => 'required|date',
-        'start_date' => 'required|date',
-        'end_date' => 'required|date',
-        'resident_id' => 'required|string',
+        'name' => 'required|string|max:255',
+        'position' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'terms' => 'nullable|string',
+        'no_of_per_term' => 'nullable|integer',
+        'elected_date' => 'nullable|date',
+        'start_date' => 'nullable|date',
+        'end_date' => 'nullable|date',
+        'resident_id' => 'nullable|integer|exists:residents,id',
     ]);
 
     $official = Official::create($validated);

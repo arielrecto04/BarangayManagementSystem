@@ -16,7 +16,8 @@ class Complaint extends Model
     'date',
     'filing_date',
     'respondent_id',
-    'complainant_id'
+    'complainant_id',
+    'status',
 ];
     public function respondent_complaint()
     {

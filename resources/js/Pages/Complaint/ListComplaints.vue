@@ -8,6 +8,8 @@ const { complaints, isLoading, paginate } = storeToRefs(complaintStore);
 
 const currentPage = ref(route.query.page || 1);
 const resolutionUpdates = ref({});
+const statusUpdates = ref({});
+
 
 const handlePageChange = (page) => {
   currentPage.value = page;
@@ -29,20 +31,21 @@ const closeModal = () => {
 };
 
 
-const updateResolution = async (complaintId) => {
-  const updatedResolution = resolutionUpdates.value[complaintId];
-  if (!updatedResolution) {
-    showToast({ icon: 'warning', title: 'Please select a resolution status.' });
+const updateStatus = async (complaintId) => {
+  const updatedStatus = statusUpdates.value[complaintId];
+  if (!updatedStatus) {
+    showToast({ icon: 'warning', title: 'Please select a status.' });
     return;
   }
   try {
-    await complaintStore.updateComplaint(complaintId, { resolution: updatedResolution });
-    showToast({ icon: 'success', title: 'Resolution updated successfully' });
+    await complaintStore.updateComplaint(complaintId, { status: updatedStatus });
+    showToast({ icon: 'success', title: 'Status updated successfully' });
     complaintStore.getComplaints(currentPage.value);
   } catch (error) {
     showToast({ icon: 'error', title: error.message });
   }
 };
+
 
 const deleteComplaint = async (complaintId) => {
   try {
@@ -59,20 +62,25 @@ const columns = [
   { key: "respondent_name", label: "Respondent" },
   { key: "case_no", label: "Case No" },
   { key: "title", label: "Title" },
-  { key: "description", label: "Description" },
-  { key: "resolution", label: "Resolution" },
-  { key: "date", label: "Date" },
-  { key: "filing_date", label: "Filing Date" }
+  { key: "filing_date", label: "Filing Date" },
+  { key: "status", label: "Status" }
 ];
 
 onMounted(() => {
-  complaintStore.getComplaints(currentPage.value);
+  const page = currentPage.value;
+  const status = route.query.status;
+
+  if (status) {
+    complaintStore.getComplaints(page, status); // assumes getComplaints supports filter
+  } else {
+    complaintStore.getComplaints(page);
+  }
 });
 
 watch(complaints, (newComplaints) => {
   newComplaints.forEach(complaint => {
-    if (!(complaint.id in resolutionUpdates.value)) {
-      resolutionUpdates.value[complaint.id] = complaint.resolution || "";
+    if (!(complaint.id in statusUpdates.value)) {
+      statusUpdates.value[complaint.id] = complaint.status || "";
     }
   });
 });
@@ -96,7 +104,7 @@ watch(complaints, (newComplaints) => {
           Delete
         </button>
 
-        <select v-model="resolutionUpdates[row.id]" class="ml-2 border rounded px-2 py-1 text-sm">
+        <select v-model="statusUpdates[row.id]" class="ml-2 border rounded px-2 py-1 text-sm">
           <option disabled value="">Update</option>
           <option value="Open">Open</option>
           <option value="In Progress">In Progress</option>
@@ -104,7 +112,7 @@ watch(complaints, (newComplaints) => {
         </select>
 
         <button
-          @click="updateResolution(row.id)"
+          @click="updateStatus(row.id)"
           class="bg-green-500 text-white px-2 py-1 rounded ml-2">
           Apply
         </button>
@@ -130,35 +138,84 @@ watch(complaints, (newComplaints) => {
       :itemsPerPage="paginate.per_page"
     />
 
-    <!-- Modal -->
+ <!-- Modal -->
 <div
   v-if="showModal"
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
 >
-  <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl">
+  <div
+    class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto"
+  >
+    <!-- Close Button -->
     <button
       @click="closeModal"
       class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl"
     >
       &times;
     </button>
-    <h2 class="text-lg font-bold mb-4 text-gray-700">Complaint Details</h2>
 
-    <div class="grid grid-cols-2 gap-4 text-sm text-gray-800">
-      <div><strong>Complainant:</strong> {{ selectedComplaint?.complainant_name }}</div>
-      <div><strong>Respondent:</strong> {{ selectedComplaint?.respondent_name }}</div>
-      <div><strong>Case No:</strong> {{ selectedComplaint?.case_no }}</div>
-      <div><strong>Title:</strong> {{ selectedComplaint?.title }}</div>
-      <div class="col-span-2 max-h-40 overflow-x-auto whitespace-pre-line"><strong>Description:</strong><br />{{ selectedComplaint?.description }}</div>
-      <div><strong>Resolution:</strong> {{ selectedComplaint?.resolution || 'N/A' }}</div>
-      <div><strong>Date:</strong> {{ selectedComplaint?.date }}</div>
-      <div><strong>Filing Date:</strong> {{ selectedComplaint?.filing_date }}</div>
-      <div><strong>Complainant ID:</strong> (ID: {{ selectedComplaint?.complainant_id }})</div>
-      <div><strong>Respondent ID:</strong> (ID: {{ selectedComplaint?.respondent_id }})</div>
+    <!-- Modal Title -->
+    <h2 class="text-lg font-bold mb-6 text-gray-700">Complaint Details</h2>
+
+    <!-- Grid Layout for Fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
+      <div>
+        <strong>Complainant:</strong><br />
+        {{ selectedComplaint?.complainant_name }}
+      </div>
+      <div>
+        <strong>Respondent:</strong><br />
+        {{ selectedComplaint?.respondent_name }}
+      </div>
+      <div>
+        <strong>Case No:</strong><br />
+        {{ selectedComplaint?.case_no }}
+      </div>
+      <div>
+        <strong>Title:</strong><br />
+        {{ selectedComplaint?.title }}
+      </div>
+
+      <!-- Description with scroll -->
+   <div class="md:col-span-2">
+  <strong>Description:</strong>
+  <textarea
+    readonly
+    class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
+  >{{ selectedComplaint?.description }}</textarea>
+</div>
+
+<!-- Resolution -->
+   <div class="md:col-span-2">
+  <strong>Resolution:</strong>
+  <textarea
+    readonly
+    class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
+  >{{ selectedComplaint?.resolution }}</textarea>
+</div>
+<div>
+        <strong>Date:</strong><br />
+        {{ selectedComplaint?.date }}
+      </div>
+      <div>
+        <strong>Filing Date:</strong><br />
+        {{ selectedComplaint?.filing_date }}
+      </div>
+      <div>
+        <strong>Complainant ID:</strong><br />
+        ID: {{ selectedComplaint?.complainant_id }}
+      </div>
+      <div>
+        <strong>Respondent ID:</strong><br />
+        ID: {{ selectedComplaint?.respondent_id }}
+      </div>
+      <div>
+  <strong>Status:</strong><br />
+  {{ selectedComplaint?.status || 'N/A' }}
+</div>
 
     </div>
   </div>
 </div>
-
-  </div>
+</div>
 </template>
