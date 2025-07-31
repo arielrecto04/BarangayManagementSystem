@@ -22,7 +22,7 @@ return new class extends Migration
             $table->longText('resolution');
             $table->string('date');
             $table->string('filing_date');
-            $table->string('status')->default('N/A'); // Added status field with default value
+            $table->string('status')->default('N/A');
             $table->foreignId('respondent_id')->constrained('residents')->nullOnDelete();
             $table->foreignId('complainant_id')->constrained('residents')->nullOnDelete();
             $table->timestamps();
