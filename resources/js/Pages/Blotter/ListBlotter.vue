@@ -24,14 +24,14 @@ const formatDate = (dateString) => {
 const columns = [
     { key: "blotter_no", label: "Blotter ID" },
     { key: "title_case", label: "Title" },
-    { key: "resident", label: "Resident" }, // This should be a computed/display field in your data
+    { key: "complainants_id", label: "Complainant ID" },
+    { key: "respondents_id", label: "Respondent ID" },
     { key: "status", label: "Status" },
     { 
         key: "filing_date", 
         label: "Date",
         formatter: (value) => formatDate(value)
-    },
-    
+    }
 ];
 
 const deleteBlotter = async (blotterId) => {
