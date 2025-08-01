@@ -181,7 +181,28 @@ const routes = [
             title: "Health Services",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/HealthServices.vue"),
+        redirect: { name: "Health Dashboard"},
+        component: () => import("@/Pages/HealthService/ParentHealthServiceView.vue"),
+        children: [
+            {
+                path: "dashboard",
+                name: "Health Dashboard",
+                meta: {
+                    title: "Health Dashboard",
+                    requiresAuth: true,
+                }, 
+                component: () => import("@/Pages/Dashboard/HealthServices.vue"),
+            },
+            {
+                path: "inventory",
+                name: "Medicine Inventory",
+                meta: {
+                    title: "Medicine Inventory",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Dashboard/HealthServices.vue"),
+            },
+        ]
     },
     {
         path: "/",
