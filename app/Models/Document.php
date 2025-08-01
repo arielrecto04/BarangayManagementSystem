@@ -16,7 +16,7 @@ class Document extends Model
         'assignable_type',
     ];
 
-    public function user()
+    public function uploadedBy()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
