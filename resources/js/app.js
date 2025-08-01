@@ -1,4 +1,5 @@
 import "./bootstrap";
+import 'venobox/dist/venobox.min.css';
 
 import { createApp } from "vue";
 import App from "@/App.vue";

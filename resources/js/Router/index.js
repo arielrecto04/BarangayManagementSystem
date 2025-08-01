@@ -237,10 +237,10 @@ router.beforeEach((to, from, next) => {
         next({ name: "Login" });
         return;
     }
-    if (!to.meta.requiresAuth && auth.isAuthenticated) {
-        next({ name: "Dashboard" });
-        return;
-    }
+    // if (!to.meta.requiresAuth && auth.isAuthenticated && to.name == "Login" ) {
+    //     next({ name: "Dashboard" });
+    //     return;
+    // }
 
     next();
 });

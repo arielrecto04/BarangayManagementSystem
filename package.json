@@ -20,6 +20,7 @@
         "mark.js": "^8.11.1",
         "pinia": "^3.0.3",
         "sweetalert2": "^11.22.2",
+        "venobox": "^2.1.8",
         "vue": "^3.5.17",
         "vue-multiselect": "^3.3.1",
         "vue-router": "^4.5.1"
