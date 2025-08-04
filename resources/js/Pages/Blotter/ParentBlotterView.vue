@@ -59,6 +59,10 @@ const router = useRouter();
                 </div>
             </div>
         </div>
-        <router-view></router-view>
-    </AuthLayout>
+      </div>
+
+      <!-- Nested ListBlotterView.vue goes here -->
+      <router-view :key="$route.fullPath"/>
+    </div>
+  </AuthLayout>
 </template>
