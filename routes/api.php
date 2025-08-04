@@ -25,11 +25,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/search', [ProjectController::class, 'search']);
     });
 
+    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
+
+
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);
     Route::apiResource('blotters', BlotterController::class);
     Route::apiResource('complaints', ComplaintController::class);
     Route::apiResource('projects', ProjectController::class);
     Route::apiResource('documents', DocumentController::class);
-
 });
