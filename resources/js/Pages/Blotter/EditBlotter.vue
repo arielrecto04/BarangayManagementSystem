@@ -1,14 +1,20 @@
 <script setup>
-import { useResidentStore } from '@/Stores'
-import { ref, onMounted } from 'vue'
+import { useBlotterStore, useResidentStore } from '@/Stores'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
 import { storeToRefs } from 'pinia';
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
 const { showToast } = useToast();
 
+const blotterStore = useBlotterStore();
 const residentStore = useResidentStore();
+const residents = ref([]);
+const selectedComplainant = ref(null);
+const selectedRespondent = ref(null);
 
 const { resident, isLoading } = storeToRefs(residentStore);
 
@@ -27,9 +33,18 @@ const updateResidentData  = async () => {
 }
 
 
-onMounted(() => {
-    residentStore.getResidentById(residentId);
+onMounted(async () => {
+    await residentStore.getResidents();
+    residents.value = residentStore.residents;
+    await blotterStore.getBlotterById(blotterId);
 });
+
+watch(() => blotter.value, (newBlotter) => {
+    if (newBlotter) {
+        selectedComplainant.value = residents.value.find(r => r.id == newBlotter.complainants_id);
+        selectedRespondent.value = residents.value.find(r => r.id == newBlotter.respondents_id);
+    }
+}, { immediate: true });
 
 
 </script>
@@ -90,12 +105,30 @@ onMounted(() => {
                             </select>
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant ID</label>
-                            <input id="complainants_id" type="text" v-model="blotter.complainants_id" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                            <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant</label>
+                            <Multiselect
+                                v-model="selectedComplainant"
+                                :options="residents"
+                                :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
+                                track-by="id"
+                                placeholder="Search or select complainant"
+                                :searchable="true"
+                                :show-labels="false"
+                                @input="val => blotter.complainants_id = val?.id"
+                            />
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent ID</label>
-                            <input id="respondents_id" type="text" v-model="blotter.respondents_id" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                            <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent</label>
+                            <Multiselect
+                                v-model="selectedRespondent"
+                                :options="residents"
+                                :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
+                                track-by="id"
+                                placeholder="Search or select respondent"
+                                :searchable="true"
+                                :show-labels="false"
+                                @input="val => blotter.respondents_id = val?.id"
+                            />
                         </div>
                         <div class="flex flex-col gap-2">
                             <label for="place" class="text-sm font-semibold text-gray-600">Place</label>
@@ -172,3 +205,37 @@ onMounted(() => {
         </template>
     </div>
 </template>
+
+<style>
+.multiselect {
+  min-height: auto;
+}
+
+.multiselect__tags {
+  min-height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+}
+
+.multiselect__input,
+.multiselect__single {
+  font-size: 1rem;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.multiselect__placeholder {
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-left: 0;
+}
+
+.multiselect__option--highlight {
+  background: #3b82f6;
+}
+
+.multiselect__option--highlight::after {
+  background: #3b82f6;
+}
+</style>

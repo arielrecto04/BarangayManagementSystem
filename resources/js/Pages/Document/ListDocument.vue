@@ -192,6 +192,7 @@ watch(() => documentStore.documents, () => {
 
 
 onUnmounted(() => {
+    // venoBox.value.destroy();
     venoBox.value.close();
 })
 
