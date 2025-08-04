@@ -80,7 +80,7 @@ const resolved = computed(() => blotters.value.filter(b => b.status === 'Resolve
       </div>
 
       <!-- Nested ListBlotterView.vue goes here -->
-      <router-view />
+      <router-view :key="$route.fullPath"/>
     </div>
   </AuthLayout>
 </template>

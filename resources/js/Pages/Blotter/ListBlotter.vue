@@ -1,6 +1,7 @@
 <script setup>
 import { AuthLayout } from "@/Layouts";
 import { Table } from '@/Components'
+import { useRoute } from "vue-router";
 import { useBlotterStore } from '@/Stores'
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from "vue";
@@ -8,6 +9,7 @@ import useToast from '@/Utils/useToast';
 
 const { showToast } = useToast();
 
+const route = useRoute();   
 const blotterStore = useBlotterStore();
 const { blotters, isLoading } = storeToRefs(blotterStore);
 
