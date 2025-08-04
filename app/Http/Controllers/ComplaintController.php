@@ -34,14 +34,21 @@ class ComplaintController extends Controller
             'case_no' => 'required|string',
             'title' => 'required|string',
             'description' => 'required|string',
-            'resolution' => 'nullable|string',
-            'date' => 'required|date',
+            'resolution' => 'required|string',
             'filing_date' => 'required|date',
             'complainant_id' => 'required|exists:residents,id',
             'respondent_id' => 'required|exists:residents,id',
-            'status' => 'nullable|string',
+            'status' => 'required|string',
+            'nature_of_complaint' => 'required|string',
+            'incident_datetime' => 'required|date',
+            'incident_location' => 'required|string',
+            'supporting_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
+            'witness' => 'required|string',
         ]);
-         $complaint = Complaint::create($validated);
+        if ($request->hasFile('supporting_document')) {
+            $validated['supporting_document'] = $request->file('supporting_document')->store('documents', 'public');
+        }
+        $complaint = Complaint::create($validated);
 
         return response()->json([
             'message' => 'Complaint created successfully',
@@ -71,16 +78,23 @@ class ComplaintController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-    'complainant_name' => 'sometimes|string',
-    'respondent_name' => 'sometimes|string',
-    'case_no' => 'sometimes|string',
-    'title' => 'sometimes|string',
-    'description' => 'sometimes|string',
-    'resolution' => 'nullable|string',
-    'date' => 'sometimes|date',
-    'filing_date' => 'sometimes|date',
-    'status' => 'nullable|string',
+            'complainant_name' => 'required|string',
+            'respondent_name' => 'required|string',
+            'case_no' => 'required|string',
+            'title' => 'required|string',
+            'description' => 'required|string',
+            'resolution' => 'required|string',
+            'filing_date' => 'required|date',
+            'status' => 'required|string',
+            'nature_of_complaint' => 'required|string',
+            'incident_datetime' => 'required|date',
+            'incident_location' => 'required|string',
+            'supporting_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
+            'witness' => 'required|string',
         ]);
+        if ($request->hasFile('supporting_document')) {
+            $validated['supporting_document'] = $request->file('supporting_document')->store('documents', 'public');
+        }
         $complaint = Complaint::findOrFail($id);
         $complaint->update($request->all());
 
