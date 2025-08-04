@@ -27,6 +27,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/search', [ProjectController::class, 'search']);
     });
 
+    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
+
+
     Route::prefix('document-requests')->group(function () {
         Route::get('/statistic', [DocumentRequestController::class, 'statistic']);
         Route::get('/search', [DocumentRequestController::class, 'search']);

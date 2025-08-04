@@ -1,4 +1,30 @@
 <script setup>
+import { AuthLayout } from "@/Layouts";
+import { Table, Paginate } from '@/Components';
+import { useComplaintStore } from '@/Stores';
+import { storeToRefs } from 'pinia';
+import { onMounted, ref } from "vue";
+import useToast from '@/Utils/useToast';
+import { useRoute, useRouter } from 'vue-router';
+import { watch } from 'vue';
+
+// Format date and time
+const formatDateTime = (isoString) => {
+  if (!isoString) return 'N/A';
+
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  };
+
+  return new Date(isoString).toLocaleString('en-US', options);
+};
+
+
 const { showToast } = useToast();
 const route = useRoute();
 const router = useRouter();
@@ -62,7 +88,7 @@ const columns = [
   { key: "respondent_name", label: "Respondent" },
   { key: "case_no", label: "Case No" },
   { key: "title", label: "Title" },
-  { key: "filing_date", label: "Filing Date" },
+  { key: "formatted_filing_date", label: "Filing Date" },
   { key: "status", label: "Status" }
 ];
 
@@ -71,7 +97,7 @@ onMounted(() => {
   const status = route.query.status;
 
   if (status) {
-    complaintStore.getComplaints(page, status); // assumes getComplaints supports filter
+    complaintStore.getComplaints(page, status);
   } else {
     complaintStore.getComplaints(page);
   }
@@ -94,7 +120,10 @@ watch(complaints, (newComplaints) => {
       <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
     </div>
 
-    <Table v-else :columns="columns" :rows="complaints">
+    <Table v-else :columns="columns" :rows="complaints.map(c => ({
+      ...c,
+      formatted_filing_date: formatDateTime(c.filing_date)
+    }))">
       <template #actions="{ row }">
         <router-link :to="`/complaints/edit-complaint/${row.id}`" class="bg-blue-500 text-white px-2 py-1 rounded">
           Edit
@@ -111,111 +140,123 @@ watch(complaints, (newComplaints) => {
           <option value="Resolved">Resolved</option>
         </select>
 
-        <button
-          @click="updateStatus(row.id)"
-          class="bg-green-500 text-white px-2 py-1 rounded ml-2">
+        <button @click="updateStatus(row.id)" class="bg-green-500 text-white px-2 py-1 rounded ml-2">
           Apply
         </button>
 
         <!-- View Button -->
-<button
-  @click="openModal(row)"
-  class="bg-gray-500 text-white px-2 py-1 rounded ml-2"
->
-  View
-</button>
+        <button @click="openModal(row)" class="bg-gray-500 text-white px-2 py-1 rounded ml-2">
+          View
+        </button>
 
       </template>
     </Table>
 
-    <Paginate
-      v-if="paginate && !isLoading"
-      @page-changed="handlePageChange"
-      :maxVisibleButtons="5"
-      :totalPages="paginate.last_page"
-      :totalItems="paginate.total"
-      :currentPage="paginate.current_page"
-      :itemsPerPage="paginate.per_page"
-    />
+    <Paginate v-if="paginate && !isLoading" @page-changed="handlePageChange" :maxVisibleButtons="5"
+      :totalPages="paginate.last_page" :totalItems="paginate.total" :currentPage="paginate.current_page"
+      :itemsPerPage="paginate.per_page" />
 
- <!-- Modal -->
-<div
-  v-if="showModal"
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
->
-  <div
-    class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto"
-  >
-    <!-- Close Button -->
-    <button
-      @click="closeModal"
-      class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl"
-    >
-      &times;
-    </button>
+    <!-- Modal -->
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+        <!-- Close Button -->
+        <button @click="closeModal" class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">
+          &times;
+        </button>
 
-    <!-- Modal Title -->
-    <h2 class="text-lg font-bold mb-6 text-gray-700">Complaint Details</h2>
+        <!-- Modal Title -->
+        <h2 class="text-lg font-bold mb-6 text-gray-700">Complaint Details</h2>
 
-    <!-- Grid Layout for Fields -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
-      <div>
-        <strong>Complainant:</strong><br />
-        {{ selectedComplaint?.complainant_name }}
-      </div>
-      <div>
-        <strong>Respondent:</strong><br />
-        {{ selectedComplaint?.respondent_name }}
-      </div>
-      <div>
-        <strong>Case No:</strong><br />
-        {{ selectedComplaint?.case_no }}
-      </div>
-      <div>
-        <strong>Title:</strong><br />
-        {{ selectedComplaint?.title }}
-      </div>
+        <!-- Grid Layout for Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
+          <!-- Complaint Name -->
+          <div>
+            <strong>Complainant:</strong><br />
+            {{ selectedComplaint?.complainant_name }}
+          </div>
+          <!-- Respondent Name -->
+          <div>
+            <strong>Respondent:</strong><br />
+            {{ selectedComplaint?.respondent_name }}
+          </div>
+          <!-- Nature of Complaint -->
+          <div>
+            <strong>Nature of Complaint:</strong><br />
+            {{ selectedComplaint?.nature_of_complaint }}
+          </div>
+          <!-- Location of Incident -->
+          <div>
+            <strong>Location of Incident:</strong><br />
+            {{ selectedComplaint?.incident_location }}
+          </div>
+          <!-- Case Number -->
+          <div>
+            <strong>Case Number:</strong><br />
+            {{ selectedComplaint?.case_no }}
+          </div>
+          <!-- Title -->
+          <div>
+            <strong>Title:</strong><br />
+            {{ selectedComplaint?.title }}
+          </div>
 
-      <!-- Description with scroll -->
-   <div class="md:col-span-2">
-  <strong>Description:</strong>
-  <textarea
-    readonly
-    class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
-  >{{ selectedComplaint?.description }}</textarea>
-</div>
+          <!-- Description with scroll -->
+          <div class="md:col-span-2">
+            <strong>Description:</strong>
+            <textarea readonly
+              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
+                selectedComplaint?.description }}</textarea>
+          </div>
 
-<!-- Resolution -->
-   <div class="md:col-span-2">
-  <strong>Resolution:</strong>
-  <textarea
-    readonly
-    class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
-  >{{ selectedComplaint?.resolution }}</textarea>
-</div>
-<div>
-        <strong>Date:</strong><br />
-        {{ selectedComplaint?.date }}
-      </div>
-      <div>
-        <strong>Filing Date:</strong><br />
-        {{ selectedComplaint?.filing_date }}
-      </div>
-      <div>
-        <strong>Complainant ID:</strong><br />
-        ID: {{ selectedComplaint?.complainant_id }}
-      </div>
-      <div>
-        <strong>Respondent ID:</strong><br />
-        ID: {{ selectedComplaint?.respondent_id }}
-      </div>
-      <div>
-  <strong>Status:</strong><br />
-  {{ selectedComplaint?.status || 'N/A' }}
-</div>
+          <!-- Resolution -->
+          <div class="md:col-span-2">
+            <strong>Resolution:</strong>
+            <textarea readonly
+              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
+                selectedComplaint?.resolution }}</textarea>
+          </div>
+          <!-- Date and Time of Incident -->
+          <div>
+            <strong>Date & Time of Incident:</strong><br />
+            {{ formatDateTime(selectedComplaint?.incident_datetime) }}
+          </div>
+          <!-- Filing data and time -->
+          <div>
+            <strong>Filing Date & Time:</strong><br />
+            {{ formatDateTime(selectedComplaint?.filing_date) }}
+          </div>
+          <!-- Complainant ID -->
+          <div>
+            <strong>Complainant ID:</strong><br />
+            ID: {{ selectedComplaint?.complainant_id }}
+          </div>
+          <!-- Respondent ID -->
+          <div>
+            <strong>Respondent ID:</strong><br />
+            ID: {{ selectedComplaint?.respondent_id }}
+          </div>
+          <!-- Witness -->
+          <div>
+            <strong>Witness(es):</strong><br />
+            {{ selectedComplaint?.witness || 'N/A' }}
+          </div>
+          <!-- Status -->
+          <div>
+            <strong>Status:</strong><br />
+            {{ selectedComplaint?.status || 'N/A' }}
+          </div>
+          <!-- Supporting Documents -->
+          <div>
+            <strong>Supporting Documents:</strong><br />
+            <ul class="list-disc pl-5">
+              <li v-for="(doc, index) in selectedComplaint?.supporting_documents" :key="index">
+                <a :href="doc.url" target="_blank" class="text-blue-500 hover:underline">{{ doc.name }}</a>
+              </li>
+            </ul>
+          </div>
 
+        </div>
+      </div>
     </div>
   </div>
-</div>
-</div>
 </template>

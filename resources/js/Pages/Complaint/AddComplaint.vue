@@ -167,7 +167,7 @@ const submitForm = async () => {
             <option value="Domestic/Family Disputes">Domestic/Family Disputes</option>
             <option value="Community & Public Order">Community & Public Order</option>
             <option value="VAWC">VAWC</option>
-            <option value="Business or Economic">Business or Economic</option>
+            <option value="Business | Economic">Business | Economic</option>
           </select>
         </div>
         <!-- Case Number -->
