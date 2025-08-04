@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('file_path');
             $table->string('file_sizes');
             $table->foreignIdFor(User::class, 'uploaded_by')->constrained('users')->onDelete('cascade');
-            $table->morphs('assignable');
+            $table->nullableMorphs('assignable');
             $table->timestamps();
         });
     }

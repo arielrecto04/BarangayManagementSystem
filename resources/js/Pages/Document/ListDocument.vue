@@ -1,9 +1,11 @@
 <script setup>
-import { ref, watchEffect } from 'vue';
-import {AuthLayout} from '@/Layouts';
-import { Modal } from '@/Components'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { AuthLayout } from '@/Layouts';
+import { Modal, Loader, Table } from '@/Components'
 import { useDocumentStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
+import { ArrowDownOnSquareIcon, TrashIcon, EyeIcon } from '@heroicons/vue/24/outline'
+import VenoBox from 'venoBox';
 
 
 //instantiate section
@@ -18,8 +20,30 @@ const uploadForm = ref(null);
 const searchQuery = ref('');
 const documentToUpload = ref([]);
 const { documents, isLoading } = storeToRefs(documentStore);
+const venoBox = ref(null);
 
-
+const columns = [
+    {
+        label: 'File Name',
+        key: 'file_name',
+    },
+    {
+        label: 'File Type',
+        key: 'file_type',
+    },
+    {
+        label: 'File Path',
+        key: 'file_path',
+    },
+    {
+        label: 'File Size',
+        key: 'file_sizes',
+    },
+    {
+        label: 'Uploaded By',
+        key: 'uploaded_by',
+    }
+];
 
 const getDocuments = (e) => {
     const files = e.target.files;
@@ -31,11 +55,12 @@ const getDocuments = (e) => {
         file: file,
         lastModified: file.lastModified,
         progress: 0,
-        status: 'pending'
+        status: 'pending',
+        error: null
     }));
 
 
-    console.log(documentToUpload.value);
+    console.log(documentToUpload.value, 'documentToUpload.value in getDocuments');
 }
 
 // File icon component
@@ -89,31 +114,30 @@ const uploadModalAction = () => {
 
 
 const uploadDocuments = async () => {
-    console.log(documentToUpload.value);
-  const uploadPromises  = documentToUpload.value.map(doc => {
+    console.log(documentToUpload.value, 'documentToUpload.value in uploadDocuments');
+    const uploadPromises = documentToUpload.value.map(doc => {
 
-    const formData = new FormData();
+        const formData = new FormData();
 
-    formData.append('document', doc.file);
-    doc.status = 'uploading';
+        formData.append('document', doc.file);
+        doc.status = 'uploading';
 
-    return documentStore.addDocument(formData, (progressEvent) => {
-      doc.progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-    }).then(() => {
-      doc.status = 'uploaded';
-    }).catch((error) => {
-      doc.status = 'failed';
+        return documentStore.addDocument(formData, (progressEvent) => {
+            doc.progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        }).then(() => {
+            doc.status = 'uploaded';
+        }).catch((error) => {
+            doc.status = 'failed';
+            doc.error = error;
+        });
     });
-  });
 
-  try {
-    await Promise.all(uploadPromises);
-    showUploadModal.value = false;
-    documentToUpload.value = [];
-    uploadModalAction();
-  } catch (error) {
-    console.error(error);
-  }
+    try {
+        await Promise.all(uploadPromises);
+
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 // Hardcoded data
@@ -124,48 +148,6 @@ const quickAccess = [
     { id: 4, name: 'Trash', itemCount: 3 }
 ];
 
-const files = [
-    {
-        id: 1,
-        name: 'Annual Report 2023.pdf',
-        type: 'PDF',
-        owner: 'John Doe',
-        modified: '2023-11-15T14:30:00Z',
-        size: 2457600
-    },
-    {
-        id: 2,
-        name: 'Project Proposal.docx',
-        type: 'Document',
-        owner: 'Jane Smith',
-        modified: '2023-11-14T09:15:00Z',
-        size: 512000
-    },
-    {
-        id: 3,
-        name: 'Budget Q4.xlsx',
-        type: 'Spreadsheet',
-        owner: 'Mike Johnson',
-        modified: '2023-11-10T16:45:00Z',
-        size: 1024000
-    },
-    {
-        id: 4,
-        name: 'Team Meeting.pptx',
-        type: 'Presentation',
-        owner: 'Sarah Williams',
-        modified: '2023-11-08T11:20:00Z',
-        size: 3072000
-    },
-    {
-        id: 5,
-        name: 'Design Assets',
-        type: 'Folder',
-        owner: 'Alex Chen',
-        modified: '2023-11-05T13:10:00Z',
-        size: 0
-    }
-];
 
 
 
@@ -188,6 +170,22 @@ const formatFileSize = (bytes) => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
+
+
+onMounted(() => {
+    documentStore.getDocuments();
+    venoBox.value = new VenoBox({
+        selector: '.venobox',
+        numeration: true,
+        infinigall: true,
+    });
+})
+
+
+onUnmounted(() => {
+    venoBox.value.destroy();
+})
+
 </script>
 
 
@@ -198,15 +196,21 @@ const formatFileSize = (bytes) => {
             <div class="flex justify-between items-center mb-8">
                 <h1 class="text-2xl font-semibold text-gray-800">My Drive</h1>
                 <div class="flex space-x-3">
-                    <button @click="uploadModalAction" class="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    <button @click="uploadModalAction"
+                        class="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                clip-rule="evenodd" />
                         </svg>
                         New
                     </button>
                     <button class="p-2 border rounded-lg hover:bg-gray-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path
+                                d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                         </svg>
                     </button>
                 </div>
@@ -216,20 +220,27 @@ const formatFileSize = (bytes) => {
             <div class="mb-6 flex justify-between items-center">
                 <div class="relative w-1/3">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <input type="text" v-model="searchQuery" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent" placeholder="Search in Drive">
+                    <input type="text" v-model="searchQuery"
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
+                        placeholder="Search in Drive">
                 </div>
                 <div class="flex space-x-2">
-                    <select class="border border-gray-100 shadow-sm bg-white rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent py-2 text-sm text-gray-600">
+                    <select
+                        class="border border-gray-100 shadow-sm bg-white rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent py-2 text-sm text-gray-600">
                         <option>Type</option>
                         <option>Documents</option>
                         <option>Spreadsheets</option>
                         <option>Presentations</option>
                     </select>
-                        <select class="border border-gray-100 shadow-sm bg-white rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent py-2 text-sm text-gray-600">
+                    <select
+                        class="border border-gray-100 shadow-sm bg-white rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent py-2 text-sm text-gray-600">
                         <option>Last modified</option>
                         <option>Name (A-Z)</option>
                         <option>Name (Z-A)</option>
@@ -241,11 +252,14 @@ const formatFileSize = (bytes) => {
             <div class="mb-8">
                 <h2 class="text-sm font-medium text-gray-500 mb-4">QUICK ACCESS</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div v-for="folder in quickAccess" :key="folder.id" class="p-4 bg-white shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <div v-for="folder in quickAccess" :key="folder.id"
+                        class="p-4 bg-white shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                         <div class="flex items-center">
                             <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                                 </svg>
                             </div>
                             <div>
@@ -264,96 +278,84 @@ const formatFileSize = (bytes) => {
                     <button class="text-sm text-blue-600 hover:text-blue-800">View all</button>
                 </div>
 
+
+
                 <!-- Table View -->
-                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last modified</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File size</th>
-                                <th scope="col" class="relative px-6 py-3">
-                                    <span class="sr-only">Actions</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="item in files" :key="item.id" class="hover:bg-gray-50 cursor-pointer">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 text-gray-400">
-                                            <FileIcon :type="item.type" />
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ item.name }}</div>
-                                            <div class="text-sm text-gray-500">{{ item.type }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
-                                            {{ getInitials(item.owner) }}
-                                        </div>
-                                        <div class="ml-3">
-                                            <div class="text-sm text-gray-900">{{ item.owner }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ formatDate(item.modified) }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ formatFileSize(item.size) }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button @click.stop class="text-gray-400 hover:text-gray-600 mr-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                        </svg>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+
+                <Loader v-if="isLoading" />
+                <Table :columns="columns" :rows="documents" :searchable="false" :selectable="false">
+
+                    <template #cell(uploaded_by)="{ row }">
+                        <div class="flex items-center gap-2">
+                            <img :src="`https://ui-avatars.com/api/?name=${row.uploaded_by.name}`" alt=""
+                                class="w-10 h-10 rounded-full">
+                            {{ row.uploaded_by.name }}
+                        </div>
+                    </template>
+                    <template #actions="{ row }">
+                        <a :href="row.file_path" class="venobox p-2 bg-gray-50 rounded-lg hover:bg-gray-100"
+                            data-gall="document-gallery" data-vbtype="iframe">
+                            <EyeIcon class="w-5 h-5" />
+                        </a>
+                        <button @click="downloadDocument(row)" class="p-2 bg-gray-50 rounded-lg hover:bg-gray-100">
+                            <ArrowDownOnSquareIcon class="w-5 h-5" />
+                        </button>
+                        <button @click="deleteDocument(row)" class="p-2 bg-red-500 rounded-lg hover:bg-red-600">
+                            <TrashIcon class="w-5 h-5 text-white" />
+                        </button>
+                    </template>
+
+                </Table>
+
             </div>
         </div>
 
         <Modal title="Upload Document" :show="showUploadModal" @close="uploadModalAction">
             <form ref="uploadForm" @submit.prevent="uploadDocuments" enctype="multipart/form-data">
 
-                <label for="documents" class="text-sm font-medium text-gray-700 w-full border border-gray-200 rounded-md p-2 items-center flex cursor-pointer h-12 gap-5 ">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                <label for="documents"
+                    class="text-sm font-medium text-gray-700 w-full border border-gray-200 rounded-md p-2 items-center flex cursor-pointer h-12 gap-5 ">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     <span class="flex items-center">Choose file</span>
-                    <input type="file" @change="getDocuments($event)" hidden name="documents" id="documents" multiple class="mt-1 block w-full">
+                    <input type="file" @change="getDocuments($event)" hidden name="documents" id="documents" multiple
+                        class="mt-1 block w-full">
                 </label>
 
 
                 <div v-if="documentToUpload.length" class="mt-4">
                     <ul>
                         <li v-for="document in documentToUpload" :key="document.name">
-                           <div class="flex flex-col gap-2 p-2 border border-gray-200 rounded-md mb-2">
-                            <p class="font-medium">{{ document.name }}</p>
+                            <div class="flex flex-col gap-2 p-2 border border-gray-200 rounded-md mb-2">
+                                <p class="font-medium">{{ document.name }}</p>
 
-                            <div class="flex items-center gap-2">
-                                <p class="text-sm text-gray-500">{{ document.type }}</p>
-                                <p class="text-sm text-gray-500">{{ formatFileSize(document.size) }}</p>
-                            </div>
+                                <div class="flex items-center gap-2">
+                                    <p class="text-sm text-gray-500">{{ document.type }}</p>
+                                    <p class="text-sm text-gray-500">{{ formatFileSize(document.size) }}</p>
+                                </div>
 
-                            <div class="flex items-center gap-2">
-                                <p :class="document.status === 'uploading' ? 'text-sm text-green-500 font-medium' : 'text-sm text-red-500 font-medium'">{{ document.progress }} %</p>
-                                <p :class="document.status === 'uploading' ? 'text-sm text-green-500 font-medium' : 'text-sm text-red-500 font-medium'">{{ document.status }}</p>
+                                <div class="flex items-center gap-2">
+                                    <p
+                                        :class="document.status === 'uploaded' || document.status === 'uploading' ? 'text-sm text-green-500 font-medium' : 'text-sm text-red-500 font-medium'">
+                                        {{ document.progress }} %</p>
+                                    <p
+                                        :class="document.status === 'uploaded' || document.status === 'uploading' ? 'text-sm text-green-500 font-medium' : 'text-sm text-red-500 font-medium'">
+                                        {{ document.status }}</p>
+                                </div>
                             </div>
-                           </div>
                         </li>
                     </ul>
                 </div>
 
-                <button type="submit" class="mt-4 inline-flex justify-center rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700">Upload</button>
+                <div class="mt-4 flex items-center gap-2">
+                    <button type="submit"
+                        class="mt-4 inline-flex justify-center rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700">Upload</button>
+                    <button type="button" @click="uploadModalAction"
+                        class="mt-4 inline-flex justify-center rounded-md border border-transparent bg-gray-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-700">Cancel</button>
+                </div>
             </form>
         </Modal>
     </AuthLayout>

@@ -13,7 +13,7 @@ class DocumentController extends Controller
      */
     public function index()
     {
-        //
+        return Document::with('uploadedBy')->paginate(10);
     }
 
     /**
@@ -29,20 +29,19 @@ class DocumentController extends Controller
      */
     public function store(Request $request)
     {
-
         $request->validate([
             'document' => 'required|file|mimes:pdf,doc,docx|max:2048'
         ]);
 
 
-        $path = $request->file('document')->storeAs('documents', $request->file('document')->getClientOriginalName());
+        $path = $request->document->storeAs('/public/documents', str_replace(' ', '_', $request->document->getClientOriginalName()), 'public');
 
 
         $Document = Document::create([
-            'file_name' => $request->file('document')->getClientOriginalName(),
-            'file_type' => $request->file('document')->getClientOriginalExtension(),
-            'file_path' => $path,
-            'file_sizes' => $request->file('document')->getSize(),
+            'file_name' => $request->document->getClientOriginalName(),
+            'file_type' => $request->document->getClientOriginalExtension(),
+            'file_path' => asset('storage/' . $path),
+            'file_sizes' => $request->document->getSize(),
             'uploaded_by' => Auth::user()->id,
         ]);
 
