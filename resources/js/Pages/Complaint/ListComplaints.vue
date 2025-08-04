@@ -56,6 +56,7 @@ const closeModal = () => {
   selectedComplaint.value = null;
 };
 
+const emit = defineEmits(['status-updated']);
 
 const updateStatus = async (complaintId) => {
   const updatedStatus = statusUpdates.value[complaintId];
@@ -65,8 +66,11 @@ const updateStatus = async (complaintId) => {
   }
   try {
     await complaintStore.updateComplaint(complaintId, { status: updatedStatus });
+    const index = complaints.value.findIndex(c => c.id === complaintId);
+    if (index !== -1) {
+      complaints.value[index].status = updatedStatus;
+    }
     showToast({ icon: 'success', title: 'Status updated successfully' });
-    complaintStore.getComplaints(currentPage.value);
   } catch (error) {
     showToast({ icon: 'error', title: error.message });
   }

@@ -30,7 +30,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/statistic', [DocumentRequestController::class, 'statistic']);
     });
 
-    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
 
 
     Route::apiResource('residents', ResidentController::class);

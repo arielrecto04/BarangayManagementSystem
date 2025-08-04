@@ -78,19 +78,19 @@ class ComplaintController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'complainant_name' => 'required|string',
-            'respondent_name' => 'required|string',
-            'case_no' => 'required|string',
-            'title' => 'required|string',
-            'description' => 'required|string',
-            'resolution' => 'required|string',
-            'filing_date' => 'required|date',
-            'status' => 'required|string',
-            'nature_of_complaint' => 'required|string',
-            'incident_datetime' => 'required|date',
-            'incident_location' => 'required|string',
+            'complainant_name' => 'sometimes|required|string',
+            'respondent_name' => 'sometimes|required|string',
+            'case_no' => 'sometimes|required|string',
+            'title' => 'sometimes|required|string',
+            'description' => 'sometimes|required|string',
+            'resolution' => 'sometimes|required|string',
+            'filing_date' => 'sometimes|required|date',
+            'status' => 'sometimes|required|string',
+            'nature_of_complaint' => 'sometimes|required|string',
+            'incident_datetime' => 'sometimes|required|date',
+            'incident_location' => 'sometimes|required|string',
             'supporting_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
-            'witness' => 'required|string',
+            'witness' => 'sometimes|required|string',
         ]);
         if ($request->hasFile('supporting_document')) {
             $validated['supporting_document'] = $request->file('supporting_document')->store('documents', 'public');
