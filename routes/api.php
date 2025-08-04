@@ -9,6 +9,7 @@ use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\AuthenticationController;
+use App\Http\Controllers\DocumentRequestController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -23,6 +24,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('projects')->group(function () {
         Route::get('/search', [ProjectController::class, 'search']);
+    });
+
+    Route::prefix('document-requests')->group(function () {
+        Route::get('/statistic', [DocumentRequestController::class, 'statistic']);
     });
 
     Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);

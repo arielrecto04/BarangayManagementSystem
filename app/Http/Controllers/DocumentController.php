@@ -13,7 +13,7 @@ class DocumentController extends Controller
      */
     public function index()
     {
-        return Document::with('uploadedBy')->paginate(10);
+        return Document::with('uploadedBy')->latest()->paginate(10);
     }
 
     /**
@@ -30,7 +30,7 @@ class DocumentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'document' => 'required|file|mimes:pdf,doc,docx|max:2048'
+            'document' => 'required|file|max:2048'
         ]);
 
 

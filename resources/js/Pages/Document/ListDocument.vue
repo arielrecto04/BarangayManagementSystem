@@ -1,15 +1,19 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { AuthLayout } from '@/Layouts';
-import { Modal, Loader, Table } from '@/Components'
+import { Modal, Loader, Table, FileType, Paginate } from '@/Components'
 import { useDocumentStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
 import { ArrowDownOnSquareIcon, TrashIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import VenoBox from 'venoBox';
-
+import { formatFileSize } from '@/Utils';
+import { useRoute, useRouter } from 'vue-router';
+import { Squares2X2Icon, TableCellsIcon } from '@heroicons/vue/24/outline'
 
 //instantiate section
 const documentStore = useDocumentStore();
+const route = useRoute();
+const router = useRouter();
 
 
 
@@ -19,21 +23,13 @@ const showUploadModal = ref(false);
 const uploadForm = ref(null);
 const searchQuery = ref('');
 const documentToUpload = ref([]);
-const { documents, isLoading } = storeToRefs(documentStore);
+const { documents, isLoading, paginate } = storeToRefs(documentStore);
 const venoBox = ref(null);
-
+const viewType = ref(route.query.viewType || 'list');
 const columns = [
     {
         label: 'File Name',
         key: 'file_name',
-    },
-    {
-        label: 'File Type',
-        key: 'file_type',
-    },
-    {
-        label: 'File Path',
-        key: 'file_path',
     },
     {
         label: 'File Size',
@@ -44,6 +40,18 @@ const columns = [
         key: 'uploaded_by',
     }
 ];
+const quickAccess = [
+    { id: 1, name: 'Shared with me', itemCount: 24 },
+    { id: 2, name: 'Recent', itemCount: 15 },
+    { id: 3, name: 'Starred', itemCount: 8 },
+    { id: 4, name: 'Trash', itemCount: 3 }
+];
+
+
+const changeViewType = (type) => {
+    viewType.value = type;
+    router.replace({ query: { viewType: type } });
+}
 
 const getDocuments = (e) => {
     const files = e.target.files;
@@ -140,13 +148,7 @@ const uploadDocuments = async () => {
     }
 }
 
-// Hardcoded data
-const quickAccess = [
-    { id: 1, name: 'Shared with me', itemCount: 24 },
-    { id: 2, name: 'Recent', itemCount: 15 },
-    { id: 3, name: 'Starred', itemCount: 8 },
-    { id: 4, name: 'Trash', itemCount: 3 }
-];
+
 
 
 
@@ -163,13 +165,7 @@ const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
-const formatFileSize = (bytes) => {
-    if (bytes === 0) return '--';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
+
 
 
 onMounted(() => {
@@ -182,8 +178,21 @@ onMounted(() => {
 })
 
 
+watch(() => documentStore.documents, () => {
+    if (documentStore.documents.length > 0) {
+        nextTick(() => {
+            venoBox.value = new VenoBox({
+                selector: '.venobox',
+                numeration: true,
+                infinigall: true,
+            });
+        })
+    }
+})
+
+
 onUnmounted(() => {
-    // venoBox.value.destroy();
+    venoBox.value.close();
 })
 
 </script>
@@ -206,12 +215,15 @@ onUnmounted(() => {
                         </svg>
                         New
                     </button>
-                    <button class="p-2 border rounded-lg hover:bg-gray-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20"
-                            fill="currentColor">
-                            <path
-                                d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                        </svg>
+                    <button @click="changeViewType('list')"
+                        :class="viewType === 'list' ? 'p-2 bg-green-700 text-white rounded-lg hover:bg-green-800' : 'p-2 bg-gray-100 rounded-lg hover:bg-green-700 hover:text-white'"
+                        class="duration-300">
+                        <TableCellsIcon class="h-5 w-5" />
+                    </button>
+                    <button @click="changeViewType('grid')"
+                        :class="viewType === 'grid' ? 'p-2 bg-green-700 text-white rounded-lg hover:bg-green-800' : 'p-2 bg-gray-100 rounded-lg hover:bg-green-700 hover:text-white'"
+                        class="duration-300">
+                        <Squares2X2Icon class="h-5 w-5" />
                     </button>
                 </div>
             </div>
@@ -283,8 +295,18 @@ onUnmounted(() => {
                 <!-- Table View -->
 
                 <Loader v-if="isLoading" />
-                <Table :columns="columns" :rows="documents" :searchable="false" :selectable="false">
 
+
+
+                <Table v-show="viewType === 'list'" :columns="columns" :rows="documents" :searchable="false"
+                    :selectable="false">
+
+                    <template #cell(file_name)="{ row }">
+                        <div class="flex items-center gap-2">
+                            <FileType :type="row.file_type" />
+                            {{ row.file_name }}
+                        </div>
+                    </template>
                     <template #cell(uploaded_by)="{ row }">
                         <div class="flex items-center gap-2">
                             <img :src="`https://ui-avatars.com/api/?name=${row.uploaded_by.name}`" alt=""
@@ -292,11 +314,17 @@ onUnmounted(() => {
                             {{ row.uploaded_by.name }}
                         </div>
                     </template>
+                    <template #cell(file_sizes)="{ row }">
+                        {{ formatFileSize(row.file_sizes) }}
+                    </template>
                     <template #actions="{ row }">
-                        <a :href="row.file_path" class="venobox p-2 bg-gray-50 rounded-lg hover:bg-gray-100"
+
+
+                        <button :data-href="row.file_path" class="venobox p-2 bg-gray-50 rounded-lg hover:bg-gray-100"
                             data-gall="document-gallery" data-vbtype="iframe">
                             <EyeIcon class="w-5 h-5" />
-                        </a>
+                        </button>
+
                         <button @click="downloadDocument(row)" class="p-2 bg-gray-50 rounded-lg hover:bg-gray-100">
                             <ArrowDownOnSquareIcon class="w-5 h-5" />
                         </button>
@@ -307,6 +335,34 @@ onUnmounted(() => {
 
                 </Table>
 
+
+
+                <d v-show="viewType === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div v-for="document in documents" :key="document.id"
+                        class="p-4 bg-white shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <a :data-href="document.file_path" data-gall="document-gallery" data-vbtype="iframe"
+                            class="venobox flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                                <FileType :type="document.file_type" />
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-900">{{ document.file_name }}</h3>
+                                <p class="text-sm text-gray-500">{{ document.file_sizes }}</p>
+                            </div>
+                        </a>
+                    </div>
+                </d>
+
+
+                <template v-if="documents.length === 0">
+                    <div class="flex items-center justify-center h-full">
+                        <p class="text-gray-600">No documents found</p>
+                    </div>
+                </template>
+
+                <Paginate :maxVisibleButtons="5" :totalPages="paginate.total" :totalItems="paginate.total"
+                    :itemsPerPage="paginate.per_page" :currentPage="paginate.current_page"
+                    @page-changed="getDocuments" />
             </div>
         </div>
 

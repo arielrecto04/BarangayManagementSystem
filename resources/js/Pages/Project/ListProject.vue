@@ -14,8 +14,8 @@ import {
     PlusIcon,
     UserGroupIcon,
     FolderOpenIcon,
+    Squares2X2Icon,
     TableCellsIcon,
-    ListBulletIcon
 } from '@heroicons/vue/24/outline';
 import { useProjectStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
@@ -214,11 +214,11 @@ onMounted(async () => {
                     </select>
                     <button @click="handleViewModeChange('grid')"
                         :class="viewMode === 'grid' ? 'p-2 bg-green-700 rounded-md hover:bg-green-800 transition-colors text-white' : 'p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors'">
-                        <TableCellsIcon class="w-5 h-5" />
+                        <Squares2X2Icon class="w-5 h-5" />
                     </button>
                     <button @click="handleViewModeChange('list')"
                         :class="viewMode === 'list' ? 'p-2 bg-green-700 rounded-md hover:bg-green-800 transition-colors text-white' : 'p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors'">
-                        <ListBulletIcon class="w-5 h-5" />
+                        <TableCellsIcon class="w-5 h-5" />
                     </button>
                 </div>
             </div>
