@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthenticationStore } from "@/Stores";
 
+
 const routes = [
     {
         // path: "/",
@@ -71,11 +72,40 @@ const routes = [
     {
         path: "/documents",
         name: "Documents",
+        redirect: { name: "Document Dashboard" },
         meta: {
             title: "Documents",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Document/ListDocument.vue"),
+        children: [
+            {
+                path: "list-documents",
+                name: "List Documents",
+                meta: {
+                    title: "List Documents",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Document/ListDocument.vue"),
+            },
+            {
+                path: "dashboard",
+                name: "Document Dashboard",
+                meta: {
+                    title: "Dashboard",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Document/Dashboard.vue"),
+            },
+            {
+                path: "add-document",
+                name: "Add Document",
+                meta: {
+                    title: "Add Document",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Document/AddRequestDocument.vue"),
+            },
+        ],
     },
     {
         path: "/complaints",

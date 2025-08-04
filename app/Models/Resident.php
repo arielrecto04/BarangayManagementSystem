@@ -42,4 +42,8 @@ class Resident extends Model
         return $this->morphTo();
     }
 
+    public function documentRequests()
+    {
+        return $this->morphMany(DocumentRequest::class,'requestable');
+    }
 }

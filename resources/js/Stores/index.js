@@ -5,3 +5,4 @@ export { useBlotterStore } from "./useBlotterStore";
 export { useComplaintStore } from "./useComplaintStore";
 export { useProjectStore } from "./useProjectStore";
 export { useDocumentStore } from "./useDocumentStore";
+export { useDocumentRequestStore } from "./useDocumentRequestStore";
