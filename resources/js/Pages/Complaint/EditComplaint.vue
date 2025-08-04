@@ -37,6 +37,7 @@ onMounted(async () => {
     residents.value = residentStore.residents;
 
     const response = await axios.get(`/api/complaints/${complaintId}`);
+    console.log(response.data);
     Object.assign(complaintForm.value, response.data);
   } catch (error) {
     console.error(error);
