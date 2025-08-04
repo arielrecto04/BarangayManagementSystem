@@ -1,7 +1,7 @@
-import { axios } from '@/utils';
-import { defineStore } from 'pinia';
+import { axios } from "@/utils";
+import { defineStore } from "pinia";
 
-export const useComplaintStore = defineStore('complaint', {
+export const useComplaintStore = defineStore("complaint", {
     state: () => ({
         _complaints: [],
         _isLoading: false,
@@ -19,7 +19,8 @@ export const useComplaintStore = defineStore('complaint', {
                 const response = await axios.get('/complaints');
                 this._complaints = response.data.data;
             } catch (error) {
-                console.log(error);
+                console.error("Error fetching complaints:", error);
+                this._error = error;
             } finally {
                 this._isLoading = false;
             }
@@ -30,7 +31,8 @@ export const useComplaintStore = defineStore('complaint', {
                 await axios.delete(`/complaints/${complaintId}`);
                 this._complaints = this._complaints.filter((complaint) => complaint.id !== complaintId);
             } catch (error) {
-                console.log(error);
+                console.error('Error deleting complaint:', error);
+                this._error = error;
             } finally {
                 this._isLoading = false;
             }
@@ -38,11 +40,11 @@ export const useComplaintStore = defineStore('complaint', {
 
         async addComplaint(complaintData) {
             try {
-                this._isLoading = true;
-                const response = await axios.post('/complaints', complaintData);
+                const response = await axios.post("/complaints", data);
                 this._complaints.push(response.data.data);
             } catch (error) {
-                console.log(error);
+                console.error("Error adding complaint:", error);
+                this._error = error;
             } finally {
                 this._isLoading = false;
             }
@@ -63,21 +65,23 @@ export const useComplaintStore = defineStore('complaint', {
             }
         },
 
-        async createComplaint(data) {
-    this._isLoading = true;
-    this._error = null;
-    try {
-        const response = await axios.post('/complaints', data);
-        this._complaints.push(response.data.data);
-    } catch (error) {
-        console.error('Error creating complaint:', error);
-        this._error = error;
-    } finally {
-        this._isLoading = false;
-    }
-},
-
-
+        async createComplaint(formData) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                const response = await axios.post("/complaints", formData, {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                });
+                this._complaints.push(response.data.data);
+            } catch (error) {
+                console.error("Error creating complaint:", error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
 
         async deleteComplaint(id) {
             this._isLoading = true;
