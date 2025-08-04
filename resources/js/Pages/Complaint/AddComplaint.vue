@@ -30,7 +30,7 @@ const complaintForm = ref({
   incident_location: '',
   supporting_documents: null,
   witness: '',
-  status: 'Open'
+  status: '',
 });
 
 const handleFileUpload = (event) => {

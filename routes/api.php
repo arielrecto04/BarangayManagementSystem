@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get-resident-by-number/{number}', [ResidentController::class, 'getResidentByNumber']);
     });
 
+
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);
     Route::apiResource('blotters', BlotterController::class);

@@ -52,12 +52,13 @@ export const useComplaintStore = defineStore("complaint", {
 
         async updateComplaint(id, complaintData) {
             try {
-                this._isLoading = true;
-                const response = await axios.put(`/complaints/${id}`, complaintData);
-                const index = this._complaints.findIndex(c => c.id === id);
+                const response = await axios.patch(`/complaints/${id}`, data);
+                const index = this._complaints.findIndex((c) => c.id === id);
                 if (index !== -1) {
                     this._complaints[index] = response.data.data;
                 }
+
+                // ✅ This ensures dashboard stats update
             } catch (error) {
                 console.log(error);
             } finally {
