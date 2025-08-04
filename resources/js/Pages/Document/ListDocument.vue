@@ -183,7 +183,7 @@ onMounted(() => {
 
 
 onUnmounted(() => {
-    venoBox.value.destroy();
+    // venoBox.value.destroy();
 })
 
 </script>

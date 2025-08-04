@@ -1,20 +1,24 @@
 <script setup>
 import Multiselect from 'vue-multiselect';
 import { useBlotterStore, useResidentStore } from '@/Stores'
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
 const { showToast } = useToast();
-
 const blotterStore = useBlotterStore();
 const residentStore = useResidentStore();
 const residents = ref([]);
-
 const errors = ref({});
 const selectedComplainant = ref(null);
 const selectedRespondent = ref(null);
+
+onMounted(async () => {
+    await residentStore.getResidents();
+    residents.value = residentStore.residents;
+});
 
 watch(selectedComplainant, (val) => {
     blotterDataForm.value.complainants_id = val?.id ?? '';
@@ -142,15 +146,31 @@ const createBlotter = async () => {
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant ID</label>
-                        <input id="complainants_id" type="text" placeholder="Enter Resident ID of Complainant" v-model="blotterDataForm.complainants_id" 
-                        :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.complainants_id ? 'border-red-500' : 'border-gray-200']" />
+                        <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant</label>
+                        <Multiselect
+                            v-model="selectedComplainant"
+                            :options="residents"
+                            :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
+                            track-by="id"
+                            placeholder="Search or select complainant"
+                            :searchable="true"
+                            :show-labels="false"
+                            @select="val => blotterDataForm.complainants_id = val?.id"
+                        />
                         <span v-if="errors.complainants_id" class="text-red-500 text-xs mt-1">{{ errors.complainants_id }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent ID</label>
-                        <input id="respondents_id" type="text" placeholder="Enter Resident ID of Respondent" v-model="blotterDataForm.respondents_id" 
-                        :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.respondents_id ? 'border-red-500' : 'border-gray-200']" />
+                        <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent</label>
+                        <Multiselect
+                            v-model="selectedRespondent"
+                            :options="residents"
+                            :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
+                            track-by="id"
+                            placeholder="Search or select respondent"
+                            :searchable="true"
+                            :show-labels="false"
+                            @select="val => blotterDataForm.respondents_id = val?.id"
+                        />
                         <span v-if="errors.respondents_id" class="text-red-500 text-xs mt-1">{{ errors.respondents_id }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
