@@ -40,7 +40,12 @@ const props = defineProps({
     hoverEffect: {
         type: Boolean,
         default: true
+    },
+    clazz : {
+        type: String,
+        default: ''
     }
+
 });
 
 const emits = defineEmits(['update:page', 'row-click', 'sort', 'selection-change']);
@@ -269,11 +274,12 @@ const clearFilters = () => {
 
                     <tbody class="bg-white divide-y divide-gray-200">
                         <!-- Rows -->
-                        <tr v-for="row in paginatedRows" :key="row.id" @click="handleRowClick(row, $event)"
+                        <tr  v-for="row in paginatedRows" :key="row.id" @click="handleRowClick(row, $event)"
                             class="transition-colors duration-150" :class="{
+                                clazz,
                                 'bg-blue-50': selectedRows.includes(row.id),
                                 'hover:bg-gray-50': hoverEffect && !selectedRows.includes(row.id)
-                            }">
+                            }" >
                             <!-- Row Checkbox -->
                             <td v-if="selectable" class="px-6 py-4 whitespace-nowrap">
                                 <input type="checkbox" :value="row.id" v-model="selectedRows"
