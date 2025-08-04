@@ -52,7 +52,7 @@ export const useDocumentStore = defineStore("document", {
                 });
 
                 // Add the successfully uploaded document to the main list
-                this._documents.push(response.data.document);
+                this._documents = [response.data.document, ...this._documents];
             } catch (error) {
                 console.error("Upload failed in store:", error);
                 // Re-throw the error so the component's try/catch can handle it
