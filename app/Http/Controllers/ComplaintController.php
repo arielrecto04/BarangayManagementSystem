@@ -116,4 +116,17 @@ class ComplaintController extends Controller
             'message' => 'Complaint deleted successfully',
         ], 200);
     }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:Open,In Progress,Resolved'
+        ]);
+
+        $complaint = Complaint::findOrFail($id);
+        $complaint->status = $request->status;
+        $complaint->save();
+
+        return response()->json(['data' => $complaint]);
+    }
 }
