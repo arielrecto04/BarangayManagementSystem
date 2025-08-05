@@ -22,8 +22,12 @@ class Complaint extends Model
         'nature_of_complaint',
         'incident_datetime',
         'incident_location',
-        'supporting_documents_attached',
+        'supporting_documents',
         'witness',
+    ];
+
+    protected $casts = [
+        'supporting_documents' => 'array',
     ];
     public function respondent_complaint()
     {

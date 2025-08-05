@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('nature_of_complaint')->nullable();
             $table->dateTime('incident_datetime')->nullable();
             $table->string('incident_location')->nullable();
-            $table->string('supporting_documents')->nullable();
+            $table->json('supporting_documents')->nullable()->change();
             $table->string('witness')->nullable();
             $table->timestamps();
         });

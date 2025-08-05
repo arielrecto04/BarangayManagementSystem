@@ -132,8 +132,9 @@ const submitForm = async () => {
     const formData = new FormData();
     Object.entries(complaintForm.value).forEach(([key, value]) => {
       if (key === 'supporting_documents' && Array.isArray(value)) {
-        value.forEach((file, index) => {
-          formData.append(`supporting_documents[${index}]`, file);
+        // Append each file with [] syntax
+        value.forEach(file => {
+          formData.append('supporting_documents[]', file);
         });
       } else {
         formData.append(key, value);
