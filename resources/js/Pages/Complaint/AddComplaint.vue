@@ -33,6 +33,8 @@ const complaintForm = ref({
   status: '',
 });
 
+
+
 const handleFileUpload = (event) => {
   const newFiles = Array.from(event.target.files);
 
@@ -79,41 +81,49 @@ onMounted(async () => {
   residents.value = residentStore.residents;
 });
 
-const submitForm = async () => {
-  formErrors.value = {}; // reset
+const validateForm = () => {
+  formErrors.value = {};
+  let isValid = true;
 
-  // Frontend validation
-  const requiredFields = [
-    'complainant_id',
-    'respondent_id',
-    'case_no',
-    'title',
-    'description',
-    'resolution',
-    'filing_date',
-    'nature_of_complaint',
-    'incident_datetime',
-    'incident_location',
-    'witness'
-  ];
+  const fields = {
+    complainant_id: 'Complainant',
+    respondent_id: 'Respondent',
+    case_no: 'Case Number',
+    title: 'Title',
+    description: 'Description',
+    resolution: 'Resolution',
+    filing_date: 'Filing Date',
+    nature_of_complaint: 'Nature of Complaint',
+    incident_datetime: 'Date/Time of Incident',
+    incident_location: 'Location of Incident',
+    witness: 'Witness',
+    status: 'Status',
+  };
 
-  requiredFields.forEach(field => {
+  for (const [field, label] of Object.entries(fields)) {
     if (!complaintForm.value[field]) {
-      formErrors.value[field] = 'Please fill out this field';
+      formErrors.value[field] = `${label} is required.`;
+      isValid = false;
     }
-  });
+  }
 
-  // Prevent same person as both complainant and respondent
+  // Check if complainant and respondent are the same
   if (
     complaintForm.value.complainant_id &&
     complaintForm.value.respondent_id &&
     complaintForm.value.complainant_id === complaintForm.value.respondent_id
   ) {
-    showToast({ icon: 'error', title: 'Complainant and Respondent cannot be the same person.' });
-    return;
+    formErrors.value.complainant_id = 'Complainant and Respondent cannot be the same.';
+    formErrors.value.respondent_id = 'Complainant and Respondent cannot be the same.';
+    isValid = false;
   }
 
-  if (Object.keys(formErrors.value).length > 0) {
+  return isValid;
+};
+
+
+const submitForm = async () => {
+  if (!validateForm()) {
     showToast({ icon: 'error', title: 'Please fill in all required fields.' });
     return;
   }
@@ -132,7 +142,6 @@ const submitForm = async () => {
     const formData = new FormData();
     Object.entries(complaintForm.value).forEach(([key, value]) => {
       if (key === 'supporting_documents' && Array.isArray(value)) {
-        // Append each file with [] syntax
         value.forEach(file => {
           formData.append('supporting_documents[]', file);
         });
@@ -140,9 +149,9 @@ const submitForm = async () => {
         formData.append(key, value);
       }
     });
+
     await complaintStore.createComplaint(formData);
     showToast({ icon: 'success', title: 'Complaint submitted successfully.' });
-
     await complaintStore.getComplaints(1);
     router.push('/complaints/list-complaints');
   } catch (error) {
@@ -154,6 +163,7 @@ const submitForm = async () => {
     }
   }
 };
+
 </script>
 
 <template>
@@ -168,6 +178,7 @@ const submitForm = async () => {
           <Multiselect v-model="selectedComplainant" :options="filteredComplainants"
             :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
             placeholder="Search or select complainant" :searchable="true" :show-labels="false" />
+          <p v-if="formErrors.complainant_id" class="text-red-500 text-sm mt-1">{{ formErrors.complainant_id }}</p>
         </div>
 
         <!-- Respondent Searchable Dropdown -->
@@ -176,6 +187,7 @@ const submitForm = async () => {
           <Multiselect v-model="selectedRespondent" :options="filteredRespondents"
             :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
             placeholder="Search or select respondent" :searchable="true" :show-labels="false" />
+          <p v-if="formErrors.respondent_id" class="text-red-500 text-sm mt-1">{{ formErrors.respondent_id }}</p>
         </div>
 
         <!-- Nature of Complaint -->
@@ -190,41 +202,52 @@ const submitForm = async () => {
             <option value="VAWC">VAWC</option>
             <option value="Business | Economic">Business | Economic</option>
           </select>
+          <p v-if="formErrors.nature_of_complaint" class="text-red-500 text-sm mt-1">{{ formErrors.nature_of_complaint
+          }}</p>
         </div>
         <!-- Case Number -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Case Number</label>
           <input v-model="complaintForm.case_no" type="text" class="border rounded-md p-2" />
+          <p v-if="formErrors.case_no" class="text-red-500 text-sm mt-1">{{ formErrors.case_no }}</p>
         </div>
         <!-- Title -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Title</label>
           <input v-model="complaintForm.title" type="text" class="border rounded-md p-2" />
+          <p v-if="formErrors.title" class="text-red-500 text-sm mt-1">{{ formErrors.title }}</p>
         </div>
         <!-- Location of Incident -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Location of Incident</label>
           <input v-model="complaintForm.incident_location" type="text" class="border rounded-md p-2" />
+          <p v-if="formErrors.incident_location" class="text-red-500 text-sm mt-1">{{ formErrors.incident_location }}
+          </p>
         </div>
         <!-- Description -->
         <div class="flex flex-col col-span-2">
           <label class="font-semibold text-sm">Description</label>
           <textarea v-model="complaintForm.description" class="border rounded-md p-2"></textarea>
+          <p v-if="formErrors.description" class="text-red-500 text-sm mt-1">{{ formErrors.description }}</p>
         </div>
         <!-- Resolution -->
         <div class="flex flex-col col-span-2">
           <label class="font-semibold text-sm">Resolution</label>
           <textarea v-model="complaintForm.resolution" class="border rounded-md p-2"></textarea>
+          <p v-if="formErrors.resolution" class="text-red-500 text-sm mt-1">{{ formErrors.resolution }}</p>
         </div>
-        <!-- Date -->
+        <!-- Date & Time of Incident -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Date & Time of Incident</label>
           <input type="datetime-local" v-model="complaintForm.incident_datetime" class="border rounded-md p-2" />
+          <p v-if="formErrors.incident_datetime" class="text-red-500 text-sm mt-1">{{ formErrors.incident_datetime }}
+          </p>
         </div>
         <!-- Filing Date -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Filing Date & Time</label>
           <input type="datetime-local" v-model="complaintForm.filing_date" class="border rounded-md p-2" />
+          <p v-if="formErrors.filing_date" class="text-red-500 text-sm mt-1">{{ formErrors.filing_date }}</p>
         </div>
 
         <!-- Status -->
@@ -235,6 +258,7 @@ const submitForm = async () => {
             <option value="In Progress">In Progress</option>
             <option value="Resolved">Resolved</option>
           </select>
+          <p v-if="formErrors.status" class="text-red-500 text-sm mt-1">{{ formErrors.status }}</p>
         </div>
         <!-- Witness -->
         <div class="flex flex-col">
