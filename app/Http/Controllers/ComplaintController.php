@@ -116,30 +116,47 @@ class ComplaintController extends Controller
                 'description' => 'sometimes|required|string',
                 'resolution' => 'sometimes|required|string',
                 'filing_date' => 'sometimes|required|date',
+                'complainant_id' => 'sometimes|required|exists:residents,id',
+                'respondent_id' => 'sometimes|required|exists:residents,id',
                 'status' => 'sometimes|required|string',
                 'nature_of_complaint' => 'sometimes|required|string',
                 'incident_datetime' => 'sometimes|required|date',
                 'incident_location' => 'sometimes|required|string',
                 'supporting_documents' => 'nullable|array',
                 'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
+                'existing_documents' => 'nullable|string', // JSON string of existing docs to keep
                 'witness' => 'sometimes|required|string',
             ]);
 
             $complaint = Complaint::findOrFail($id);
 
-            // Handle file uploads for updates
+            // Handle supporting documents
+            $finalDocuments = [];
+
+            // Keep existing documents if specified
+            if ($request->has('existing_documents')) {
+                $existingDocs = json_decode($request->existing_documents, true);
+                if (is_array($existingDocs)) {
+                    $finalDocuments = array_merge($finalDocuments, $existingDocs);
+                }
+            }
+
+            // Add new uploaded files
             if ($request->hasFile('supporting_documents')) {
-                $fileData = [];
                 foreach ($request->file('supporting_documents') as $file) {
                     $originalName = $file->getClientOriginalName();
                     $path = $file->store('documents', 'public');
 
-                    $fileData[] = [
+                    $finalDocuments[] = [
                         'path' => $path,
                         'name' => $originalName
                     ];
                 }
-                $validated['supporting_documents'] = $fileData;
+            }
+
+            // Update supporting documents if any changes were made
+            if (!empty($finalDocuments) || $request->has('supporting_documents') || $request->has('existing_documents')) {
+                $validated['supporting_documents'] = $finalDocuments;
             }
 
             $complaint->update($validated);
@@ -148,6 +165,11 @@ class ComplaintController extends Controller
                 'message' => 'Complaint updated successfully',
                 'data' => $complaint,
             ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             Log::error('Error updating complaint: ' . $e->getMessage());
             return response()->json([
