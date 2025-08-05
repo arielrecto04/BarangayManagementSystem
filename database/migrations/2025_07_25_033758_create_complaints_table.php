@@ -20,10 +20,16 @@ return new class extends Migration
             $table->string('title');
             $table->longText('description');
             $table->longText('resolution');
-            $table->string('date');
-            $table->string('filing_date');
-            $table->foreignIdFor(Complaint::class, 'respondent_id')->constrained('respondent_id')->nullOnDelete();
-            $table->foreignIdFor(Complaint::class, 'complainant_id')->constrained('complainant_id')->nullOnDelete();
+            $table->dateTime('filing_date');
+            $table->string('status')->default('N/A');
+            $table->foreignId('respondent_id')->constrained('residents')->nullOnDelete();
+            $table->foreignId('complainant_id')->constrained('residents')->nullOnDelete();
+            $table->string('nature_of_complaint')->nullable();
+            $table->dateTime('incident_datetime')->nullable();
+            $table->string('incident_location')->nullable();
+            // Store both file paths and original names
+            $table->json('supporting_documents')->nullable(); // Array of objects with 'path' and 'name'
+            $table->string('witness')->nullable();
             $table->timestamps();
         });
     }

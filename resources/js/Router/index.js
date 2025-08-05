@@ -4,13 +4,25 @@ import { useAuthenticationStore } from "@/Stores";
 
 const routes = [
     {
-        // path: "/",
-        // name: "Home",
-        // meta: {
-        //     title: "Home",
-        //     requiresAuth: false,
-        // },
-        // component: () => import("@/Pages/Home.vue"),
+        path: "/",
+        name: "ParentLandingPage",
+        redirect: { name: "Home" },
+        meta: {
+            title: "Home",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/LandingPage/ParentLandingPage.vue"),
+        children: [
+            {
+                path: "home",
+                name: "Home",
+                meta: {
+                    title: "Home",
+                    requiresAuth: false,    
+                },
+                component: () => import("@/Pages/LandingPage/Home.vue"),
+            },
+        ],
     },
     {
         path: "/Registration",
@@ -114,7 +126,37 @@ const routes = [
             title: "Complaints",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Complaints.vue"),
+        redirect: { name: "List Complaints" },
+        component: () => import("@/Pages/Complaint/ParentComplaintView.vue"),
+        children: [
+            {
+                path: "list-complaints",
+                name: "List Complaints",
+                meta: {
+                    title: "List Complaints",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/ListComplaints.vue"),
+            },
+            {
+                path: "add-complaint",
+                name: "Add Complaint",
+                meta: {
+                    title: "Add Complaint",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/AddComplaint.vue"),
+            },
+            {
+                path: "edit-complaint/:id",
+                name: "Edit Complaint",
+                meta: {
+                    title: "Edit Complaint",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/EditComplaint.vue"),
+            }
+        ]
     },
     {
         path: "/blotter",
@@ -206,7 +248,7 @@ const routes = [
     },
   
     {
-        path: "/",
+        path: "/login",
         name: "Login",
         meta: {
             title: "Login",

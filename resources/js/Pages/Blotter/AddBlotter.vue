@@ -1,14 +1,34 @@
 <script setup>
-import { useBlotterStore } from '@/Stores'
-import { ref } from 'vue'
+import Multiselect from 'vue-multiselect';
+import { useBlotterStore, useResidentStore } from '@/Stores'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
 const { showToast } = useToast();
-
 const blotterStore = useBlotterStore();
+const residentStore = useResidentStore();
+const residents = ref([]);
 const errors = ref({});
+const selectedComplainant = ref(null);
+const selectedRespondent = ref(null);
+
+onMounted(async () => {
+    await residentStore.getResidents();
+    residents.value = residentStore.residents;
+});
+
+watch(selectedComplainant, (val) => {
+    blotterDataForm.value.complainants_id = val?.id ?? '';
+});
+
+watch(selectedRespondent, (val) => {
+    blotterDataForm.value.respondents_id = val?.id ?? '';
+});
+
+
 
 const blotterDataForm = ref({
     blotter_no: '',
@@ -27,7 +47,9 @@ const blotterDataForm = ref({
     open_cases: '0',
     in_progress: '0',
     resolved: '0',
-    status: ''
+    status: '',
+    description: '',
+    witness: ''
 });
 
 const validateForm = () => {
@@ -45,7 +67,9 @@ const validateForm = () => {
         datetime_of_incident: 'Date/Time of Incident',
         blotter_type: 'Blotter Type',
         barangay_case_no: 'Barangay Case No',
-        status: 'Status'
+        status: 'Status',
+        description: 'Description',
+        witness: 'Witness'
     };
 
     for (const [field, label] of Object.entries(fields)) {
@@ -103,37 +127,101 @@ const createBlotter = async () => {
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="title_case" class="text-sm font-semibold text-gray-600">Title Case</label>
-                        <input id="title_case" type="text" placeholder="Enter Title Case" v-model="blotterDataForm.title_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="title_case" type="text" 
+                        placeholder="Enter Title Case" v-model="blotterDataForm.title_case" 
+                        :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.title_case ? 'border-red-500' : 'border-gray-200']" />
+                        <span v-if="errors.title_case" class="text-red-500 text-xs mt-1">{{ errors.title_case }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of Case</label>
-                        <input id="nature_of_case" type="text" placeholder="Enter Nature of Case" v-model="blotterDataForm.nature_of_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                    <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of Case</label>
+                        <select 
+                        id="nature_of_case" 
+                        v-model="blotterDataForm.nature_of_case" 
+                        :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.nature_of_case ? 'border-red-500' : 'border-gray-200']">
+                        <span v-if="errors.nature_of_case" class="text-red-500 text-xs mt-1">{{ errors.nature_of_case }}</span
+                    >
+                        <option value="" disabled selected>Select Nature of Case</option>
+                        <option value="civil case">Civil Case</option>
+                        <option value="criminal case">Criminal Case</option>
+                        </select>
+                        <span v-if="errors.nature_of_case" class="text-red-500 text-xs mt-1">{{ errors.nature_of_case }}</span>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant</label>
+                        <Multiselect
+                            v-model="selectedComplainant"
+                            :options="residents"
+                            :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
+                            track-by="id"
+                            placeholder="Search or select complainant"
+                            :searchable="true"
+                            :show-labels="false"
+                            @select="val => blotterDataForm.complainants_id = val?.id"
+                        />
+                        <span v-if="errors.complainants_id" class="text-red-500 text-xs mt-1">{{ errors.complainants_id }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant ID</label>
-                        <input id="complainants_id" type="text" placeholder="Enter Resident ID of Complainant" v-model="blotterDataForm.complainants_id" class="input-style col-span-1 border text-sm border-gray-200 rounded-md px-4 py-2" />
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent ID</label>
-                        <input id="respondents_id" type="text" placeholder="Enter Resident ID of Respondent" v-model="blotterDataForm.respondents_id" class="input-style col-span-1 border text-sm border-gray-200 rounded-md px-4 py-2" />
+                        <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent</label>
+                        <Multiselect
+                            v-model="selectedRespondent"
+                            :options="residents"
+                            :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
+                            track-by="id"
+                            placeholder="Search or select respondent"
+                            :searchable="true"
+                            :show-labels="false"
+                            @select="val => blotterDataForm.respondents_id = val?.id"
+                        />
+                        <span v-if="errors.respondents_id" class="text-red-500 text-xs mt-1">{{ errors.respondents_id }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="place" class="text-sm font-semibold text-gray-600">Place</label>
-                        <input id="place" type="text" placeholder="Enter Place" v-model="blotterDataForm.place" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="place" type="text" placeholder="Enter Place" v-model="blotterDataForm.place" 
+                        :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.place ? 'border-red-500' : 'border-gray-200']" />
+                        <span v-if="errors.place" class="text-red-500 text-xs mt-1">{{ errors.place }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="datetime_of_incident" class="text-sm font-semibold text-gray-600">Date/Time of Incident</label>
-                        <input id="datetime_of_incident" type="datetime-local" v-model="blotterDataForm.datetime_of_incident" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="datetime_of_incident" type="datetime-local" v-model="blotterDataForm.datetime_of_incident" 
+                        :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.datetime_of_incident ? 'border-red-500' : 'border-gray-200']" />
+                        <span v-if="errors.datetime_of_incident" class="text-red-500 text-xs mt-1">{{ errors.datetime_of_incident }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="blotter_type" class="text-sm font-semibold text-gray-600">Blotter Type</label>
-                        <input id="blotter_type" type="text" placeholder="Enter Blotter Type" v-model="blotterDataForm.blotter_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="blotter_type" type="text" placeholder="Enter Blotter Type" v-model="blotterDataForm.blotter_type" 
+                        :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.blotter_type ? 'border-red-500' : 'border-gray-200']" />
+                        <span v-if="errors.blotter_type" class="text-red-500 text-xs mt-1">{{ errors.blotter_type }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="barangay_case_no" class="text-sm font-semibold text-gray-600">Barangay Case No</label>
-                        <input id="barangay_case_no" type="text" placeholder="Enter Case No" v-model="blotterDataForm.barangay_case_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        <input id="barangay_case_no" type="text" placeholder="Enter Case No" v-model="blotterDataForm.barangay_case_no" 
+                        :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.barangay_case_no ? 'border-red-500' : 'border-gray-200']" />
+                        <span v-if="errors.barangay_case_no" class="text-red-500 text-xs mt-1">{{ errors.barangay_case_no }}</span>
+                    </div>
+                    <div class="col-span-2 flex flex-col gap-2">
+                        <label for="description" class="text-sm font-semibold text-gray-600">Description</label>
+                            <textarea 
+                                id="description" 
+                                v-model="blotterDataForm.description" 
+                                placeholder="Enter Description" 
+                                rows="4"
+                                :class="['input-style w-full border border-gray-200 rounded-md px-4 py-2', errors.description ? 'border-red-500' : 'border-gray-200']"
+                            ></textarea>
+                            <span v-if="errors.description" class="text-red-500 text-xs mt-1">{{ errors.description }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
+                        <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
+                        <input 
+                            id="witness" 
+                            type="text" 
+                            placeholder="Enter Witness Name" 
+                            v-model="blotterDataForm.witness" 
+                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.witness ? 'border-red-500' : 'border-gray-200']"
+                        />
+                        <span v-if="errors.witness" class="text-red-500 text-xs mt-1">{{ errors.witness }}</span>
+                    </div>
+                    <div class="flex flex-col gap-2 rel">
                         <label for="status" class="text-sm font-semibold text-gray-600">Status</label>
                         <select 
                             id="status" 
@@ -145,7 +233,9 @@ const createBlotter = async () => {
                             <option value="In Progress">In Progress</option>
                             <option value="Resolved">Resolved</option>
                         </select>
+                        <span v-if="errors.status" class="text-red-500 text-xs mt-1">{{ errors.status }}</span>
                     </div>
+                   
                 </div>
                 <div class="flex justify-center mt-10 gap-4">
                     <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">Save</button>

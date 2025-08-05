@@ -95,5 +95,8 @@ export const useBlotterStore = defineStore('blotter', {
                 this._isLoading = false;
             }
         },
+         resetBlotter() {
+        this._blotter = null;
+    }
     },
 });

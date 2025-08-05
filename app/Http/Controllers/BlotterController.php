@@ -21,13 +21,16 @@ class BlotterController extends Controller
                     'filing_date' => $blotter->filing_date,
                     'title_case' => $blotter->title_case,
                     'nature_of_case' => $blotter->nature_of_case,
-                    'complainants_id' => $blotter->complainants_id,
-                    'respondents_id' => $blotter->respondents_id,
+                    'complainants_id' => str_pad($blotter->complainants_id, 4, '0', STR_PAD_LEFT),
+                    'respondents_id' =>  str_pad($blotter->respondents_id, 4, '0', STR_PAD_LEFT),
                     'place' => $blotter->place,
                     'datetime_of_incident' => $blotter->datetime_of_incident,
                     'blotter_type' => $blotter->blotter_type,
                     'barangay_case_no' => $blotter->barangay_case_no,
-                    'status' => $blotter->status
+                    'status' => $blotter->status,
+                    'description' => $blotter->description,
+                    'witness' => $blotter->witness,
+
                 ];
             }),
             'current_page' => $blotters->currentPage(),
@@ -56,7 +59,9 @@ public function store(Request $request)
         'blotter_type' => 'required',
         'barangay_case_no' => 'required',
         'total_cases' => 'required',
-        'status' => 'required|in:Open,In Progress,Resolved'
+        'status' => 'required|in:Open,In Progress,Resolved',
+        'description' => 'required|string|max:1000',
+        'witness' => 'required|string|max:255'
     ]);
 
     $blotter = Blotter::create($validated);
@@ -94,7 +99,9 @@ public function store(Request $request)
             'blotter_type' => 'required',
             'barangay_case_no' => 'required',
             'total_cases' => 'nullable',
-            'status' => 'required|in:Open,In Progress,Resolved'
+            'status' => 'required|in:Open,In Progress,Resolved',
+            'description' => 'required|string|max:1000',
+            'witness' => 'required|string|max:255'
         ]);
 
         $blotter = Blotter::findOrFail($id);
