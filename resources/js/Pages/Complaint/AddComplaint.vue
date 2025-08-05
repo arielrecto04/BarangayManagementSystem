@@ -28,14 +28,28 @@ const complaintForm = ref({
   nature_of_complaint: '',
   incident_datetime: '',
   incident_location: '',
-  supporting_documents: null,
+  supporting_documents: [],
   witness: '',
   status: '',
 });
 
 const handleFileUpload = (event) => {
-  complaintForm.value.supporting_documents = event.target.files[0];
+  const newFiles = Array.from(event.target.files);
+
+  const existingNames = new Set(
+    complaintForm.value.supporting_documents.map(file => file.name)
+  );
+
+  const uniqueNewFiles = newFiles.filter(file => !existingNames.has(file.name));
+
+  complaintForm.value.supporting_documents = [
+    ...complaintForm.value.supporting_documents,
+    ...uniqueNewFiles
+  ];
+
+  event.target.value = '';
 };
+
 const formErrors = ref({});
 
 // Exclude selected respondent from complainant list
@@ -117,7 +131,13 @@ const submitForm = async () => {
 
     const formData = new FormData();
     Object.entries(complaintForm.value).forEach(([key, value]) => {
-      formData.append(key, value);
+      if (key === 'supporting_documents' && Array.isArray(value)) {
+        value.forEach((file, index) => {
+          formData.append(`supporting_documents[${index}]`, file);
+        });
+      } else {
+        formData.append(key, value);
+      }
     });
     await complaintStore.createComplaint(formData);
     showToast({ icon: 'success', title: 'Complaint submitted successfully.' });
@@ -207,10 +227,31 @@ const submitForm = async () => {
         </div>
         <!-- Supporting Document -->
         <div class="flex flex-col">
-          <label class="font-semibold text-sm">Supporting Documents</label>
-          <input type="file" @change="handleFileUpload" class="border rounded-md p-2"
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+          <label class="font-semibold text-sm mb-1">Supporting Documents</label>
+
+          <!-- Hidden file input -->
+          <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+
+          <!-- Custom upload button -->
+          <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit"
+            @click="$refs.fileInput.click()">
+            Upload Files
+          </button>
+
+          <!-- List selected file names -->
+          <div v-if="complaintForm.supporting_documents.length" class="mt-2 space-y-1 text-sm text-gray-700">
+            <div v-for="(file, index) in complaintForm.supporting_documents" :key="index"
+              class="flex items-center gap-2">
+              <span>{{ file.name }}</span>
+              <button type="button" class="text-red-500 hover:underline"
+                @click="complaintForm.supporting_documents.splice(index, 1)">
+                ✖
+              </button>
+            </div>
+          </div>
         </div>
+
         <!-- Status -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Status</label>
