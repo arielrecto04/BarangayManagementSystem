@@ -226,6 +226,22 @@ const submitForm = async () => {
           <label class="font-semibold text-sm">Filing Date & Time</label>
           <input type="datetime-local" v-model="complaintForm.filing_date" class="border rounded-md p-2" />
         </div>
+
+        <!-- Status -->
+        <div class="flex flex-col">
+          <label class="font-semibold text-sm">Status</label>
+          <select v-model="complaintForm.status" class="border rounded-md p-2">
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+        <!-- Witness -->
+        <div class="flex flex-col">
+          <label class="font-semibold text-sm">Witness</label>
+          <textarea v-model="complaintForm.witness" class="border rounded-md p-2"></textarea>
+        </div>
+
         <!-- Supporting Document -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm mb-1">Supporting Documents</label>
@@ -251,37 +267,6 @@ const submitForm = async () => {
               </button>
             </div>
           </div>
-        </div>
-
-        <!-- Status -->
-        <div class="flex flex-col">
-          <label class="font-semibold text-sm">Status</label>
-          <select v-model="complaintForm.status" class="border rounded-md p-2">
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-          </select>
-        </div>
-        <!-- Witness -->
-        <div class="flex flex-col">
-          <label class="font-semibold text-sm">Witness</label>
-          <textarea v-model="complaintForm.witness" class="border rounded-md p-2"></textarea>
-        </div>
-        <div class="flex flex-col">
-          <label class="font-semibold text-sm">Complainant ID</label>
-          <input v-model="complaintForm.complainant_id" type="text" class="border rounded-md p-2" />
-        </div>
-        <div class="flex flex-col">
-          <label class="font-semibold text-sm">Respondent ID</label>
-          <input v-model="complaintForm.respondent_id" type="text" class="border rounded-md p-2" />
-        </div>
-        <div class="flex flex-col">
-          <label class="font-semibold text-sm">Complainant ID</label>
-          <input v-model="complaintForm.complainant_id" type="text" class="border rounded-md p-2" />
-        </div>
-        <div class="flex flex-col">
-          <label class="font-semibold text-sm">Respondent ID</label>
-          <input v-model="complaintForm.respondent_id" type="text" class="border rounded-md p-2" />
         </div>
       </div>
 
@@ -322,10 +307,10 @@ const submitForm = async () => {
 }
 
 .multiselect__option--highlight {
-  background: #3b82f6;
+  background: #16A34A;
 }
 
 .multiselect__option--highlight::after {
-  background: #3b82f6;
+  background: #16A34A;
 }
 </style>

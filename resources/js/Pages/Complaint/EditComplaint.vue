@@ -1,7 +1,7 @@
 <script setup>
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
-import { ref, onMounted, watch, computed } from 'vue';
+import { onMounted, ref, watch, computed, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useComplaintStore, useResidentStore } from '@/Stores';
 import useToast from '@/Utils/useToast';
@@ -105,17 +105,30 @@ const filteredRespondents = computed(() => {
 });
 
 watch(selectedComplainant, (val) => {
+  if (!val || isLoading.value) return; // Prevent during cleanup/loading
   complaintForm.value.complainant_id = val?.id ?? '';
 });
 
 watch(selectedRespondent, (val) => {
+  if (!val || isLoading.value) return; // Prevent during cleanup/loading
   complaintForm.value.respondent_id = val?.id ?? '';
 });
 
-// Navigation guard to prevent leaving during form submission
+// Navigation guard to prevent leaving during form submission and cleanup watchers
 onBeforeRouteLeave((to, from, next) => {
+  // Skip cleanup if going to List Complaints
+  if (to.name === 'List Complaints') {
+    next();
+    return;
+  }
+
+  // Clear any pending reactive updates
+  selectedComplainant.value = null;
+  selectedRespondent.value = null;
+
   if (isLoading.value) {
     if (confirm('Form is still processing. Are you sure you want to leave?')) {
+      isLoading.value = false;
       next();
     } else {
       next(false);
@@ -123,6 +136,19 @@ onBeforeRouteLeave((to, from, next) => {
   } else {
     next();
   }
+});
+
+
+// Cleanup on component unmount
+onUnmounted(() => {
+  // Clear all reactive references
+  selectedComplainant.value = null;
+  selectedRespondent.value = null;
+  residents.value = [];
+  existingSupportingDocuments.value = [];
+  newSupportingDocuments.value = [];
+  formErrors.value = {};
+  isLoading.value = false;
 });
 
 onMounted(async () => {
@@ -169,6 +195,22 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+// Add a cancel handler function
+const handleCancel = () => {
+  // Reset all reactive state
+  selectedComplainant.value = null;
+  selectedRespondent.value = null;
+  residents.value = [];
+  existingSupportingDocuments.value = [];
+  newSupportingDocuments.value = [];
+  formErrors.value = {};
+
+  // Use nextTick to ensure cleanup completes
+  nextTick(() => {
+    router.push('/complaints/list-complaints');
+  });
+};
 
 const submitForm = async () => {
   if (isLoading.value) return; // Prevent multiple submissions
@@ -282,7 +324,9 @@ onMounted(fetchComplaint);
       <p>An error occurred loading the form. Please refresh the page.</p>
     </div>
 
-    <form v-else @submit.prevent="submitForm" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
+    <form v-if="!isLoading && !formErrors.component" :key="`form-${complaintId}`" @submit.prevent="submitForm"
+      class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
+
       <h1 class="text-2xl font-bold mb-6">Edit Complaint</h1>
 
       <div class="grid grid-cols-2 gap-4">
@@ -360,52 +404,7 @@ onMounted(fetchComplaint);
           <input type="datetime-local" v-model="complaintForm.filing_date" class="border rounded-md p-2" />
         </div>
 
-        <!-- Supporting Documents -->
-        <div class="flex flex-col col-span-2">
-          <label class="font-semibold text-sm mb-1">Supporting Documents</label>
 
-          <!-- Existing documents -->
-          <div v-if="existingSupportingDocuments.length > 0" class="mb-3">
-            <h4 class="text-sm font-medium text-gray-700 mb-2">Current Documents:</h4>
-            <div class="space-y-1 text-sm">
-              <div v-for="(doc, index) in existingSupportingDocuments" :key="`existing-${index}`"
-                class="flex items-center gap-2 p-2 bg-blue-50 rounded">
-                <span class="flex-1">{{ getFileName(doc) }}</span>
-                <a v-if="typeof doc === 'object' && doc.path" :href="`/storage/${doc.path}`" target="_blank"
-                  class="text-blue-600 hover:underline text-xs">
-                  View
-                </a>
-                <button type="button" class="text-red-500 hover:text-red-700 text-xs"
-                  @click="removeExistingDocument(index)">
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Upload new files -->
-          <div>
-            <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-
-            <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit mb-2"
-              @click="$refs.fileInput.click()">
-              Upload Additional Files
-            </button>
-
-            <!-- Show newly selected files -->
-            <div v-if="newSupportingDocuments.length > 0" class="space-y-1 text-sm">
-              <h4 class="text-sm font-medium text-gray-700">New Files to Upload:</h4>
-              <div v-for="(file, index) in newSupportingDocuments" :key="`new-${index}`"
-                class="flex items-center gap-2 p-2 bg-green-50 rounded">
-                <span class="flex-1">{{ file.name }}</span>
-                <button type="button" class="text-red-500 hover:text-red-700 text-xs" @click="removeNewDocument(index)">
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Status -->
         <div class="flex flex-col">
@@ -424,14 +423,62 @@ onMounted(fetchComplaint);
         </div>
       </div>
 
+      <!-- Supporting Documents -->
+      <div class="flex flex-col col-span-2">
+        <label class="font-semibold text-sm mb-1">Supporting Documents</label>
+
+        <!-- Existing documents -->
+        <div v-if="existingSupportingDocuments.length > 0" class="mb-3">
+          <h4 class="text-sm font-medium text-gray-700 mb-2">Current Documents:</h4>
+          <div class="space-y-1 text-sm">
+            <div v-for="(doc, index) in existingSupportingDocuments" :key="`existing-${index}`"
+              class="flex items-center gap-2 p-2 bg-blue-50 rounded">
+              <span class="flex-1">{{ getFileName(doc) }}</span>
+              <a v-if="typeof doc === 'object' && doc.path" :href="`/storage/${doc.path}`" target="_blank"
+                class="text-blue-600 hover:underline text-xs">
+                View
+              </a>
+              <button type="button" class="text-red-500 hover:text-red-700 text-xs"
+                @click="removeExistingDocument(index)">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload new files -->
+        <div>
+          <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+
+          <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit mb-2"
+            @click="$refs.fileInput.click()">
+            Upload Additional Files
+          </button>
+
+          <!-- Show newly selected files -->
+          <div v-if="newSupportingDocuments.length > 0" class="space-y-1 text-sm">
+            <h4 class="text-sm font-medium text-gray-700">New Files to Upload:</h4>
+            <div v-for="(file, index) in newSupportingDocuments" :key="`new-${index}`"
+              class="flex items-center gap-2 p-2 bg-green-50 rounded">
+              <span class="flex-1">{{ file.name }}</span>
+              <button type="button" class="text-red-500 hover:text-red-700 text-xs" @click="removeNewDocument(index)">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cancel -->
       <div class="mt-6 flex justify-end gap-4">
         <button type="submit" :disabled="isLoading"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50">
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md disabled:opacity-50">
           {{ isLoading ? 'Updating...' : 'Update Complaint' }}
         </button>
-        <router-link to="/complaints/list-complaints" class="bg-gray-300 px-4 py-2 rounded-md">
+        <button type="button" @click="handleCancel" class="bg-gray-300 px-4 py-2 rounded-md" :disabled="isLoading">
           Cancel
-        </router-link>
+        </button>
       </div>
     </form>
   </div>
@@ -464,10 +511,10 @@ onMounted(fetchComplaint);
 }
 
 .multiselect__option--highlight {
-  background: #3b82f6;
+  background: #16A34A;
 }
 
 .multiselect__option--highlight::after {
-  background: #3b82f6;
+  background: #16A34A;
 }
 </style>
