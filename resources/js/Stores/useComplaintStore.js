@@ -71,16 +71,30 @@ export const useComplaintStore = defineStore("complaint", {
             this._isLoading = true;
             this._error = null;
             try {
-                const response = await axios.patch(`/complaints/${id}`, data);
+                let response;
+                
+                // Check if data is FormData (for file uploads)
+                if (data instanceof FormData) {
+                    response = await axios.post(`/complaints/${id}`, data, {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    });
+                } else {
+                    // Regular JSON update
+                    response = await axios.patch(`/complaints/${id}`, data);
+                }
+                
                 const index = this._complaints.findIndex((c) => c.id === id);
                 if (index !== -1) {
                     this._complaints[index] = response.data.data;
                 }
 
-                // ✅ This ensures dashboard stats update
+                return response.data;
             } catch (error) {
                 console.error(`Error updating complaint ID ${id}:`, error);
                 this._error = error;
+                throw error;
             } finally {
                 this._isLoading = false;
             }
