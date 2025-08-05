@@ -254,7 +254,10 @@ watch(complaints, (newComplaints) => {
             <strong>Supporting Documents:</strong><br />
             <ul class="list-disc pl-5">
               <li v-for="(doc, index) in selectedComplaint?.supporting_documents" :key="index">
-                <a :href="doc.url" target="_blank" class="text-blue-500 hover:underline">{{ doc.name }}</a>
+                <a :href="doc.url" :download="doc.name" target="_blank" class="text-blue-500 hover:underline">
+                  {{ doc.name }}
+                </a>
+
               </li>
             </ul>
           </div>
