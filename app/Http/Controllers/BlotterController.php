@@ -64,7 +64,7 @@ public function store(Request $request)
         'witness' => 'required|string|max:255'
     ]);
 
-    $blotter = Blotter::create($request->all());
+    $blotter = Blotter::create($request->validated());
 
     return response()->json([
         'message' => 'Blotter created successfully',
@@ -101,11 +101,25 @@ public function store(Request $request)
             'total_cases' => 'nullable',
             'status' => 'required|in:Open,In Progress,Resolved',
             'description' => 'required|string|max:1000',
-            'witness' => 'required|string|max:255'
+            'witness' => 'nullable|string|max:255',
+            'supporting_documents' => 'nullable|array',
+            'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
         ]);
 
         $blotter = Blotter::findOrFail($id);
-        $blotter->update($request->all());
+        $fileData = [];
+        if ($request->hasFile('supporting_documents')) {
+            foreach ($request->file('supporting_documents') as $file) {
+                $originalName = $file->getClientOriginalName();
+                $path = $file->store('documents', 'public');
+                $fileData[] = [
+                    'name' => $originalName,
+                    'path' => $path,
+                ];
+            }
+            $validated['supporting_documents'] = json_encode($fileData);
+        }
+        $blotter->update($validated);
 
         return response()->json([
             'message' => 'Blotter updated successfully',
