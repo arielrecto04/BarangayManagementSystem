@@ -1,6 +1,6 @@
 <script setup>
 import { useBlotterStore, useResidentStore } from '@/Stores'
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
 import { storeToRefs } from 'pinia';
@@ -16,22 +16,30 @@ const residents = ref([]);
 const selectedComplainant = ref(null);
 const selectedRespondent = ref(null);
 
-const { resident, isLoading } = storeToRefs(residentStore);
+const { blotter, isLoading } = storeToRefs(blotterStore);
+const blotterId = router.currentRoute.value.params.id;
 
-const residentId = router.currentRoute.value.params.id;
-
-
+// Add this cleanup function
+const cleanup = () => {
+  selectedComplainant.value = null;
+  selectedRespondent.value = null;
+  blotterStore._blotter = null;
+};
 
 const updateResidentData  = async () => {
     try {
-        await residentStore.updateResident();
-        showToast({ icon: 'success', title: 'Resident updated successfully' });
-        router.push('/residents');
+        if (!blotter.value) return;
+        await blotterStore.updateBlotter(blotterId, blotter.value);
+        showToast({ icon: 'success', title: 'Blotter updated successfully' });
+        cleanup();
+        router.push('/blotter'); // Changed to parent route
     } catch (error) {
         showToast({ icon: 'error', title: error.message });
     }
 }
 
+// Add beforeUnmount hook
+onBeforeUnmount(cleanup);
 
 onMounted(async () => {
     await residentStore.getResidents();
@@ -45,8 +53,17 @@ watch(() => blotter.value, (newBlotter) => {
         selectedRespondent.value = residents.value.find(r => r.id == newBlotter.respondents_id);
     }
 }, { immediate: true });
+const handleCancel = () => {
+  // Clean up Multiselect references
+  selectedComplainant.value = null;
+  selectedRespondent.value = null;
 
+  // Reset the current blotter in store
+  blotterStore._blotter = null;
 
+  // Navigate back to parent blotter route
+  router.push('/blotter');
+};
 </script>
 
 <template>
@@ -193,12 +210,13 @@ watch(() => blotter.value, (newBlotter) => {
 
 
                     <div class="flex justify-center mt-10 gap-4">
-
-                        <button type="submit"
-                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">Save</button>
-                        <router-link to="/residents"
-                            class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200">Cancel</router-link>
-
+                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">Save</button>
+                        <button
+                             @click="handleCancel"
+                            class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200"
+                        >
+                            Cancel
+                        </button>
                     </div>
                 </div>
             </form>

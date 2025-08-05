@@ -18,7 +18,7 @@ const routes = [
                 name: "Home",
                 meta: {
                     title: "Home",
-                    requiresAuth: false,
+                    requiresAuth: false,    
                 },
                 component: () => import("@/Pages/LandingPage/Home.vue"),
             },
