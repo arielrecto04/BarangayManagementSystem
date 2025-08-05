@@ -12,6 +12,7 @@ class ComplaintController extends Controller
      */
     public function index()
     {
+
         return Complaint::paginate(10);
     }
 
@@ -42,12 +43,21 @@ class ComplaintController extends Controller
             'nature_of_complaint' => 'required|string',
             'incident_datetime' => 'required|date',
             'incident_location' => 'required|string',
-            'supporting_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
+            'supporting_documents' => 'nullable|array', // Accept multiple files
+            'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
             'witness' => 'required|string',
         ]);
-        if ($request->hasFile('supporting_document')) {
-            $validated['supporting_document'] = $request->file('supporting_document')->store('documents', 'public');
+
+        $filePaths = [];
+        if ($request->hasFile('supporting_documents')) {
+            foreach ($request->file('supporting_documents') as $file) {
+                $path = $file->store('documents', 'public');
+                $filePaths[] = $path;
+            }
         }
+
+        $validated['supporting_documents'] = json_encode($filePaths);
+
         $complaint = Complaint::create($validated);
 
         return response()->json([
@@ -55,6 +65,7 @@ class ComplaintController extends Controller
             'data' => $complaint,
         ], 201);
     }
+
 
     /**
      * Display the specified resource.
@@ -89,11 +100,11 @@ class ComplaintController extends Controller
             'nature_of_complaint' => 'sometimes|required|string',
             'incident_datetime' => 'sometimes|required|date',
             'incident_location' => 'sometimes|required|string',
-            'supporting_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
+            'supporting_documents' => 'nullable|file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
             'witness' => 'sometimes|required|string',
         ]);
-        if ($request->hasFile('supporting_document')) {
-            $validated['supporting_document'] = $request->file('supporting_document')->store('documents', 'public');
+        if ($request->hasFile('supporting_documents')) {
+            $validated['supporting_documents'] = $request->file('supporting_documents')->store('documents', 'public');
         }
         $complaint = Complaint::findOrFail($id);
         $complaint->update($request->all());
