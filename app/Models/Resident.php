@@ -13,6 +13,7 @@ class Resident extends Model
     protected $fillable = [
         'first_name',
         'last_name',
+        'middle_name',
         'birthday',
         'resident_number',
         'email',
@@ -20,6 +21,7 @@ class Resident extends Model
         'gender',
         'address',
         'contact_number',
+        'contact_person',
         'family_member',
         'emergency_contact',
     ];
