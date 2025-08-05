@@ -41,10 +41,13 @@ const columns = [
         key: "avatar", label: "Image"
     },
     {
-        key: "last_name", label: "Last Name"
+        key: "first_name", label: "First Name"
     },
     {
-        key: "first_name", label: "First Name"
+        key: "middle_name", label: "Middle Name"
+    },
+    {
+        key: "last_name", label: "Last Name"
     },
     {
         key: "birthday", label: "Birthday"
@@ -63,6 +66,9 @@ const columns = [
     },
     {
         key: "emergency_contact", label: "Emergency Contact"
+    },
+    {
+        key: "contact_person", label: "Contact Person"
     },
 ];
 
@@ -122,7 +128,12 @@ onMounted(() => {
             <template #cell(avatar)="{ row }">
                 <img :src="row.avatar" alt="image" srcset="" class="w-10 h-10 rounded-full">
             </template>
-
+            <template #cell(middle_name)="{ row }">
+                {{ row.middle_name }}
+            </template>
+            <template #cell(contact_person)="{ row }">
+                {{ row.contact_person }}
+            </template>
             <template #actions="{ row }">
                 <router-link :to="`/residents/edit-resident/${row.id}`"
                     class="bg-blue-500 text-white px-2 py-1 rounded">Edit</router-link>
