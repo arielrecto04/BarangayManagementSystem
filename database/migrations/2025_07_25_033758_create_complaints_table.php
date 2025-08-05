@@ -27,7 +27,8 @@ return new class extends Migration
             $table->string('nature_of_complaint')->nullable();
             $table->dateTime('incident_datetime')->nullable();
             $table->string('incident_location')->nullable();
-            $table->json('supporting_documents')->nullable()->change();
+            // Store both file paths and original names
+            $table->json('supporting_documents')->nullable(); // Array of objects with 'path' and 'name'
             $table->string('witness')->nullable();
             $table->timestamps();
         });
