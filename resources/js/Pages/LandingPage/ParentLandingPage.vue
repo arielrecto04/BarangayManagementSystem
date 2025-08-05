@@ -12,7 +12,7 @@ import { NavBar } from '@/Components';
     <BaseLayout>
      <div class="w-full flex flex-col">
         <NavBar />
-        <div class="w-5/6 mx-auto">
+        <div class="w-full xl:w-5/6 mx-auto">
             <router-view />
         </div>
      </div>
