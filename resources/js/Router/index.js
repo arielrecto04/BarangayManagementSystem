@@ -4,13 +4,25 @@ import { useAuthenticationStore } from "@/Stores";
 
 const routes = [
     {
-        // path: "/",
-        // name: "Home",
-        // meta: {
-        //     title: "Home",
-        //     requiresAuth: false,
-        // },
-        // component: () => import("@/Pages/Home.vue"),
+        path: "/",
+        name: "ParentLandingPage",
+        redirect: { name: "Home" },
+        meta: {
+            title: "Home",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/LandingPage/ParentLandingPage.vue"),
+        children: [
+            {
+                path: "home",
+                name: "Home",
+                meta: {
+                    title: "Home",
+                    requiresAuth: false,
+                },
+                component: () => import("@/Pages/LandingPage/Home.vue"),
+            },
+        ],
     },
     {
         path: "/Registration",
@@ -214,7 +226,7 @@ const routes = [
         component: () => import("@/Pages/Dashboard/HealthServices.vue"),
     },
     {
-        path: "/",
+        path: "/login",
         name: "Login",
         meta: {
             title: "Login",
