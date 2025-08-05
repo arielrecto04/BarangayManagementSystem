@@ -69,7 +69,7 @@ const validateForm = () => {
         barangay_case_no: 'Barangay Case No',
         status: 'Status',
         description: 'Description',
-        witness: 'Witness'
+        
     };
 
     for (const [field, label] of Object.entries(fields)) {

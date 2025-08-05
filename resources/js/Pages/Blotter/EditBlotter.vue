@@ -165,7 +165,7 @@ const handleCancel = () => {
                         </div>
                         <div class="flex flex-col gap-2">
                             <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
-                            <input id="witness" type="text" v-model="blotter.witness" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                            <textarea id="witness" type="text" v-model="blotter.witness" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
                         <div class="flex flex-col gap-2">
                             <label for="status" class="text-sm font-semibold text-gray-600">Status</label>

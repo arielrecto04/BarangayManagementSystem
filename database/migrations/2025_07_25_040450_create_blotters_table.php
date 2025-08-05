@@ -29,6 +29,8 @@ return new class extends Migration
             $table->string('status')->default('Open');
             $table->longText('description');
             $table->string('witness');
+            // Store both file paths and original names
+            $table->json('supporting_documents')->nullable(); // Array of objects with 'path
             $table->timestamps();
         });
     }
