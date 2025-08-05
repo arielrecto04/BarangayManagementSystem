@@ -26,8 +26,11 @@ class Complaint extends Model
         'witness',
     ];
 
+
     protected $casts = [
         'supporting_documents' => 'array',
+        'complainant_id' => 'integer',
+        'respondent_id' => 'integer',
     ];
     public function respondent()
     {

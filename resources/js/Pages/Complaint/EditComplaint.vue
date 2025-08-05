@@ -1,7 +1,7 @@
 <script setup>
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
-import { onMounted, ref, watch, computed, onUnmounted, nextTick } from 'vue';
+import { onMounted, ref, watch, computed, onUnmounted, nextTick, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useComplaintStore, useResidentStore } from '@/Stores';
 import useToast from '@/Utils/useToast';
@@ -15,6 +15,7 @@ const residentStore = useResidentStore();
 const residents = ref([]);
 const complaintId = route.params.id;
 const isLoading = ref(true);
+const isDestroyed = ref(false); // Track component destruction
 
 const selectedComplainant = ref(null);
 const selectedRespondent = ref(null);
@@ -41,6 +42,9 @@ const existingSupportingDocuments = ref([]);
 const newSupportingDocuments = ref([]);
 const formErrors = ref({});
 
+// Watchers array to store watcher cleanup functions
+const watchers = [];
+
 // Format datetime for input fields (convert from ISO to datetime-local format)
 const formatDateTimeForInput = (isoString) => {
   if (!isoString) return '';
@@ -49,7 +53,7 @@ const formatDateTimeForInput = (isoString) => {
   return date.toISOString().slice(0, 16);
 };
 
-// Helper function to get filename from document object (KEEP ONLY THIS ONE)
+// Helper function to get filename from document object
 const getFileName = (doc) => {
   try {
     if (typeof doc === 'object' && doc && doc.name) {
@@ -66,6 +70,8 @@ const getFileName = (doc) => {
 };
 
 const handleFileUpload = (event) => {
+  if (isDestroyed.value) return; // Prevent operations after destruction
+
   const newFiles = Array.from(event.target.files);
 
   const existingNames = new Set(
@@ -83,15 +89,18 @@ const handleFileUpload = (event) => {
 };
 
 const removeExistingDocument = (index) => {
+  if (isDestroyed.value) return;
   existingSupportingDocuments.value.splice(index, 1);
 };
 
 const removeNewDocument = (index) => {
+  if (isDestroyed.value) return;
   newSupportingDocuments.value.splice(index, 1);
 };
 
 // Exclude selected respondent from complainant list
 const filteredComplainants = computed(() => {
+  if (isDestroyed.value) return [];
   return residents.value.filter(resident =>
     selectedRespondent.value ? resident.id !== selectedRespondent.value.id : true
   );
@@ -99,49 +108,42 @@ const filteredComplainants = computed(() => {
 
 // Exclude selected complainant from respondent list
 const filteredRespondents = computed(() => {
+  if (isDestroyed.value) return [];
   return residents.value.filter(resident =>
     selectedComplainant.value ? resident.id !== selectedComplainant.value.id : true
   );
 });
 
-watch(selectedComplainant, (val) => {
-  if (!val || isLoading.value) return; // Prevent during cleanup/loading
+// Safe watchers that check for component destruction
+const complainantWatcher = watch(selectedComplainant, (val) => {
+  if (isDestroyed.value || isLoading.value) return;
   complaintForm.value.complainant_id = val?.id ?? '';
 });
 
-watch(selectedRespondent, (val) => {
-  if (!val || isLoading.value) return; // Prevent during cleanup/loading
+const respondentWatcher = watch(selectedRespondent, (val) => {
+  if (isDestroyed.value || isLoading.value) return;
   complaintForm.value.respondent_id = val?.id ?? '';
 });
 
-// Navigation guard to prevent leaving during form submission and cleanup watchers
-onBeforeRouteLeave((to, from, next) => {
-  // Skip cleanup if going to List Complaints
-  if (to.name === 'List Complaints') {
-    next();
-    return;
-  }
+// Store watchers for cleanup
+watchers.push(complainantWatcher, respondentWatcher);
 
-  // Clear any pending reactive updates
-  selectedComplainant.value = null;
-  selectedRespondent.value = null;
+// Cleanup function
+const cleanup = () => {
+  isDestroyed.value = true;
 
-  if (isLoading.value) {
-    if (confirm('Form is still processing. Are you sure you want to leave?')) {
-      isLoading.value = false;
-      next();
-    } else {
-      next(false);
+  // Stop all watchers
+  watchers.forEach(stopWatcher => {
+    if (typeof stopWatcher === 'function') {
+      try {
+        stopWatcher();
+      } catch (error) {
+        console.warn('Error stopping watcher:', error);
+      }
     }
-  } else {
-    next();
-  }
-});
+  });
 
-
-// Cleanup on component unmount
-onUnmounted(() => {
-  // Clear all reactive references
+  // Clear reactive references
   selectedComplainant.value = null;
   selectedRespondent.value = null;
   residents.value = [];
@@ -149,16 +151,47 @@ onUnmounted(() => {
   newSupportingDocuments.value = [];
   formErrors.value = {};
   isLoading.value = false;
+};
+
+// Navigation guard with proper cleanup
+onBeforeRouteLeave((to, from, next) => {
+  if (isLoading.value) {
+    if (confirm('Form is still processing. Are you sure you want to leave?')) {
+      cleanup();
+      next();
+    } else {
+      next(false);
+    }
+  } else {
+    cleanup();
+    next();
+  }
+});
+
+// Component cleanup
+onBeforeUnmount(() => {
+  cleanup();
+});
+
+onUnmounted(() => {
+  cleanup();
 });
 
 onMounted(async () => {
   try {
     isLoading.value = true;
+    isDestroyed.value = false;
 
     await residentStore.getResidents();
+
+    if (isDestroyed.value) return;
+
     residents.value = residentStore.residents;
 
     const response = await axios.get(`/complaints/${complaintId}`);
+
+    if (isDestroyed.value) return;
+
     const complaintData = response.data;
 
     // Assign all the data to the form
@@ -179,41 +212,52 @@ onMounted(async () => {
         : [];
     }
 
-    // Set selected residents for dropdowns
-    if (complaintData.complainant_id) {
-      selectedComplainant.value = residents.value.find(r => r.id === complaintData.complainant_id);
-    }
-    if (complaintData.respondent_id) {
-      selectedRespondent.value = residents.value.find(r => r.id === complaintData.respondent_id);
+    await nextTick();
+
+    if (!isDestroyed.value) {
+      // Use string comparison for consistent matching
+      if (complaintData.complainant_id) {
+        selectedComplainant.value = residents.value.find(
+          r => String(r.id) === String(complaintData.complainant_id)
+        );
+      }
+      if (complaintData.respondent_id) {
+        selectedRespondent.value = residents.value.find(
+          r => String(r.id) === String(complaintData.respondent_id)
+        );
+      }
     }
 
   } catch (error) {
     console.error('Error in onMounted:', error);
-    formErrors.value.component = true;
-    showToast({ icon: 'error', title: 'Error loading complaint data' });
+    if (!isDestroyed.value) {
+      formErrors.value.component = true;
+      showToast({ icon: 'error', title: 'Error loading complaint data' });
+    }
   } finally {
-    isLoading.value = false;
+    if (!isDestroyed.value) {
+      isLoading.value = false;
+    }
   }
 });
 
-// Add a cancel handler function
-const handleCancel = () => {
-  // Reset all reactive state
-  selectedComplainant.value = null;
-  selectedRespondent.value = null;
-  residents.value = [];
-  existingSupportingDocuments.value = [];
-  newSupportingDocuments.value = [];
-  formErrors.value = {};
+// Enhanced cancel handler with proper cleanup
+const handleCancel = async () => {
+  cleanup();
 
-  // Use nextTick to ensure cleanup completes
-  nextTick(() => {
+  // Use nextTick to ensure cleanup completes before navigation
+  await nextTick();
+
+  try {
     router.push('/complaints/list-complaints');
-  });
+  } catch (error) {
+    // Handle navigation errors gracefully
+    console.warn('Navigation error:', error);
+  }
 };
 
 const submitForm = async () => {
-  if (isLoading.value) return; // Prevent multiple submissions
+  if (isLoading.value || isDestroyed.value) return; // Prevent multiple submissions and operations on destroyed component
 
   formErrors.value = {}; // reset
 
@@ -292,14 +336,24 @@ const submitForm = async () => {
     formData.append('_method', 'PATCH');
 
     await complaintStore.updateComplaint(complaintId, formData);
+
+    if (isDestroyed.value) return; // Check if component was destroyed during operation
+
     showToast({ icon: 'success', title: 'Complaint updated successfully.' });
 
     await complaintStore.getComplaints(1);
 
-    // Add a small delay before navigation to ensure DOM updates complete
+    // Cleanup before navigation
+    cleanup();
+
+    // Add a small delay and use nextTick to ensure DOM updates complete
+    await nextTick();
     await new Promise(resolve => setTimeout(resolve, 100));
+
     router.push('/complaints/list-complaints');
   } catch (error) {
+    if (isDestroyed.value) return; // Don't show errors if component is destroyed
+
     if (error.response && error.response.status === 422) {
       const messages = Object.values(error.response.data.errors).flat().join(' ');
       showToast({ icon: 'error', title: messages });
@@ -307,7 +361,9 @@ const submitForm = async () => {
       showToast({ icon: 'error', title: error.message });
     }
   } finally {
-    isLoading.value = false;
+    if (!isDestroyed.value) {
+      isLoading.value = false;
+    }
   }
 };
 
@@ -324,8 +380,8 @@ onMounted(fetchComplaint);
       <p>An error occurred loading the form. Please refresh the page.</p>
     </div>
 
-    <form v-if="!isLoading && !formErrors.component" :key="`form-${complaintId}`" @submit.prevent="submitForm"
-      class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
+    <form v-if="!isLoading && !formErrors.component && !isDestroyed" :key="`form-${complaintId}`"
+      @submit.prevent="submitForm" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
 
       <h1 class="text-2xl font-bold mb-6">Edit Complaint</h1>
 
@@ -333,18 +389,18 @@ onMounted(fetchComplaint);
         <!-- Complainant Searchable Dropdown -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm mb-1">Complainant</label>
-          <Multiselect v-if="residents.length > 0" v-model="selectedComplainant" :options="filteredComplainants"
-            :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
-            placeholder="Search or select complainant" :searchable="true" :show-labels="false"
+          <Multiselect v-if="residents.length > 0 && !isDestroyed" v-model="selectedComplainant"
+            :options="filteredComplainants" :custom-label="resident => `${resident.first_name} ${resident.last_name}`"
+            track-by="id" placeholder="Search or select complainant" :searchable="true" :show-labels="false"
             :key="`complainant-${residents.length}`" />
         </div>
 
         <!-- Respondent Searchable Dropdown -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm mb-1">Respondent</label>
-          <Multiselect v-if="residents.length > 0" v-model="selectedRespondent" :options="filteredRespondents"
-            :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
-            placeholder="Search or select respondent" :searchable="true" :show-labels="false"
+          <Multiselect v-if="residents.length > 0 && !isDestroyed" v-model="selectedRespondent"
+            :options="filteredRespondents" :custom-label="resident => `${resident.first_name} ${resident.last_name}`"
+            track-by="id" placeholder="Search or select respondent" :searchable="true" :show-labels="false"
             :key="`respondent-${residents.length}`" />
         </div>
 
@@ -404,8 +460,6 @@ onMounted(fetchComplaint);
           <input type="datetime-local" v-model="complaintForm.filing_date" class="border rounded-md p-2" />
         </div>
 
-
-
         <!-- Status -->
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Status</label>
@@ -452,7 +506,7 @@ onMounted(fetchComplaint);
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
 
           <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit mb-2"
-            @click="$refs.fileInput.click()">
+            @click="$refs.fileInput?.click()">
             Upload Additional Files
           </button>
 
@@ -470,9 +524,9 @@ onMounted(fetchComplaint);
         </div>
       </div>
 
-      <!-- Cancel -->
+      <!-- Action Buttons -->
       <div class="mt-6 flex justify-end gap-4">
-        <button type="submit" :disabled="isLoading"
+        <button type="submit" :disabled="isLoading || isDestroyed"
           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md disabled:opacity-50">
           {{ isLoading ? 'Updating...' : 'Update Complaint' }}
         </button>
