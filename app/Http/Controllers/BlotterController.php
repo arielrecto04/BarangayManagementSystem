@@ -28,7 +28,9 @@ class BlotterController extends Controller
                     'blotter_type' => $blotter->blotter_type,
                     'barangay_case_no' => $blotter->barangay_case_no,
                     'status' => $blotter->status,
-                    'description' => $blotter->description
+                    'description' => $blotter->description,
+                    'witness' => $blotter->witness,
+
                 ];
             }),
             'current_page' => $blotters->currentPage(),
@@ -58,8 +60,8 @@ public function store(Request $request)
         'barangay_case_no' => 'required',
         'total_cases' => 'required',
         'status' => 'required|in:Open,In Progress,Resolved',
-        'description' => 'required|string|max:1000'
-
+        'description' => 'required|string|max:1000',
+        'witness' => 'required|string|max:255'
     ]);
 
     $blotter = Blotter::create($validated);
@@ -98,7 +100,8 @@ public function store(Request $request)
             'barangay_case_no' => 'required',
             'total_cases' => 'nullable',
             'status' => 'required|in:Open,In Progress,Resolved',
-            'description' => 'required|string|max:1000'
+            'description' => 'required|string|max:1000',
+            'witness' => 'required|string|max:255'
         ]);
 
         $blotter = Blotter::findOrFail($id);

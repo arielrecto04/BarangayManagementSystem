@@ -130,6 +130,11 @@ onMounted(() => {
                         <strong>Barangay Case No:</strong><br />
                         {{ selectedBlotter?.barangay_case_no }}
                     </div>
+                   
+                    <div>
+                        <strong>Witness:</strong><br />
+                        {{ selectedBlotter?.witness }}
+                    </div>
                     <div class="col-span-2">
                         <strong>Description:</strong><br />
                         <textarea

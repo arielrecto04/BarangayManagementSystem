@@ -21,7 +21,8 @@ class Blotter extends Model
         'barangay_case_no',
         'total_cases',
         'status',
-        'description'
+        'description',
+        'witness',
     ];
 
     protected $casts = [

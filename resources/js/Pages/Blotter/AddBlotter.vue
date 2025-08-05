@@ -48,7 +48,8 @@ const blotterDataForm = ref({
     in_progress: '0',
     resolved: '0',
     status: '',
-    description: ''
+    description: '',
+    witness: ''
 });
 
 const validateForm = () => {
@@ -67,7 +68,8 @@ const validateForm = () => {
         blotter_type: 'Blotter Type',
         barangay_case_no: 'Barangay Case No',
         status: 'Status',
-        description: 'Description'
+        description: 'Description',
+        witness: 'Witness'
     };
 
     for (const [field, label] of Object.entries(fields)) {
@@ -207,6 +209,17 @@ const createBlotter = async () => {
                                 :class="['input-style w-full border border-gray-200 rounded-md px-4 py-2', errors.description ? 'border-red-500' : 'border-gray-200']"
                             ></textarea>
                             <span v-if="errors.description" class="text-red-500 text-xs mt-1">{{ errors.description }}</span>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
+                        <input 
+                            id="witness" 
+                            type="text" 
+                            placeholder="Enter Witness Name" 
+                            v-model="blotterDataForm.witness" 
+                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.witness ? 'border-red-500' : 'border-gray-200']"
+                        />
+                        <span v-if="errors.witness" class="text-red-500 text-xs mt-1">{{ errors.witness }}</span>
                     </div>
                     <div class="flex flex-col gap-2 rel">
                         <label for="status" class="text-sm font-semibold text-gray-600">Status</label>
