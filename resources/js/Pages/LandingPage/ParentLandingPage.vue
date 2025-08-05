@@ -10,9 +10,9 @@ import { NavBar } from '@/Components';
 
 <template>
     <BaseLayout>
-     <div class="w-full flex flex-col">
+     <div class="w-screen flex flex-col">
         <NavBar />
-        <div class="w-5/6 mx-auto">
+        <div class="w-full mx-auto">
             <router-view />
         </div>
      </div>
