@@ -72,7 +72,7 @@ export const useComplaintStore = defineStore("complaint", {
             this._error = null;
             try {
                 let response;
-                
+
                 // Check if data is FormData (for file uploads)
                 if (data instanceof FormData) {
                     response = await axios.post(`/complaints/${id}`, data, {
@@ -84,7 +84,7 @@ export const useComplaintStore = defineStore("complaint", {
                     // Regular JSON update
                     response = await axios.patch(`/complaints/${id}`, data);
                 }
-                
+
                 const index = this._complaints.findIndex((c) => c.id === id);
                 if (index !== -1) {
                     this._complaints[index] = response.data.data;
