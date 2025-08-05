@@ -1,7 +1,7 @@
-import { axios } from '@/utils';
-import { defineStore } from 'pinia';
+import { axios } from "@/utils";
+import { defineStore } from "pinia";
 
-export const useComplaintStore = defineStore('complaint', {
+export const useComplaintStore = defineStore("complaint", {
     state: () => ({
         _complaints: [],
         _complaint: null,
@@ -32,7 +32,7 @@ export const useComplaintStore = defineStore('complaint', {
                     total: response.data.total,
                 };
             } catch (error) {
-                console.error('Error fetching complaints:', error);
+                console.error("Error fetching complaints:", error);
                 this._error = error;
             } finally {
                 this._isLoading = false;
@@ -57,10 +57,10 @@ export const useComplaintStore = defineStore('complaint', {
             this._isLoading = true;
             this._error = null;
             try {
-                const response = await axios.post('/complaints', data);
+                const response = await axios.post("/complaints", data);
                 this._complaints.push(response.data.data);
             } catch (error) {
-                console.error('Error adding complaint:', error);
+                console.error("Error adding complaint:", error);
                 this._error = error;
             } finally {
                 this._isLoading = false;
@@ -71,11 +71,13 @@ export const useComplaintStore = defineStore('complaint', {
             this._isLoading = true;
             this._error = null;
             try {
-                const response = await axios.put(`/complaints/${id}`, data);
+                const response = await axios.patch(`/complaints/${id}`, data);
                 const index = this._complaints.findIndex((c) => c.id === id);
                 if (index !== -1) {
                     this._complaints[index] = response.data.data;
                 }
+
+                // ✅ This ensures dashboard stats update
             } catch (error) {
                 console.error(`Error updating complaint ID ${id}:`, error);
                 this._error = error;
@@ -84,21 +86,23 @@ export const useComplaintStore = defineStore('complaint', {
             }
         },
 
-        async createComplaint(data) {
-    this._isLoading = true;
-    this._error = null;
-    try {
-        const response = await axios.post('/complaints', data);
-        this._complaints.push(response.data.data);
-    } catch (error) {
-        console.error('Error creating complaint:', error);
-        this._error = error;
-    } finally {
-        this._isLoading = false;
-    }
-},
-
-
+        async createComplaint(formData) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                const response = await axios.post("/complaints", formData, {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                });
+                this._complaints.push(response.data.data);
+            } catch (error) {
+                console.error("Error creating complaint:", error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
 
         async deleteComplaint(id) {
             this._isLoading = true;

@@ -153,15 +153,15 @@ const submitForm = async () => {
           <label class="font-semibold text-sm">Date</label>
           <input type="date" v-model="complaintForm.date" class="border rounded-md p-2" />
         </div>
-        
-<div class="flex flex-col">
-  <label class="font-semibold text-sm">Status</label>
-  <select v-model="complaintForm.status" class="border rounded-md p-2">
-    <option value="Open">Open</option>
-    <option value="In Progress">In Progress</option>
-    <option value="Resolved">Resolved</option>
-  </select>
-</div>
+
+        <div class="flex flex-col">
+          <label class="font-semibold text-sm">Status</label>
+          <select v-model="complaintForm.status" class="border rounded-md p-2">
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
 
         <div class="flex flex-col">
           <label class="font-semibold text-sm">Filing Date</label>

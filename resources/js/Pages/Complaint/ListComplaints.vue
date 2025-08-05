@@ -8,6 +8,90 @@ import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
 import { watch } from 'vue';
 
+// Format date and time
+const formatDateTime = (isoString) => {
+  if (!isoString) return 'N/A';
+
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  };
+
+  return new Date(isoString).toLocaleString('en-US', options);
+};
+
+// Helper function to check if supporting documents exist and are valid
+const getSupportingDocuments = (complaint) => {
+  if (!complaint?.supporting_documents) return [];
+
+  // Handle both array and string cases
+  if (Array.isArray(complaint.supporting_documents)) {
+    // New format: array of objects with 'path' and 'name'
+    return complaint.supporting_documents.filter(doc => {
+      // Handle new format (objects with path and name)
+      if (typeof doc === 'object' && doc.path && doc.name) {
+        return true;
+      }
+      // Handle old format (just strings)
+      if (typeof doc === 'string') {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  // If it's a string (JSON), try to parse it
+  if (typeof complaint.supporting_documents === 'string') {
+    try {
+      const parsed = JSON.parse(complaint.supporting_documents);
+      return Array.isArray(parsed) ? parsed.filter(doc => {
+        if (typeof doc === 'object' && doc.path && doc.name) {
+          return true;
+        }
+        if (typeof doc === 'string') {
+          return true;
+        }
+        return false;
+      }) : [];
+    } catch (e) {
+      console.warn('Failed to parse supporting documents:', e);
+      return [];
+    }
+  }
+
+  return [];
+};
+
+// Helper function to get filename - handles both old and new formats
+const getFileName = (doc) => {
+  // New format: object with name property
+  if (typeof doc === 'object' && doc.name) {
+    return doc.name;
+  }
+  // Old format: just file path string
+  if (typeof doc === 'string') {
+    return doc.split('/').pop() || 'Unknown file';
+  }
+  return 'Unknown file';
+};
+
+// Helper function to get file path - handles both old and new formats
+const getFilePath = (doc) => {
+  // New format: object with path property
+  if (typeof doc === 'object' && doc.path) {
+    return doc.path;
+  }
+  // Old format: just file path string
+  if (typeof doc === 'string') {
+    return doc;
+  }
+  return '';
+};
+
 const { showToast } = useToast();
 const route = useRoute();
 const router = useRouter();
@@ -18,7 +102,6 @@ const { complaints, isLoading, paginate } = storeToRefs(complaintStore);
 const currentPage = ref(route.query.page || 1);
 const resolutionUpdates = ref({});
 const statusUpdates = ref({});
-
 
 const handlePageChange = (page) => {
   currentPage.value = page;
@@ -39,6 +122,7 @@ const closeModal = () => {
   selectedComplaint.value = null;
 };
 
+const emit = defineEmits(['status-updated']);
 
 const updateStatus = async (complaintId) => {
   const updatedStatus = statusUpdates.value[complaintId];
@@ -48,13 +132,15 @@ const updateStatus = async (complaintId) => {
   }
   try {
     await complaintStore.updateComplaint(complaintId, { status: updatedStatus });
+    const index = complaints.value.findIndex(c => c.id === complaintId);
+    if (index !== -1) {
+      complaints.value[index].status = updatedStatus;
+    }
     showToast({ icon: 'success', title: 'Status updated successfully' });
-    complaintStore.getComplaints(currentPage.value);
   } catch (error) {
     showToast({ icon: 'error', title: error.message });
   }
 };
-
 
 const deleteComplaint = async (complaintId) => {
   try {
@@ -71,7 +157,7 @@ const columns = [
   { key: "respondent_name", label: "Respondent" },
   { key: "case_no", label: "Case No" },
   { key: "title", label: "Title" },
-  { key: "filing_date", label: "Filing Date" },
+  { key: "formatted_filing_date", label: "Filing Date" },
   { key: "status", label: "Status" }
 ];
 
@@ -80,7 +166,7 @@ onMounted(() => {
   const status = route.query.status;
 
   if (status) {
-    complaintStore.getComplaints(page, status); // assumes getComplaints supports filter
+    complaintStore.getComplaints(page, status);
   } else {
     complaintStore.getComplaints(page);
   }
@@ -103,7 +189,10 @@ watch(complaints, (newComplaints) => {
       <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
     </div>
 
-    <Table v-else :columns="columns" :rows="complaints">
+    <Table v-else :columns="columns" :rows="complaints.map(c => ({
+      ...c,
+      formatted_filing_date: formatDateTime(c.filing_date)
+    }))">
       <template #actions="{ row }">
         <router-link :to="`/complaints/edit-complaint/${row.id}`" class="bg-blue-500 text-white px-2 py-1 rounded">
           Edit
@@ -120,111 +209,130 @@ watch(complaints, (newComplaints) => {
           <option value="Resolved">Resolved</option>
         </select>
 
-        <button
-          @click="updateStatus(row.id)"
-          class="bg-green-500 text-white px-2 py-1 rounded ml-2">
+        <button @click="updateStatus(row.id)" class="bg-green-500 text-white px-2 py-1 rounded ml-2">
           Apply
         </button>
 
         <!-- View Button -->
-<button
-  @click="openModal(row)"
-  class="bg-gray-500 text-white px-2 py-1 rounded ml-2"
->
-  View
-</button>
+        <button @click="openModal(row)" class="bg-gray-500 text-white px-2 py-1 rounded ml-2">
+          View
+        </button>
 
       </template>
     </Table>
 
-    <Paginate
-      v-if="paginate && !isLoading"
-      @page-changed="handlePageChange"
-      :maxVisibleButtons="5"
-      :totalPages="paginate.last_page"
-      :totalItems="paginate.total"
-      :currentPage="paginate.current_page"
-      :itemsPerPage="paginate.per_page"
-    />
+    <Paginate v-if="paginate && !isLoading" @page-changed="handlePageChange" :maxVisibleButtons="5"
+      :totalPages="paginate.last_page" :totalItems="paginate.total" :currentPage="paginate.current_page"
+      :itemsPerPage="paginate.per_page" />
 
- <!-- Modal -->
-<div
-  v-if="showModal"
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
->
-  <div
-    class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto"
-  >
-    <!-- Close Button -->
-    <button
-      @click="closeModal"
-      class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl"
-    >
-      &times;
-    </button>
+    <!-- Modal -->
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+        <!-- Close Button -->
+        <button @click="closeModal" class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">
+          &times;
+        </button>
 
-    <!-- Modal Title -->
-    <h2 class="text-lg font-bold mb-6 text-gray-700">Complaint Details</h2>
+        <!-- Modal Title -->
+        <h2 class="text-lg font-bold mb-6 text-gray-700">Complaint Details</h2>
 
-    <!-- Grid Layout for Fields -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
-      <div>
-        <strong>Complainant:</strong><br />
-        {{ selectedComplaint?.complainant_name }}
-      </div>
-      <div>
-        <strong>Respondent:</strong><br />
-        {{ selectedComplaint?.respondent_name }}
-      </div>
-      <div>
-        <strong>Case No:</strong><br />
-        {{ selectedComplaint?.case_no }}
-      </div>
-      <div>
-        <strong>Title:</strong><br />
-        {{ selectedComplaint?.title }}
-      </div>
+        <!-- Grid Layout for Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
+          <!-- Complaint Name -->
+          <div>
+            <strong>Complainant:</strong><br />
+            {{ selectedComplaint?.complainant_name || 'N/A' }}
+          </div>
+          <!-- Respondent Name -->
+          <div>
+            <strong>Respondent:</strong><br />
+            {{ selectedComplaint?.respondent_name || 'N/A' }}
+          </div>
+          <!-- Nature of Complaint -->
+          <div>
+            <strong>Nature of Complaint:</strong><br />
+            {{ selectedComplaint?.nature_of_complaint || 'N/A' }}
+          </div>
+          <!-- Location of Incident -->
+          <div>
+            <strong>Location of Incident:</strong><br />
+            {{ selectedComplaint?.incident_location || 'N/A' }}
+          </div>
+          <!-- Case Number -->
+          <div>
+            <strong>Case Number:</strong><br />
+            {{ selectedComplaint?.case_no || 'N/A' }}
+          </div>
+          <!-- Title -->
+          <div>
+            <strong>Title:</strong><br />
+            {{ selectedComplaint?.title || 'N/A' }}
+          </div>
 
-      <!-- Description with scroll -->
-   <div class="md:col-span-2">
-  <strong>Description:</strong>
-  <textarea
-    readonly
-    class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
-  >{{ selectedComplaint?.description }}</textarea>
-</div>
+          <!-- Description with scroll -->
+          <div class="md:col-span-2">
+            <strong>Description:</strong>
+            <textarea readonly
+              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
+                selectedComplaint?.description || 'N/A' }}</textarea>
+          </div>
 
-<!-- Resolution -->
-   <div class="md:col-span-2">
-  <strong>Resolution:</strong>
-  <textarea
-    readonly
-    class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
-  >{{ selectedComplaint?.resolution }}</textarea>
-</div>
-<div>
-        <strong>Date:</strong><br />
-        {{ selectedComplaint?.date }}
-      </div>
-      <div>
-        <strong>Filing Date:</strong><br />
-        {{ selectedComplaint?.filing_date }}
-      </div>
-      <div>
-        <strong>Complainant ID:</strong><br />
-        ID: {{ selectedComplaint?.complainant_id }}
-      </div>
-      <div>
-        <strong>Respondent ID:</strong><br />
-        ID: {{ selectedComplaint?.respondent_id }}
-      </div>
-      <div>
-  <strong>Status:</strong><br />
-  {{ selectedComplaint?.status || 'N/A' }}
-</div>
+          <!-- Resolution -->
+          <div class="md:col-span-2">
+            <strong>Resolution:</strong>
+            <textarea readonly
+              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
+                selectedComplaint?.resolution || 'N/A' }}</textarea>
+          </div>
+          <!-- Date and Time of Incident -->
+          <div>
+            <strong>Date & Time of Incident:</strong><br />
+            {{ formatDateTime(selectedComplaint?.incident_datetime) }}
+          </div>
+          <!-- Filing data and time -->
+          <div>
+            <strong>Filing Date & Time:</strong><br />
+            {{ formatDateTime(selectedComplaint?.filing_date) }}
+          </div>
+          <!-- Complainant ID -->
+          <div>
+            <strong>Complainant ID:</strong><br />
+            ID: {{ selectedComplaint?.complainant_id || 'N/A' }}
+          </div>
+          <!-- Respondent ID -->
+          <div>
+            <strong>Respondent ID:</strong><br />
+            ID: {{ selectedComplaint?.respondent_id || 'N/A' }}
+          </div>
+          <!-- Witness -->
+          <div>
+            <strong>Witness(es):</strong><br />
+            {{ selectedComplaint?.witness || 'N/A' }}
+          </div>
+          <!-- Status -->
+          <div>
+            <strong>Status:</strong><br />
+            {{ selectedComplaint?.status || 'N/A' }}
+          </div>
+          <!-- Supporting Documents - FIXED -->
+          <div class="md:col-span-2">
+            <strong>Supporting Documents:</strong><br />
+            <div v-if="getSupportingDocuments(selectedComplaint).length > 0">
+              <ul class="list-disc pl-5">
+                <li v-for="(doc, index) in getSupportingDocuments(selectedComplaint)" :key="index">
+                  <a :href="`/storage/${getFilePath(doc)}`" target="_blank" class="text-blue-500 hover:underline">
+                    {{ getFileName(doc) }}
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div v-else class="text-gray-500 italic">
+              No supporting documents available
+            </div>
+          </div>
 
+        </div>
+      </div>
     </div>
   </div>
-</div>
-</div>
 </template>
