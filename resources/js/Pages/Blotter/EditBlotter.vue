@@ -19,11 +19,17 @@ const selectedRespondent = ref(null);
 const { blotter, isLoading } = storeToRefs(blotterStore);
 const blotterId = router.currentRoute.value.params.id;
 
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toISOString().slice(0, 16);
+};
 // Add this cleanup function
 const cleanup = () => {
-  selectedComplainant.value = null;
-  selectedRespondent.value = null;
-  blotterStore._blotter = null;
+    selectedComplainant.value = null;
+    selectedRespondent.value = null;
+    blotterStore._blotter = null;
+
 };
 
 const updateResidentData  = async () => {
@@ -45,12 +51,20 @@ onMounted(async () => {
     await residentStore.getResidents();
     residents.value = residentStore.residents;
     await blotterStore.getBlotterById(blotterId);
+    // Format dates after loading
+     if (blotter.value) {
+        blotter.value.filing_date = blotter.value.filing_date?.split('T')[0] || '';
+        blotter.value.datetime_of_incident = formatDateForInput(blotter.value.datetime_of_incident);
+    }
 });
 
 watch(() => blotter.value, (newBlotter) => {
     if (newBlotter) {
         selectedComplainant.value = residents.value.find(r => r.id == newBlotter.complainants_id);
         selectedRespondent.value = residents.value.find(r => r.id == newBlotter.respondents_id);
+
+        newBlotter.filing_date = newBlotter.filing_date?.split('T')[0] || '';
+        newBlotter.datetime_of_incident = formatDateForInput(newBlotter.datetime_of_incident);
     }
 }, { immediate: true });
 const handleCancel = () => {
@@ -116,7 +130,7 @@ const handleCancel = () => {
                                 v-model="blotter.nature_of_case"
                                 class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2"
                             >
-                                <option value="" disabled selected>Select Nature of Case</option>
+                                <option value="" disabled>Select Nature of Case</option>
                                 <option value="Civil case">Civil Case</option>
                                 <option value="Criminal case">Criminal Case</option>
                             </select>
