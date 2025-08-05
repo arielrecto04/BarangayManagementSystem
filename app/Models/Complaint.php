@@ -29,12 +29,12 @@ class Complaint extends Model
     protected $casts = [
         'supporting_documents' => 'array',
     ];
-    public function respondent_complaint()
+    public function respondent()
     {
-        return $this->belongsTo(Complaint::class, 'respondent_id');
+        return $this->belongsTo(Resident::class, 'respondent_id');
     }
-    public function complainant_complaint()
+    public function complainant()
     {
-        return $this->belongsTo(Complaint::class, 'complainant_id');
+        return $this->belongsTo(Resident::class, 'complainant_id');
     }
 }

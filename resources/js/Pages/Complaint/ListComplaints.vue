@@ -24,6 +24,73 @@ const formatDateTime = (isoString) => {
   return new Date(isoString).toLocaleString('en-US', options);
 };
 
+// Helper function to check if supporting documents exist and are valid
+const getSupportingDocuments = (complaint) => {
+  if (!complaint?.supporting_documents) return [];
+
+  // Handle both array and string cases
+  if (Array.isArray(complaint.supporting_documents)) {
+    // New format: array of objects with 'path' and 'name'
+    return complaint.supporting_documents.filter(doc => {
+      // Handle new format (objects with path and name)
+      if (typeof doc === 'object' && doc.path && doc.name) {
+        return true;
+      }
+      // Handle old format (just strings)
+      if (typeof doc === 'string') {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  // If it's a string (JSON), try to parse it
+  if (typeof complaint.supporting_documents === 'string') {
+    try {
+      const parsed = JSON.parse(complaint.supporting_documents);
+      return Array.isArray(parsed) ? parsed.filter(doc => {
+        if (typeof doc === 'object' && doc.path && doc.name) {
+          return true;
+        }
+        if (typeof doc === 'string') {
+          return true;
+        }
+        return false;
+      }) : [];
+    } catch (e) {
+      console.warn('Failed to parse supporting documents:', e);
+      return [];
+    }
+  }
+
+  return [];
+};
+
+// Helper function to get filename - handles both old and new formats
+const getFileName = (doc) => {
+  // New format: object with name property
+  if (typeof doc === 'object' && doc.name) {
+    return doc.name;
+  }
+  // Old format: just file path string
+  if (typeof doc === 'string') {
+    return doc.split('/').pop() || 'Unknown file';
+  }
+  return 'Unknown file';
+};
+
+// Helper function to get file path - handles both old and new formats
+const getFilePath = (doc) => {
+  // New format: object with path property
+  if (typeof doc === 'object' && doc.path) {
+    return doc.path;
+  }
+  // Old format: just file path string
+  if (typeof doc === 'string') {
+    return doc;
+  }
+  return '';
+};
 
 const { showToast } = useToast();
 const route = useRoute();
@@ -35,7 +102,6 @@ const { complaints, isLoading, paginate } = storeToRefs(complaintStore);
 const currentPage = ref(route.query.page || 1);
 const resolutionUpdates = ref({});
 const statusUpdates = ref({});
-
 
 const handlePageChange = (page) => {
   currentPage.value = page;
@@ -75,7 +141,6 @@ const updateStatus = async (complaintId) => {
     showToast({ icon: 'error', title: error.message });
   }
 };
-
 
 const deleteComplaint = async (complaintId) => {
   try {
@@ -176,32 +241,32 @@ watch(complaints, (newComplaints) => {
           <!-- Complaint Name -->
           <div>
             <strong>Complainant:</strong><br />
-            {{ selectedComplaint?.complainant_name }}
+            {{ selectedComplaint?.complainant_name || 'N/A' }}
           </div>
           <!-- Respondent Name -->
           <div>
             <strong>Respondent:</strong><br />
-            {{ selectedComplaint?.respondent_name }}
+            {{ selectedComplaint?.respondent_name || 'N/A' }}
           </div>
           <!-- Nature of Complaint -->
           <div>
             <strong>Nature of Complaint:</strong><br />
-            {{ selectedComplaint?.nature_of_complaint }}
+            {{ selectedComplaint?.nature_of_complaint || 'N/A' }}
           </div>
           <!-- Location of Incident -->
           <div>
             <strong>Location of Incident:</strong><br />
-            {{ selectedComplaint?.incident_location }}
+            {{ selectedComplaint?.incident_location || 'N/A' }}
           </div>
           <!-- Case Number -->
           <div>
             <strong>Case Number:</strong><br />
-            {{ selectedComplaint?.case_no }}
+            {{ selectedComplaint?.case_no || 'N/A' }}
           </div>
           <!-- Title -->
           <div>
             <strong>Title:</strong><br />
-            {{ selectedComplaint?.title }}
+            {{ selectedComplaint?.title || 'N/A' }}
           </div>
 
           <!-- Description with scroll -->
@@ -209,7 +274,7 @@ watch(complaints, (newComplaints) => {
             <strong>Description:</strong>
             <textarea readonly
               class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
-                selectedComplaint?.description }}</textarea>
+                selectedComplaint?.description || 'N/A' }}</textarea>
           </div>
 
           <!-- Resolution -->
@@ -217,7 +282,7 @@ watch(complaints, (newComplaints) => {
             <strong>Resolution:</strong>
             <textarea readonly
               class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
-                selectedComplaint?.resolution }}</textarea>
+                selectedComplaint?.resolution || 'N/A' }}</textarea>
           </div>
           <!-- Date and Time of Incident -->
           <div>
@@ -232,12 +297,12 @@ watch(complaints, (newComplaints) => {
           <!-- Complainant ID -->
           <div>
             <strong>Complainant ID:</strong><br />
-            ID: {{ selectedComplaint?.complainant_id }}
+            ID: {{ selectedComplaint?.complainant_id || 'N/A' }}
           </div>
           <!-- Respondent ID -->
           <div>
             <strong>Respondent ID:</strong><br />
-            ID: {{ selectedComplaint?.respondent_id }}
+            ID: {{ selectedComplaint?.respondent_id || 'N/A' }}
           </div>
           <!-- Witness -->
           <div>
@@ -249,16 +314,21 @@ watch(complaints, (newComplaints) => {
             <strong>Status:</strong><br />
             {{ selectedComplaint?.status || 'N/A' }}
           </div>
-          <!-- Supporting Documents -->
-          <div>
+          <!-- Supporting Documents - FIXED -->
+          <div class="md:col-span-2">
             <strong>Supporting Documents:</strong><br />
-            <ul class="list-disc pl-5">
-              <li v-for="(doc, index) in selectedComplaint?.supporting_documents" :key="index">
-                <a :href="`/storage/${path}`" target="_blank" class="text-blue-500 hover:underline">
-                  {{ path.split('/').pop() }}
-                </a>
-              </li>
-            </ul>
+            <div v-if="getSupportingDocuments(selectedComplaint).length > 0">
+              <ul class="list-disc pl-5">
+                <li v-for="(doc, index) in getSupportingDocuments(selectedComplaint)" :key="index">
+                  <a :href="`/storage/${getFilePath(doc)}`" target="_blank" class="text-blue-500 hover:underline">
+                    {{ getFileName(doc) }}
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div v-else class="text-gray-500 italic">
+              No supporting documents available
+            </div>
           </div>
 
         </div>
