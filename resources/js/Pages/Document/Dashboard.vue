@@ -183,8 +183,9 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex items-center justify-between">
-                    <a @click="selectedByDocumentType(DocumentTypeEnum.BarangayID)"
-                        class="font-medium text-gray-900">Barangay ID</a>
+                    <router-link
+                        :to="{ name: 'Stage Request Document', params: { documentType: DocumentTypeEnum.BarangayID } }"
+                        class="font-medium text-gray-900">Barangay ID</router-link>
                     <router-link :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.BarangayID } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
                         <DocumentPlusIcon class="w-4 h-4" />
@@ -237,8 +238,9 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex items-center justify-between">
-                    <a @click="selectedByDocumentType(DocumentTypeEnum.BarangayClearance)"
-                        class="font-medium text-gray-900">Barangay Clearance</a>
+                    <router-link
+                        :to="{ name: 'Stage Request Document', params: { documentType: DocumentTypeEnum.BarangayClearance } }"
+                        class="font-medium text-gray-900">Barangay Clearance</router-link>
                     <router-link
                         :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.BarangayClearance } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
@@ -294,8 +296,9 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex items-center justify-between">
-                    <a @click="selectedByDocumentType(DocumentTypeEnum.CertificateOfIndigency)"
-                        class="font-medium text-gray-900">Certificate of Indigency</a>
+                    <router-link
+                        :to="{ name: 'Stage Request Document', params: { documentType: DocumentTypeEnum.CertificateOfIndigency } }"
+                        class="font-medium text-gray-900">Certificate of Indigency</router-link>
                     <router-link
                         :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.CertificateOfIndigency } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
@@ -349,8 +352,9 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex items-center justify-between">
-                    <a @click="selectedByDocumentType(DocumentTypeEnum.BusinessPermit)"
-                        class="font-medium text-gray-900">Business Permit</a>
+                    <router-link
+                        :to="{ name: 'Stage Request Document', params: { documentType: DocumentTypeEnum.BusinessPermit } }"
+                        class="font-medium text-gray-900">Business Permit</router-link>
                     <router-link
                         :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.BusinessPermit } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
