@@ -13,7 +13,7 @@
     <div class="flex min-h-screen bg-gray-50">
         <Sidebar />
         <div class="flex flex-col gap-2 grow p-5">
-            <NavBar />
+            <!-- <NavBar /> -->
             <Header @search="emit('search', $event)" />
             <slot />
         </div>

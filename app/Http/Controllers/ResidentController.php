@@ -173,4 +173,9 @@ class ResidentController extends Controller
             'message' => 'Resident deleted successfully',
         ], 200);
     }
+
+    public function getResidentByNumber($number)
+    {
+        return Resident::where('resident_number', $number)->firstOrFail();
+    }
 }
