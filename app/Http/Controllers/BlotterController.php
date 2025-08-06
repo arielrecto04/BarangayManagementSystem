@@ -61,7 +61,7 @@ public function store(Request $request)
         'total_cases' => 'required',
         'status' => 'required|in:Open,In Progress,Resolved',
         'description' => 'required|string|max:1000',
-        'witness' => 'required|string|max:255'
+        'witness' => 'nullable|string|max:255'
     ]);
 
     $blotter = Blotter::create($validated);
@@ -101,7 +101,7 @@ public function store(Request $request)
             'total_cases' => 'nullable',
             'status' => 'required|in:Open,In Progress,Resolved',
             'description' => 'required|string|max:1000',
-            'witness' => 'required|string|max:255'
+            'witness' => 'nullable|string|max:255'
         ]);
 
         $blotter = Blotter::findOrFail($id);

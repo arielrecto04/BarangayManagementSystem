@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('total_cases');
             $table->string('status')->default('Open');
             $table->longText('description');
-            $table->string('witness');
+            $table->string('witness')->nullable();
             $table->timestamps();
         });
     }
