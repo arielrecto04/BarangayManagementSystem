@@ -71,7 +71,7 @@ const activeTab = ref('announcements');
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 w-full">
     <!-- Hero Section -->
     <div class="relative bg-green-800 text-white">
       <div class="absolute inset-0">

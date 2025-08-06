@@ -121,4 +121,36 @@ class DocumentRequestController extends Controller
             'total_requests_by_status' => DocumentRequest::groupBy('status')->count(),
         ]);
     }
+
+    public function search(Request $request)
+    {
+        $search = $request->search;
+        $documentRequests = DocumentRequest::where('requestor_name', 'like', "%{$search}%")
+            ->orWhere('requestor_email', 'like', "%{$search}%")
+            ->orWhere('requestor_contact_number', 'like', "%{$search}%")
+            ->orWhere('requestor_address', 'like', "%{$search}%")
+            ->orWhere('remarks', 'like', "%{$search}%")
+            ->orWhere('document_type', 'like', "%{$search}%")
+            ->latest()
+            ->paginate(10);
+
+        return $documentRequests;
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,processing,completed',
+        ]);
+
+        $documentRequest = DocumentRequest::findOrFail($id);
+        $documentRequest->update([
+            'status' => $request->status,
+        ]);
+
+        return response()->json([
+            'message' => 'Document request status updated successfully.',
+            'document_request' => $documentRequest
+        ]);
+    }
 }

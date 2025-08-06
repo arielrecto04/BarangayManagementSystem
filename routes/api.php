@@ -28,6 +28,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('document-requests')->group(function () {
         Route::get('/statistic', [DocumentRequestController::class, 'statistic']);
+        Route::get('/search', [DocumentRequestController::class, 'search']);
+        Route::put('/update-status/{id}', [DocumentRequestController::class, 'updateStatus']);
+    });
+
+    Route::prefix('residents')->group(function () {
+        Route::get('/get-resident-by-number/{number}', [ResidentController::class, 'getResidentByNumber']);
     });
 
 
@@ -38,4 +44,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('complaints', ComplaintController::class);
     Route::apiResource('projects', ProjectController::class);
     Route::apiResource('documents', DocumentController::class);
+    Route::apiResource('document-requests', DocumentRequestController::class);
 });

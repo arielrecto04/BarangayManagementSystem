@@ -19,6 +19,8 @@ class ResidentFactory extends Factory
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
+            'email' => fake()->unique()->safeEmail(),
+            'resident_number' => 'RES-' . fake()->unique()->numberBetween(1, 1000000),
             'birthday' => fake()->dateTimeBetween('-60 years', '-18 years'),
             'age' => fake()->numberBetween(18, 60),
             'gender' => fake()->randomElement(['Male', 'Female']),

@@ -26,15 +26,9 @@ export const useResidentStore = defineStore("resident", {
     },
 
     actions: {
-        // Clear error state
-        clearError() {
-            this._error = null;
-        },
-
-        // Select resident by ID from current list
         selectResidentById(residentId) {
             this._resident = this._residents.find(
-                (resident) => resident.id === residentId
+                (resident) => resident.id == residentId
             );
         },
 
@@ -199,21 +193,6 @@ export const useResidentStore = defineStore("resident", {
             } finally {
                 this._isLoading = false;
             }
-        },
-
-        // Reset store state
-        resetState() {
-            this._residents = [];
-            this._resident = null;
-            this._error = null;
-            this._paginate = {
-                total: 0,
-                per_page: 0,
-                current_page: 1,
-                last_page: 1,
-                from: 0,
-                to: 0,
-            };
         },
     },
 });
