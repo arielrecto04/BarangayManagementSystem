@@ -7,6 +7,8 @@ import { onMounted, ref } from "vue";
 import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
 import { watch } from 'vue';
+// Import the print template component
+import ComplaintPrintTemplate from './ComplaintPrintTemplate.vue';
 
 // Format date and time
 const formatDateTime = (isoString) => {
@@ -112,6 +114,10 @@ const handlePageChange = (page) => {
 const showModal = ref(false);
 const selectedComplaint = ref(null);
 
+// Print modal states
+const showPrintModal = ref(false);
+const selectedPrintComplaint = ref(null);
+
 const openModal = (complaint) => {
   selectedComplaint.value = complaint;
   showModal.value = true;
@@ -120,6 +126,21 @@ const openModal = (complaint) => {
 const closeModal = () => {
   showModal.value = false;
   selectedComplaint.value = null;
+};
+
+// Print modal functions
+const openPrintModal = (complaint) => {
+  selectedPrintComplaint.value = complaint;
+  showPrintModal.value = true;
+};
+
+const closePrintModal = () => {
+  showPrintModal.value = false;
+  selectedPrintComplaint.value = null;
+};
+
+const handlePrint = () => {
+  showToast({ icon: 'success', title: 'Print dialog opened successfully' });
 };
 
 const emit = defineEmits(['status-updated']);
@@ -143,12 +164,14 @@ const updateStatus = async (complaintId) => {
 };
 
 const deleteComplaint = async (complaintId) => {
-  try {
-    await complaintStore.deleteComplaint(complaintId);
-    showToast({ icon: 'success', title: 'Complaint deleted successfully' });
-    complaintStore.getComplaints(currentPage.value);
-  } catch (error) {
-    showToast({ icon: 'error', title: error.message });
+  if (confirm('Are you sure you want to delete this complaint?')) {
+    try {
+      await complaintStore.deleteComplaint(complaintId);
+      showToast({ icon: 'success', title: 'Complaint deleted successfully' });
+      complaintStore.getComplaints(currentPage.value);
+    } catch (error) {
+      showToast({ icon: 'error', title: error.message });
+    }
   }
 };
 
@@ -218,6 +241,11 @@ watch(complaints, (newComplaints) => {
           View
         </button>
 
+        <!-- Print Button -->
+        <button @click="openPrintModal(row)" class="bg-purple-500 text-white px-2 py-1 rounded ml-2">
+          Print
+        </button>
+
       </template>
     </Table>
 
@@ -225,7 +253,7 @@ watch(complaints, (newComplaints) => {
       :totalPages="paginate.last_page" :totalItems="paginate.total" :currentPage="paginate.current_page"
       :itemsPerPage="paginate.per_page" />
 
-    <!-- Modal -->
+    <!-- View Details Modal -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         <!-- Close Button -->
@@ -334,5 +362,9 @@ watch(complaints, (newComplaints) => {
         </div>
       </div>
     </div>
+
+    <!-- Print Template Modal -->
+    <ComplaintPrintTemplate v-if="showPrintModal" :complaint="selectedPrintComplaint" @close="closePrintModal"
+      @print="handlePrint" />
   </div>
 </template>
