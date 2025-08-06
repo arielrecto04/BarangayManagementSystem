@@ -28,19 +28,14 @@ export const useResidentStore = defineStore("resident", {
     },
 
     actions: {
-<<<<<<<< < Temporary merge branch 1
-        // Clear error state
-        clearError() {
-    this._error = null;
-=========
-        removeResident(){
+        removeResident() {
             this._resident = null;
         },
 
-        selectResidentById(residentId){
-
-            this._resident = this._residents.find((resident) => resident.id == residentId);
->>>>>>>>> Temporary merge branch 2
+        selectResidentById(residentId) {
+            this._resident = this._residents.find(
+                (resident) => resident.id === residentId
+            );
         },
 
         // Select resident by ID from current list
@@ -212,40 +207,22 @@ export const useResidentStore = defineStore("resident", {
                 this._isLoading = false;
             }
         },
-<<<<<<<<< Temporary merge branch 1
-=========
-        async getResidentByNumber(residentNumber){
-            try{
+
+        async getResidentByNumber(residentNumber) {
+            try {
                 const response = await axios.get(`/residents/get-resident-by-number/${residentNumber}`);
                 console.log(response.data)
                 this._resident = response.data;
-            }catch(error){
+            } catch (error) {
                 console.log(error);
 
-                if(error.response){
-                    if(error.response.status === 404){
+                if (error.response) {
+                    if (error.response.status === 404) {
                         showToast({ icon: 'error', title: 'Resident not found' });
                     }
                 }
 
             }
         }
-    },
->>>>>>>>> Temporary merge branch 2
-
-        // Reset store state
-        resetState() {
-            this._residents = [];
-            this._resident = null;
-            this._error = null;
-            this._paginate = {
-                total: 0,
-                per_page: 0,
-                current_page: 1,
-                last_page: 1,
-                from: 0,
-                to: 0,
-            };
-        },
-    },
+    }
 });
