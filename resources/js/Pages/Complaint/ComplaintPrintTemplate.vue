@@ -55,15 +55,18 @@ const handlePrint = () => {
             <!-- Printable Content -->
             <div class="p-8 overflow-auto max-h-[calc(95vh-80px)] printable-content"
                 style="font-family: 'Times New Roman', serif;">
-                <!-- Header with Logo -->
-                <div class="flex justify-between items-start mb-8">
-                    <div class="text-center flex-1">
+                <div class="relative flex items-center justify-center mb-8">
+                    <!-- Centered Text -->
+                    <div class="absolute left-1/2 transform -translate-x-1/2 text-center">
                         <div class="text-sm font-bold mb-1">Republic of the Philippines</div>
                         <div class="text-sm font-bold mb-1">City Government of Cotabato</div>
                         <div class="text-sm font-bold mb-1">Barangay Immaculada Concepcion - RH2</div>
                         <div class="text-sm font-bold">OFFICE OF THE BARANGAY COUNCIL</div>
                     </div>
-                    <div class="w-32 h-32 border border-dashed border-gray-400 flex items-center justify-center ml-4">
+
+                    <!-- Logo on the right -->
+                    <div
+                        class="ml-auto w-32 h-32 border border-dashed border-gray-400 flex items-center justify-center">
                         <div class="text-sm text-gray-500 text-center">(Barangay Logo)</div>
                     </div>
                 </div>
@@ -93,7 +96,7 @@ const handlePrint = () => {
                             <div class="flex items-baseline">
                                 <strong class="w-40">Case Number:</strong>
                                 <span class="border-b border-black flex-1">{{ complaint.case_no || '__________'
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="flex items-baseline">
                                 <strong class="w-40">Title:</strong>
@@ -112,11 +115,17 @@ const handlePrint = () => {
                             <div class="flex items-baseline">
                                 <strong class="w-40">Witness/es:</strong>
                                 <span class="border-b border-black flex-1">{{ complaint.witness || '__________'
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
+
+
+                <div class="text-center my-6">
+                    <h2 class="text-lg font-bold tracking-widest">COMPLAINT</h2>
+                </div>
+
 
                 <!-- Description -->
                 <div class="mb-6 text-sm">
