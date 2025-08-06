@@ -96,7 +96,7 @@ const handlePrint = () => {
                             <div class="flex items-baseline">
                                 <strong class="w-40">Case Number:</strong>
                                 <span class="border-b border-black flex-1">{{ complaint.case_no || '__________'
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="flex items-baseline">
                                 <strong class="w-40">Title:</strong>
@@ -115,7 +115,7 @@ const handlePrint = () => {
                             <div class="flex items-baseline">
                                 <strong class="w-40">Witness/es:</strong>
                                 <span class="border-b border-black flex-1">{{ complaint.witness || '__________'
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -167,12 +167,30 @@ const handlePrint = () => {
                 </div>
 
                 <!-- Signature -->
-                <div class="flex justify-end">
+                <!-- Signatures Section -->
+                <div class="flex justify-between mt-12">
+                    <!-- Left Signatures -->
+                    <div class="space-y-10">
+                        <!-- Complainant Signature -->
+                        <div class="text-center">
+                            <div class="border-b border-black w-48 mb-2"></div>
+                            <div class="text-sm font-bold">Complainant's Signature</div>
+                        </div>
+
+                        <!-- Respondent Signature -->
+                        <div class="text-center">
+                            <div class="border-b border-black w-48 mb-2"></div>
+                            <div class="text-sm font-bold">Respondent's Signature</div>
+                        </div>
+                    </div>
+
+                    <!-- Right Signature -->
                     <div class="text-center">
                         <div class="border-b border-black w-48 mb-2"></div>
                         <div class="text-sm font-bold">Barangay Captain/Lupon Chairman</div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -201,7 +219,6 @@ const handlePrint = () => {
     }
 
     .print-area {
-        position: fixed !important;
         inset: 0 !important;
         background: white !important;
         display: block !important;
