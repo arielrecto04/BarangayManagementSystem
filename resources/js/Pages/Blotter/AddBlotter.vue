@@ -203,7 +203,7 @@ const createBlotter = async () => {
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
-                        <input 
+                        <textarea 
                             id="witness" 
                             type="text" 
                             placeholder="Enter Witness Name" 

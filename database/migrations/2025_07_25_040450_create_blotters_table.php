@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('total_cases');
             $table->string('status')->default('Open');
             $table->longText('description');
-            $table->string('witness');
+            $table->string('witness')->nullable();
             // Store both file paths and original names
             $table->json('supporting_documents')->nullable(); // Array of objects with 'path
             $table->timestamps();
