@@ -13,12 +13,14 @@ const residentStore = useResidentStore();
 
 const residentDataForm = ref({
     first_name: '',
+    middle_name: '',
     last_name: '',
     birthday: '',
     age: '',
     gender: '',
     address: '',
     contact_number: '',
+    contact_person: '',
     family_member: '',
     emergency_contact: '',
 });
@@ -50,13 +52,19 @@ const createResident = async () => {
 
                 <div class="grid grid-cols-3 gap-4">
                     <!-- First Row -->
-
+                    <!-- First Name -->
                     <div class="flex flex-col gap-2">
                         <label for="first_name" class="text-sm font-semibold text-gray-600">First Name</label>
                         <input type="text" placeholder="First Name" v-model="residentDataForm.first_name"
                             class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-
                     </div>
+                    <!-- Middle Name -->
+                    <div class="flex flex-col gap-2">
+                        <label for="middle_name" class="text-sm font-semibold text-gray-600">Middle Name</label>
+                        <input type="text" placeholder="Middle Name" v-model="residentDataForm.middle_name"
+                            class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                    </div>
+                    <!-- Last Name -->
                     <div class="flex flex-col gap-2">
                         <label for="last_name" class="text-sm font-semibold text-gray-600">Last Name</label>
                         <input type="text" placeholder="Last Name" v-model="residentDataForm.last_name"
@@ -67,17 +75,19 @@ const createResident = async () => {
                     </div>
 
                     <!-- Second Row -->
+                    <!-- Birthday -->
                     <div class="flex flex-col gap-2">
                         <label for="birthday" class="text-sm font-semibold text-gray-600">Birthday</label>
                         <input type="date" placeholder="Birthday" v-model="residentDataForm.birthday"
                             class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
+                    <!-- Age -->
                     <div class="flex flex-col gap-2">
                         <label for="age" class="text-sm font-semibold text-gray-600">Age</label>
                         <input type="number" placeholder="Age" v-model="residentDataForm.age"
                             class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
-
+                    <!-- Gender -->
                     <div class="flex flex-col gap-2">
                         <label for="gender" class="text-sm font-semibold text-gray-600">Gender</label>
                         <select name="" id="" v-model="residentDataForm.gender"
@@ -89,6 +99,7 @@ const createResident = async () => {
                     </div>
 
                     <!-- Third Row -->
+                    <!-- Address -->
                     <div class="flex flex-col gap-2">
                         <label for="address" class="text-sm font-semibold text-gray-600">Address</label>
                         <input type="text" placeholder="Lot no. / Street / Subdivision / Barangay"
@@ -102,20 +113,29 @@ const createResident = async () => {
                     </div> -->
 
                     <!-- Fourth Row -->
+                    <!-- Contact Numebr -->
                     <div class="flex flex-col gap-2">
                         <label for="contact_number" class="text-sm font-semibold text-gray-600">Contact No.</label>
                         <input type="text" placeholder="Contact No." v-model="residentDataForm.contact_number"
                             class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
+                    <!-- Family Member -->
                     <div class="flex flex-col gap-2">
                         <label for="family_member" class="text-sm font-semibold text-gray-600">Family Member</label>
                         <input type="text" placeholder="Family Member" v-model="residentDataForm.family_member"
                             class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
+                    <!-- Emergency Contact -->
                     <div class="flex flex-col gap-2">
                         <label for="emergency_contact" class="text-sm font-semibold text-gray-600">Emergency
                             Contact</label>
                         <input type="text" placeholder="Emergency Contact" v-model="residentDataForm.emergency_contact"
+                            class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                    </div>
+                    <!-- Contact Person -->
+                    <div class="flex flex-col gap-2">
+                        <label for="contact_person" class="text-sm font-semibold text-gray-600">Contact Person</label>
+                        <input type="text" placeholder="Contact Person" v-model="residentDataForm.contact_person"
                             class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                     </div>
                 </div>

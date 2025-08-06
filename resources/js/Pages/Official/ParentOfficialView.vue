@@ -14,7 +14,8 @@ const router = useRouter();
       <div class="flex justify-end bg-white shadow-lg rounded-lg p-7 mt-0 transform -translate-y-10">
         <div class="flex gap-4">
           <router-link to="/officials/add-official" class="block">
-            <div class="bg-green-700 shadow-md rounded-lg p-3 cursor-pointer text-white flex items-center gap-2 font-bold">
+            <div
+              class="bg-green-700 shadow-md rounded-lg p-3 cursor-pointer text-white flex items-center gap-2 font-bold">
               <PlusIcon class="w-5 h-5" /> Add Official
             </div>
           </router-link>

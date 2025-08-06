@@ -13,17 +13,19 @@ class Resident extends Model
     protected $fillable = [
         'first_name',
         'last_name',
+        'middle_name',
         'birthday',
         'age',
         'gender',
         'address',
         'contact_number',
+        'contact_person',
         'family_member',
         'emergency_contact',
     ];
     public function complainantBlotter()
     {
-        return $this->hasMany(Blotter::class,'complainant');
+        return $this->hasMany(Blotter::class, 'complainant');
     }
     public function officialRecords()
     {
@@ -31,11 +33,11 @@ class Resident extends Model
     }
     public function respondentComplaints()
     {
-        return $this->hasMany(Complaint::class,'respondent_id');
+        return $this->hasMany(Complaint::class, 'respondent_id');
     }
     public function complainantComplaints()
     {
-        return $this->hasMany(Complaint::class,'complainant_id');
+        return $this->hasMany(Complaint::class, 'complainant_id');
     }
     public function assignable()
     {
@@ -44,6 +46,6 @@ class Resident extends Model
 
     public function documentRequests()
     {
-        return $this->morphMany(DocumentRequest::class,'requestable');
+        return $this->morphMany(DocumentRequest::class, 'requestable');
     }
 }
