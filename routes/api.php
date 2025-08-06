@@ -50,3 +50,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('document-requests', DocumentRequestController::class);
     Route::apiResource('clinic-visits', ClinicVisitController::class);
 });
+    

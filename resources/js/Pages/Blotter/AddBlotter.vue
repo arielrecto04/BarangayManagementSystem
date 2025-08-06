@@ -251,35 +251,35 @@ const createBlotter = async () => {
                         <span v-if="errors.status" class="text-red-500 text-xs mt-1">{{ errors.status }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
-    <label class="text-sm font-semibold text-gray-600">Supporting Documents</label>
-    <input
-      ref="fileInput"
-      type="file"
-      multiple
-      class="hidden"
-      @change="handleFileUpload"
-      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-    />
-    <button
-      type="button"
-      class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md w-fit"
-      @click="$refs.fileInput.click()"
-    >
-      Upload Files
-    </button>
-    <div v-if="blotterDataForm.supporting_documents.length" class="mt-2 space-y-1 text-sm text-gray-700">
-        <div v-for="(file, index) in blotterDataForm.supporting_documents" :key="index" class="flex items-center gap-2">
-            <span>{{ file.name }}</span>
-                <button
-                    type="button"
-                    class="text-red-500 hover:underline"
-                @click="blotterDataForm.supporting_documents.splice(index, 1)"
-                >
-                ✖
-                </button>
-            </div>
-    </div>
-    </div>
+                        <label class="text-sm font-semibold text-gray-600">Supporting Documents</label>
+                        <input
+                        ref="fileInput"
+                        type="file"
+                        multiple
+                        class="hidden"
+                        @change="handleFileUpload"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        />
+                        <button
+                        type="button"
+                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md w-fit"
+                        @click="$refs.fileInput.click()"
+                        >
+                        Upload Files
+                        </button>
+                        <div v-if="blotterDataForm.supporting_documents.length" class="mt-2 space-y-1 text-sm text-gray-700">
+                            <div v-for="(file, index) in blotterDataForm.supporting_documents" :key="index" class="flex items-center gap-2">
+                                <span>{{ file.name }}</span>
+                                    <button
+                                        type="button"
+                                        class="text-red-500 hover:underline"
+                                    @click="blotterDataForm.supporting_documents.splice(index, 1)"
+                                    >
+                                    ✖
+                                    </button>
+                                </div>
+                            </div>
+                    </div>
 
 
                 </div>
