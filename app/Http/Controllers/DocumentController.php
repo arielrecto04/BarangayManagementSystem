@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Document;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DocumentController extends Controller
 {
@@ -11,7 +13,7 @@ class DocumentController extends Controller
      */
     public function index()
     {
-        //
+        return Document::with('uploadedBy')->latest()->paginate(10);
     }
 
     /**
@@ -27,7 +29,28 @@ class DocumentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'document' => 'required|file|max:2048'
+        ]);
+
+
+        $path = $request->document->storeAs('/public/documents', str_replace(' ', '_', $request->document->getClientOriginalName()), 'public');
+
+
+        $Document = Document::create([
+            'file_name' => $request->document->getClientOriginalName(),
+            'file_type' => $request->document->getClientOriginalExtension(),
+            'file_path' => asset('storage/' . $path),
+            'file_sizes' => $request->document->getSize(),
+            'uploaded_by' => Auth::user()->id,
+        ]);
+
+
+
+        return response()->json([
+            'message' => 'Document uploaded successfully',
+            'document' => $Document
+        ], 201);
     }
 
     /**

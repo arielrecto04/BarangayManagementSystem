@@ -17,8 +17,6 @@ base.interceptors.request.use(
 
         const { token } = useAuthenticationStore();
 
-        console.log(token);
-
         if (token) {
             config.headers.Authorization = `bearer ${token}`;
         }
@@ -35,6 +33,8 @@ base.interceptors.response.use((response) => {
 }, (error) => {
     if (error.response.status === 401) {
         const authStore = useAuthenticationStore();
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         authStore.logout();
     }
     return Promise.reject(error);

@@ -1,15 +1,28 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthenticationStore } from "@/Stores";
 
+
 const routes = [
     {
-        // path: "/",
-        // name: "Home",
-        // meta: {
-        //     title: "Home",
-        //     requiresAuth: false,
-        // },
-        // component: () => import("@/Pages/Home.vue"),
+        path: "/",
+        name: "ParentLandingPage",
+        redirect: { name: "Home" },
+        meta: {
+            title: "Home",
+            requiresAuth: false,
+        },
+        component: () => import("@/Pages/LandingPage/ParentLandingPage.vue"),
+        children: [
+            {
+                path: "home",
+                name: "Home",
+                meta: {
+                    title: "Home",
+                    requiresAuth: false,
+                },
+                component: () => import("@/Pages/LandingPage/Home.vue"),
+            },
+        ],
     },
     {
         path: "/Registration",
@@ -71,11 +84,40 @@ const routes = [
     {
         path: "/documents",
         name: "Documents",
+        redirect: { name: "Document Dashboard" },
         meta: {
             title: "Documents",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Documents.vue"),
+        children: [
+            {
+                path: "list-documents",
+                name: "List Documents",
+                meta: {
+                    title: "List Documents",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Document/ListDocument.vue"),
+            },
+            {
+                path: "dashboard",
+                name: "Document Dashboard",
+                meta: {
+                    title: "Dashboard",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Document/Dashboard.vue"),
+            },
+            {
+                path: "add-document",
+                name: "Add Document",
+                meta: {
+                    title: "Add Document",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Document/AddRequestDocument.vue"),
+            },
+        ],
     },
     {
         path: "/complaints",
@@ -205,7 +247,7 @@ const routes = [
         ]
     },
     {
-        path: "/",
+        path: "/login",
         name: "Login",
         meta: {
             title: "Login",
@@ -236,10 +278,10 @@ router.beforeEach((to, from, next) => {
         next({ name: "Login" });
         return;
     }
-    if (!to.meta.requiresAuth && auth.isAuthenticated) {
-        next({ name: "Dashboard" });
-        return;
-    }
+    // if (!to.meta.requiresAuth && auth.isAuthenticated && to.name == "Login" ) {
+    //     next({ name: "Dashboard" });
+    //     return;
+    // }
 
     next();
 });
