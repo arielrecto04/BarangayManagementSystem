@@ -1,50 +1,32 @@
 <script setup>
-import Multiselect from 'vue-multiselect';
-import 'vue-multiselect/dist/vue-multiselect.min.css';
 import { ref, computed, onMounted } from 'vue'
 import { useOfficialStore } from '@/Stores'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast'
 import { storeToRefs } from 'pinia'
-
+import axios from 'axios'
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter()
 const { showToast } = useToast()
 const officialStore = useOfficialStore()
 const { officials } = storeToRefs(officialStore)
-const isLoading = ref(false);
-const formErrors = ref({});
-const selectedResident = ref(null);
-watch(selectedResident, (val) => {
-  officialDataForm.value.resident_id = val?.id ?? '';
-});
 
-const handleSubmit = async () => {
-  isLoading.value = true;
-  formErrors.value = {};
-  try {
-    await officialStore.createOfficial(officialDataForm.value);
-    showToast('Official added successfully!');
-    router.push('/officials/list-officials');
-  } catch (error) {
-    if (error.response && error.response.status === 422) {
-      formErrors.value = error.response.data.errors || {};
-    }
-  } finally {
-    isLoading.value = false;
-  }
-};
 
 const residents = ref([])
 const residentSearch = ref('')
-const filteredResidents = ref([]);
-
-onMounted(async () => {
-  await residentStore.fetchResidents();
-  filteredResidents.value = residentStore.residents.filter(resident => resident.status === 'Alive');
-});
+const filteredResidents = computed(() => {
+  return residents.value.filter(r => {
+    const fullName = `${r.first_name} ${r.middle_name || ''} ${r.last_name}`.toLowerCase()
+    return fullName.includes(residentSearch.value.toLowerCase())
+  })
+})
 
 const officialDataForm = ref({
+  firstName: '',
+  middleName: '',
+  lastName: '',
   position: '',
   termFrom: '',
   termTo: '',
@@ -204,13 +186,13 @@ const createOfficial = async () => {
 
             <!-- Resident Full Name via Resident ID -->
             <div class="flex flex-col gap-2">
-              <Mult v-model="officialDataForm.resident_id" required
+              <select v-model="officialDataForm.resident_id" required
                 class="border border-gray-300 rounded-lg px-4 py-3 mt-2">
                 <option disabled value="">Select Resident</option>
                 <option v-for="resident in filteredResidents" :key="resident.id" :value="resident.id">
                   {{ resident.first_name }} {{ resident.middle_name }} {{ resident.last_name }}
                 </option>
-              </Mult>
+              </select>
             </div>
           </div>
 
