@@ -1,5 +1,7 @@
 import {axios} from '@/utils'
 import { defineStore } from 'pinia'
+import useToast from '@/Utils/useToast'
+const { showToast } = useToast();
 
 export const useResidentStore = defineStore('resident', {
     state: () => ({
@@ -23,7 +25,9 @@ export const useResidentStore = defineStore('resident', {
     },
 
     actions: {
-
+        removeResident(){
+            this._resident = null;
+        },
 
         selectResidentById(residentId){
 
@@ -106,6 +110,22 @@ export const useResidentStore = defineStore('resident', {
             }
             finally {
                 this._isLoading = false;
+            }
+        },
+        async getResidentByNumber(residentNumber){
+            try{
+                const response = await axios.get(`/residents/get-resident-by-number/${residentNumber}`);
+                console.log(response.data)
+                this._resident = response.data;
+            }catch(error){
+                console.log(error);
+
+                if(error.response){
+                    if(error.response.status === 404){
+                        showToast({ icon: 'error', title: 'Resident not found' });
+                    }
+                }
+
             }
         }
     },

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('avatar')->default('https://ionicframework.com/docs/img/demos/avatar.svg');
             $table->string('first_name');
+            $table->string('email')->unique()->nullable();
+            $table->string('resident_number')->unique();
             $table->string('last_name');
             $table->string('middle_name')->nullable();
             $table->string('birthday')->nullable();

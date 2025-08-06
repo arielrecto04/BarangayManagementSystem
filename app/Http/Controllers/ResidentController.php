@@ -94,11 +94,16 @@ class ResidentController extends Controller
      */
     public function destroy(string $id)
     {
-        $resident = Resident::findOrFail($id); 
+        $resident = Resident::findOrFail($id);
         $resident->delete();
 
         return response()->json([
             'message' => 'Resident deleted successfully',
         ], 200);
+    }
+
+    public function getResidentByNumber($number)
+    {
+        return Resident::where('resident_number', $number)->firstOrFail();
     }
 }
