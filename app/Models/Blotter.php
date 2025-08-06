@@ -23,6 +23,7 @@ class Blotter extends Model
         'status',
         'description',
         'witness',
+        'supporting_documents',
     ];
 
     protected $casts = [
@@ -42,4 +43,14 @@ class Blotter extends Model
     }
 
     protected $with = ['complainant', 'respondent'];
+    public function getSupportingDocumentsAttribute($value)
+    {
+        return json_decode($value, true) ?: [];
+    }
+
+    public function setSupportingDocumentsAttribute($value)
+    {
+        $this->attributes['supporting_documents'] = json_encode($value);
+    }
 }
+

@@ -74,6 +74,7 @@ public function store(Request $request)
             $fileData[] = [
                 'name' => $originalName,
                 'path' => $path,
+                'mime_type' => $file->getClientMimeType(),
             ];
         }
         $validated['supporting_documents'] = json_encode($fileData);
@@ -130,6 +131,7 @@ public function store(Request $request)
                 $fileData[] = [
                     'name' => $originalName,
                     'path' => $path,
+                    'mime_type' => $file->getClientMimeType(),
                 ];
             }
             $validated['supporting_documents'] = json_encode($fileData);
