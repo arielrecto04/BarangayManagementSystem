@@ -33,15 +33,14 @@ export const useResidentStore = defineStore("resident", {
         },
 
         selectResidentById(residentId) {
-            this._resident = this._residents.find(
-                (resident) => resident.id === residentId
-            );
+
+            this._resident = this._residents.find((resident) => resident.id == residentId);
         },
 
         // Select resident by ID from current list
         selectResidentById(residentId) {
             this._resident = this._residents.find(
-                (resident) => resident.id == residentId
+                (resident) => resident.id === residentId
             );
         },
 
@@ -207,7 +206,6 @@ export const useResidentStore = defineStore("resident", {
                 this._isLoading = false;
             }
         },
-
         async getResidentByNumber(residentNumber) {
             try {
                 const response = await axios.get(`/residents/get-resident-by-number/${residentNumber}`);
