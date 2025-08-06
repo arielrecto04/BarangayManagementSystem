@@ -130,6 +130,22 @@ onMounted(() => {
                         <strong>Barangay Case No:</strong><br />
                         {{ selectedBlotter?.barangay_case_no }}
                     </div>
+                   
+                    <div class="col-span-2">
+    <strong class="block mb-2">Witness:</strong>
+    <div v-if="selectedBlotter?.witness" class="pl-2">
+        <ul class="list-disc pl-5 space-y-1">
+            <li v-for="(witness, index) in selectedBlotter.witness.split('\n').filter(name => name.trim())" 
+                :key="index" 
+                class="text-gray-800">
+                {{ witness.trim() }}
+            </li>
+        </ul>
+    </div>
+    <div v-else class="text-gray-400 italic">
+        No witnesses listed
+    </div>
+</div>
                     <div class="col-span-2">
                         <strong>Description:</strong><br />
                         <textarea
@@ -177,3 +193,4 @@ onMounted(() => {
   background: #3b82f6;
 }
 </style>
+ 

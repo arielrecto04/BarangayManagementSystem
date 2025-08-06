@@ -1,6 +1,6 @@
-import { axios } from '@/utils'
-import { defineStore } from 'pinia'
-import useToast from '@/Utils/useToast'
+import { axios } from "@/utils";
+import { defineStore } from "pinia";
+import useToast from "@/Utils/useToast";
 const { showToast } = useToast();
 
 export const useResidentStore = defineStore("resident", {
@@ -33,14 +33,8 @@ export const useResidentStore = defineStore("resident", {
         },
 
         selectResidentById(residentId) {
-
-            this._resident = this._residents.find((resident) => resident.id == residentId);
-        },
-
-        // Select resident by ID from current list
-        selectResidentById(residentId) {
             this._resident = this._residents.find(
-                (resident) => resident.id === residentId
+                (resident) => resident.id == residentId
             );
         },
 
@@ -208,19 +202,23 @@ export const useResidentStore = defineStore("resident", {
         },
         async getResidentByNumber(residentNumber) {
             try {
-                const response = await axios.get(`/residents/get-resident-by-number/${residentNumber}`);
-                console.log(response.data)
+                const response = await axios.get(
+                    `/residents/get-resident-by-number/${residentNumber}`
+                );
+                console.log(response.data);
                 this._resident = response.data;
             } catch (error) {
                 console.log(error);
 
                 if (error.response) {
                     if (error.response.status === 404) {
-                        showToast({ icon: 'error', title: 'Resident not found' });
+                        showToast({
+                            icon: "error",
+                            title: "Resident not found",
+                        });
                     }
                 }
-
             }
-        }
-    }
+        },
+    },
 });

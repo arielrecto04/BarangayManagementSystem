@@ -73,6 +73,9 @@ const columns = [
     {
         key: "emergency_contact", label: "Emergency Contact"
     },
+    {
+        key: "email", label: "Email"
+    }
 ]
 
 

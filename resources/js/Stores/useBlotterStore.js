@@ -4,99 +4,189 @@ import { defineStore } from 'pinia';
 export const useBlotterStore = defineStore('blotter', {
     state: () => ({
         _blotters: [],
-        _isLoading: false,
         _blotter: null,
+        _paginate: null,
+        _isLoading: false,
+        _error: null,
     }),
+
     getters: {
         blotters: (state) => state._blotters,
-        isLoading: (state) => state._isLoading,
         blotter: (state) => state._blotter,
+        paginate: (state) => state._paginate,
+        isLoading: (state) => state._isLoading,
+        error: (state) => state._error,
     },
+
     actions: {
-        async getBlotters() {
+        async getBlotters(page = 1) {
+            this._isLoading = true;
+            this._error = null;
             try {
-                this._isLoading = true;
-                const response = await axios.get('/blotters');
+                const response = await axios.get(`/blotters?page=${page}`);
                 this._blotters = response.data.data;
+                this._paginate = {
+                    current_page: response.data.current_page,
+                    last_page: response.data.last_page,
+                    per_page: response.data.per_page,
+                    total: response.data.total,
+                };
+                return true;
             } catch (error) {
-                console.error('Error fetching blotters:', error);
-                throw error;
-            } finally {
-                this._isLoading = false;
-            }
-        },
-        
-        async getBlotterById(blotterId) {
-            try {
-                this._isLoading = true;
-                const response = await axios.get(`/blotters/${blotterId}`);
-                this._blotter = response.data;
-            } catch (error) {
-                console.error('Error fetching blotter:', error);
-                throw error;
+                console.error("Error fetching blotters:", error);
+                this._error = error;
+                return false;
             } finally {
                 this._isLoading = false;
             }
         },
 
-        async updateBlotter(blotterId, blotterData) {
+        async fetchBlotter(id) {
+            this._isLoading = true;
+            this._error = null;
             try {
-                this._isLoading = true;
-                const formattedData = {
-                    ...blotterData,
-                    complainants_type: 'App\\Models\\Resident',
-                    respondents_type: 'App\\Models\\Resident',
-                    total_cases: blotterData.total_cases || '0'
-                };
-                const response = await axios.put(`/blotters/${blotterId}`, formattedData);
-                const updatedBlotter = response.data.data;
-                const index = this._blotters.findIndex(b => b.id === blotterId);
-                if (index !== -1) {
-                    this._blotters[index] = updatedBlotter;
-                }
-                return updatedBlotter;
+                const response = await axios.get(`/blotters/${id}`);
+                this._blotter = response.data.data; // Fix: access the data property
             } catch (error) {
-                console.error('Error updating blotter:', error);
+                console.error(`Error fetching blotter ID ${id}:`, error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        async addBlotter(formData) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                const response = await axios.post('/blotters', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+
+                if (response.data?.data) {
+                    this._blotters.unshift(response.data.data);
+                    return response.data;
+                }
+                throw new Error('Invalid server response');
+            } catch (error) {
+                console.error("Error creating blotter:", error);
+                this._error = error;
+
+                if (error.response?.status === 422) {
+                    const errors = error.response.data.errors;
+                    const errorMessages = Object.values(errors).flat().join('\n');
+                    throw new Error(`Validation failed:\n${errorMessages}`);
+                }
                 throw error;
             } finally {
                 this._isLoading = false;
             }
         },
-        async deleteBlotter(blotterId) {
-            try {
-                this._isLoading = true;
-                await axios.delete(`/blotters/${blotterId}`);
-                this._blotters = this._blotters.filter((blotter) => blotter.id !== blotterId);
-            } catch (error) {
-                console.log(error);
-            } finally {
-                this._isLoading = false;
-            }
+        async getBlotterById(id) {
+            return await this.fetchBlotter(id);
         },
-        async addBlotter(blotter) {
-            try {
-                this._isLoading = true;
-                // Format dates to match database expectations
-                const formattedData = {
-                    ...blotter,
-                    filing_date: blotter.filing_date,
-                    datetime_of_incident: new Date(blotter.datetime_of_incident).toISOString().split('T')[0],
-                    total_cases: '0'
-                };
-                const response = await axios.post('/blotters', formattedData);
-                if (response.data && response.data.data) {
-                    this._blotters.push(response.data.data);
-                    return response.data;
+
+        // Update the updateBlotter method to:
+async updateBlotter(id, data) {
+    this._isLoading = true;
+    this._error = null;
+    try {
+        let response;
+        let url = `/blotters/${id}`;
+        
+        if (data instanceof FormData) {
+            data.append('_method', 'PATCH');
+            response = await axios.post(url, data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
                 }
-                throw new Error('Invalid server response');
+            });
+        } else {
+            // Ensure required fields are included
+            const payload = {
+                ...data,
+                complainants_type: 'App\\Models\\Resident',
+                respondents_type: 'App\\Models\\Resident',
+                filing_date: data.filing_date ? new Date(data.filing_date).toISOString() : null,
+                datetime_of_incident: data.datetime_of_incident ? new Date(data.datetime_of_incident).toISOString() : null
+            };
+            
+            response = await axios.patch(url, payload);
+        }
+
+        // Update local state
+        const index = this._blotters.findIndex(b => b.id === id);
+        if (index !== -1) {
+            this._blotters[index] = response.data.data;
+        }
+        
+        // Update current blotter if it's the one being edited
+        if (this._blotter?.id === id) {
+            this._blotter = response.data.data;
+        }
+        
+        return response.data;
+    } catch (error) {
+        console.error(`Error updating blotter ID ${id}:`, error);
+        
+        // Enhanced error handling
+        let errorMessage = 'Failed to update blotter';
+        if (error.response?.status === 422) {
+            const errors = error.response.data.errors;
+            errorMessage = Object.entries(errors)
+                .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+                .join('\n');
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        this._error = errorMessage;
+        throw new Error(errorMessage);
+    } finally {
+        this._isLoading = false;
+    }
+},
+
+        async deleteBlotter(id) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                await axios.delete(`/blotters/${id}`);
+                this._blotters = this._blotters.filter(b => b.id !== id);
+                return true;
             } catch (error) {
-                console.error('Error adding blotter:', error.response?.data || error);
+                console.error(`Error deleting blotter ID ${id}:`, error);
+                this._error = error;
+                return false;
             } finally {
                 this._isLoading = false;
             }
         },
-         resetBlotter() {
-        this._blotter = null;
+
+        prepareFormData(blotterData) {
+            const formData = new FormData();
+            
+            Object.entries(blotterData).forEach(([key, value]) => {
+                if (key === 'supporting_documents' && Array.isArray(value)) {
+                    value.forEach(file => {
+                        formData.append('supporting_documents[]', file);
+                    });
+                } else if (value !== null && value !== undefined) {
+                    formData.append(key, value);
+                }
+            });
+            
+            formData.append('complainants_type', 'App\\Models\\Resident');
+            formData.append('respondents_type', 'App\\Models\\Resident');
+            formData.append('total_cases', blotterData.total_cases || '0');
+            
+            return formData;
+        },
+
+        resetBlotter() {
+            this._blotter = null;
+        }
     }
-    },
 });

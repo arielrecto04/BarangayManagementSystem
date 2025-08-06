@@ -21,12 +21,15 @@ class Blotter extends Model
         'barangay_case_no',
         'total_cases',
         'status',
-        'description'
+        'description',
+        'witness',
+        'supporting_documents',
     ];
 
     protected $casts = [
         'filing_date' => 'date',
-        'datetime_of_incident' => 'date'
+        'datetime_of_incident' => 'date',
+        'supporting_documents' => 'array',
     ];
 
     public function complainant()
@@ -40,4 +43,14 @@ class Blotter extends Model
     }
 
     protected $with = ['complainant', 'respondent'];
+    public function getSupportingDocumentsAttribute($value)
+    {
+        return json_decode($value, true) ?: [];
+    }
+
+    public function setSupportingDocumentsAttribute($value)
+    {
+        $this->attributes['supporting_documents'] = json_encode($value);
+    }
 }
+
