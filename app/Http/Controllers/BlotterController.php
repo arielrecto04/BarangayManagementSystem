@@ -64,7 +64,21 @@ public function store(Request $request)
         'witness' => 'required|string|max:255'
     ]);
 
-    $blotter = Blotter::create($request->validated());
+    $fileData = [];
+    if ($request->hasFile('supporting_documents')) {
+        foreach ($request->file('supporting_documents') as $file) {
+            $originalName = $file->getClientOriginalName();
+            $path = $file->store('documents', 'public');
+            $fileData[] = [
+                'name' => $originalName,
+                'path' => $path,
+                'mime_type' => $file->getClientMimeType(),
+            ];
+        }
+        $validated['supporting_documents'] = json_encode($fileData);
+    }
+
+    $blotter = Blotter::create($validated);
 
     return response()->json([
         'message' => 'Blotter created successfully',
@@ -115,6 +129,7 @@ public function store(Request $request)
                 $fileData[] = [
                     'name' => $originalName,
                     'path' => $path,
+                    'mime_type' => $file->getClientMimeType(),
                 ];
             }
             $validated['supporting_documents'] = json_encode($fileData);

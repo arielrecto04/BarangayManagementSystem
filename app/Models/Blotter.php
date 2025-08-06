@@ -23,9 +23,16 @@ class Blotter extends Model
         'status',
         'description',
         'witness',
+        'supporting_documents',
     ];
 
-    public function complainants()
+    protected $casts = [
+        'filing_date' => 'date',
+        'datetime_of_incident' => 'date',
+        'supporting_documents' => 'array',
+    ];
+
+    public function complainant()
     {
         return $this->morphToMany(Resident::class, 'complainant');
     }
@@ -34,4 +41,16 @@ class Blotter extends Model
     {
         return $this->morphToMany(Resident::class, 'respondent');
     }
+
+    protected $with = ['complainant', 'respondent'];
+    public function getSupportingDocumentsAttribute($value)
+    {
+        return json_decode($value, true) ?: [];
+    }
+
+    public function setSupportingDocumentsAttribute($value)
+    {
+        $this->attributes['supporting_documents'] = json_encode($value);
+    }
 }
+

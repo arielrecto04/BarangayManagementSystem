@@ -49,8 +49,22 @@ const blotterDataForm = ref({
     resolved: '0',
     status: '',
     description: '',
-    witness: ''
+    witness: '',
+    supporting_documents: []
 });
+const handleFileUpload = (event) => {
+  const newFiles = Array.from(event.target.files);
+  const existingNames = new Set(
+    blotterDataForm.value.supporting_documents.map(file => file.name)
+  );
+  const uniqueNewFiles = newFiles.filter(file => !existingNames.has(file.name));
+
+  blotterDataForm.value.supporting_documents = [
+    ...blotterDataForm.value.supporting_documents,
+    ...uniqueNewFiles
+  ];
+  event.target.value = '';
+};
 
 const validateForm = () => {
     errors.value = {};
@@ -69,7 +83,7 @@ const validateForm = () => {
         barangay_case_no: 'Barangay Case No',
         status: 'Status',
         description: 'Description',
-        
+
     };
 
     for (const [field, label] of Object.entries(fields)) {
@@ -88,7 +102,21 @@ const createBlotter = async () => {
             showToast({ icon: 'error', title: 'Please select a status' });
             return;
         }
-        await blotterStore.addBlotter(blotterDataForm.value);
+         const formData = new FormData();
+
+        // Append all form fields
+        Object.entries(blotterDataForm.value).forEach(([key, value]) => {
+            if (key === 'supporting_documents' && Array.isArray(value)) {
+                // Append each file individually
+                value.forEach(file => {
+                    formData.append('supporting_documents[]', file);
+                });
+            } else {
+                // Append other fields
+                formData.append(key, value);
+            }
+        });
+        await blotterStore.addBlotter(formData);
         showToast({ icon: 'success', title: 'Blotter created successfully' });
         router.push('/blotter/list-blotter');
     } catch (error) {
@@ -203,11 +231,11 @@ const createBlotter = async () => {
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
-                        <textarea 
-                            id="witness" 
-                            type="text" 
-                            placeholder="Enter Witness Name" 
-                            v-model="blotterDataForm.witness" 
+                        <textarea
+                            id="witness"
+                            type="text"
+                            placeholder="Enter Witness Name"
+                            v-model="blotterDataForm.witness"
                             :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.witness ? 'border-red-500' : 'border-gray-200']"
                         />
                         <span v-if="errors.witness" class="text-red-500 text-xs mt-1">{{ errors.witness }}</span>
@@ -222,6 +250,37 @@ const createBlotter = async () => {
                         </select>
                         <span v-if="errors.status" class="text-red-500 text-xs mt-1">{{ errors.status }}</span>
                     </div>
+                    <div class="flex flex-col gap-2">
+    <label class="text-sm font-semibold text-gray-600">Supporting Documents</label>
+    <input
+      ref="fileInput"
+      type="file"
+      multiple
+      class="hidden"
+      @change="handleFileUpload"
+      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+    />
+    <button
+      type="button"
+      class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md w-fit"
+      @click="$refs.fileInput.click()"
+    >
+      Upload Files
+    </button>
+    <div v-if="blotterDataForm.supporting_documents.length" class="mt-2 space-y-1 text-sm text-gray-700">
+        <div v-for="(file, index) in blotterDataForm.supporting_documents" :key="index" class="flex items-center gap-2">
+            <span>{{ file.name }}</span>
+                <button
+                    type="button"
+                    class="text-red-500 hover:underline"
+                @click="blotterDataForm.supporting_documents.splice(index, 1)"
+                >
+                ✖
+                </button>
+            </div>
+    </div>
+    </div>
+
 
                 </div>
                 <div class="flex justify-center mt-10 gap-4">
