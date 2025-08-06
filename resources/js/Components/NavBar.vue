@@ -56,13 +56,11 @@ const toggleDropdown = () => {
                     leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                     <div v-if="isOpen"
                         class="origin-bottom-right z-50 top-10 absolute right-0 mt-2 w-64 rounded-md shadow-lg py-1 bg-white ring-1 focus:outline-none">
-                        <a href="#" class="flex gap-2 items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <UserIcon class="w-6 h-6 cursor-pointer" /> <span> Your Profile</span></a>
-                        <a href="#" class="flex gap-2 items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <CogIcon class="w-6 h-6 cursor-pointer" /> <span> Settings</span></a>
-                        <a href="#" @click="authStore.logout()"
+                        <router-link to="/dashboard" class="flex gap-2 items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <UserIcon class="w-6 h-6 cursor-pointer" /> <span>Dashboard</span></router-link>
+                        <router-link to="/login" @click="authStore.logout()"
                             class="flex gap-2 items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <ArrowRightIcon class="w-6 h-6 cursor-pointer" /> <span> Sign out</span></a>
+                            <ArrowRightIcon class="w-6 h-6 cursor-pointer" /> <span> Sign out</span></router-link>
                     </div>
                 </transition>
             </div>

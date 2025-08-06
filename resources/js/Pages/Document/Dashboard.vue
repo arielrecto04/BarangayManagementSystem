@@ -7,10 +7,11 @@ import { Squares2X2Icon, TableCellsIcon, DocumentPlusIcon } from '@heroicons/vue
 import { DocumentTypeEnum } from '@/Enums'
 import { useDocumentRequestStore } from '@/Stores/useDocumentRequestStore';
 import { storeToRefs } from 'pinia';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const documentRequestStore = useDocumentRequestStore()
 const router = useRouter()
+const route = useRoute()
 
 
 
@@ -67,10 +68,18 @@ const changeViewType = (type) => {
 
 
 watch(viewType, () => {
+
     if (viewType.value === 'list') {
         documentRequestStore.fetchDocumentRequests()
     }
 })
+
+
+const selectedByDocumentType = (documentType) => {
+    viewType.value = 'list';
+    router.replace({ query: { viewType: 'list', documentType: documentType } })
+
+}
 
 onMounted(async () => {
 
@@ -79,7 +88,7 @@ onMounted(async () => {
         if (viewType.value === 'list') {
             await documentRequestStore.fetchDocumentRequests()
         }
-        await documentRequestStore.statistic()
+        // await documentRequestStore.statistic()
 
     } catch (error) {
         console.log(error);
@@ -113,7 +122,9 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex justify-between">
-                    <a  class="font-medium text-gray-900">Barangay Certificate of Residency</a>
+                    <router-link
+                        :to="{ name: 'Stage Request Document', params: { documentType: DocumentTypeEnum.CertificateOfResidency } }"
+                        class="font-medium text-gray-900">Barangay Certificate of Residency</router-link>
                     <router-link
                         :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.CertificateOfResidency } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
@@ -124,7 +135,7 @@ onMounted(async () => {
 
                 <div class="flex flex-col justify-end">
                     <p class="text-sm text-gray-500">{{totalByDocumentType?.find((item) => item.document_type ===
-                        DocumentTypeEnum.CertificateOfResidency)?.count }}</p>
+                        DocumentTypeEnum.CertificateOfResidency)?.count}}</p>
                 </div>
                 <div class="w-full h-full mt-4">
                     <BarChart :data="{
@@ -172,7 +183,8 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-gray-900">Barangay ID</h3>
+                    <a @click="selectedByDocumentType(DocumentTypeEnum.BarangayID)"
+                        class="font-medium text-gray-900">Barangay ID</a>
                     <router-link :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.BarangayID } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
                         <DocumentPlusIcon class="w-4 h-4" />
@@ -225,14 +237,15 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-gray-900">Barangay Clearance</h3>
+                    <a @click="selectedByDocumentType(DocumentTypeEnum.BarangayClearance)"
+                        class="font-medium text-gray-900">Barangay Clearance</a>
                     <router-link
                         :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.BarangayClearance } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
                         <DocumentPlusIcon class="w-4 h-4" />
                         <span>Add New</span>
                     </router-link>
-                
+
                 </div>
                 <div class="w-full h-full mt-4">
                     <BarChart :data="{
@@ -281,7 +294,8 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-gray-900">Certificate of Indigency</h3>
+                    <a @click="selectedByDocumentType(DocumentTypeEnum.CertificateOfIndigency)"
+                        class="font-medium text-gray-900">Certificate of Indigency</a>
                     <router-link
                         :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.CertificateOfIndigency } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
@@ -335,7 +349,8 @@ onMounted(async () => {
             <div
                 class="p-4 h-96 bg-white flex flex-col justify-between shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-gray-900">Business Permit</h3>
+                    <a @click="selectedByDocumentType(DocumentTypeEnum.BusinessPermit)"
+                        class="font-medium text-gray-900">Business Permit</a>
                     <router-link
                         :to="{ name: 'Add Document', query: { documentType: DocumentTypeEnum.BusinessPermit } }"
                         class="bg-green-700 hover:bg-green-800 rounded-lg text-white p-2 flex items-center gap-2">
@@ -391,9 +406,7 @@ onMounted(async () => {
         <template v-if="viewType === 'list'">
             <div>
                 <Table :columns="columns" :rows="documentRequests">
-                    <template #cell(status)="{ row }">
-                        <Badge :status="row.status" />
-                    </template>
+
                 </Table>
             </div>
         </template>

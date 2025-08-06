@@ -1,5 +1,7 @@
-import { axios } from "@/utils";
-import { defineStore } from "pinia";
+import {axios} from '@/utils'
+import { defineStore } from 'pinia'
+import useToast from '@/Utils/useToast'
+const { showToast } = useToast();
 
 export const useResidentStore = defineStore("resident", {
     state: () => ({
@@ -26,16 +28,13 @@ export const useResidentStore = defineStore("resident", {
     },
 
     actions: {
-        // Clear error state
-        clearError() {
-            this._error = null;
+        removeResident(){
+            this._resident = null;
         },
 
-        // Select resident by ID from current list
-        selectResidentById(residentId) {
-            this._resident = this._residents.find(
-                (resident) => resident.id === residentId
-            );
+        selectResidentById(residentId){
+
+            this._resident = this._residents.find((resident) => resident.id == residentId);
         },
 
         // Fetch paginated list of residents
@@ -200,20 +199,21 @@ export const useResidentStore = defineStore("resident", {
                 this._isLoading = false;
             }
         },
+        async getResidentByNumber(residentNumber){
+            try{
+                const response = await axios.get(`/residents/get-resident-by-number/${residentNumber}`);
+                console.log(response.data)
+                this._resident = response.data;
+            }catch(error){
+                console.log(error);
 
-        // Reset store state
-        resetState() {
-            this._residents = [];
-            this._resident = null;
-            this._error = null;
-            this._paginate = {
-                total: 0,
-                per_page: 0,
-                current_page: 1,
-                last_page: 1,
-                from: 0,
-                to: 0,
-            };
-        },
+                if(error.response){
+                    if(error.response.status === 404){
+                        showToast({ icon: 'error', title: 'Resident not found' });
+                    }
+                }
+
+            }
+        }
     },
 });
