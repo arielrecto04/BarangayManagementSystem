@@ -1,19 +1,50 @@
 <script setup>
-import { ref, computed } from 'vue'
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
+import { ref, computed, onMounted } from 'vue'
 import { useOfficialStore } from '@/Stores'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast'
 import { storeToRefs } from 'pinia'
 
+
 const router = useRouter()
 const { showToast } = useToast()
 const officialStore = useOfficialStore()
 const { officials } = storeToRefs(officialStore)
+const isLoading = ref(false);
+const formErrors = ref({});
+const selectedResident = ref(null);
+watch(selectedResident, (val) => {
+  officialDataForm.value.resident_id = val?.id ?? '';
+});
+
+const handleSubmit = async () => {
+  isLoading.value = true;
+  formErrors.value = {};
+  try {
+    await officialStore.createOfficial(officialDataForm.value);
+    showToast('Official added successfully!');
+    router.push('/officials/list-officials');
+  } catch (error) {
+    if (error.response && error.response.status === 422) {
+      formErrors.value = error.response.data.errors || {};
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const residents = ref([])
+const residentSearch = ref('')
+const filteredResidents = ref([]);
+
+onMounted(async () => {
+  await residentStore.fetchResidents();
+  filteredResidents.value = residentStore.residents.filter(resident => resident.status === 'Alive');
+});
 
 const officialDataForm = ref({
-  firstName: '',
-  middleName: '',
-  lastName: '',
   position: '',
   termFrom: '',
   termTo: '',
@@ -170,32 +201,16 @@ const createOfficial = async () => {
 
           <!-- Personal Information -->
           <div class="col-span-12 md:col-span-8 lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- First Name -->
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-semibold text-gray-700">First Name *</label>
-              <input type="text" v-model="officialDataForm.firstName" placeholder="Juan" required
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-            </div>
 
-            <!-- Middle Name -->
+            <!-- Resident Full Name via Resident ID -->
             <div class="flex flex-col gap-2">
-              <label class="text-sm font-semibold text-gray-700">Middle Name</label>
-              <input type="text" v-model="officialDataForm.middleName" placeholder="Dela"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-            </div>
-
-            <!-- Last Name -->
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-semibold text-gray-700">Last Name *</label>
-              <input type="text" v-model="officialDataForm.lastName" placeholder="Cruz" required
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-            </div>
-
-            <!-- Resident ID -->
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-semibold text-gray-700">Resident ID</label>
-              <input type="number" v-model="officialDataForm.resident_id" placeholder="Enter Resident ID"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              <Mult v-model="officialDataForm.resident_id" required
+                class="border border-gray-300 rounded-lg px-4 py-3 mt-2">
+                <option disabled value="">Select Resident</option>
+                <option v-for="resident in filteredResidents" :key="resident.id" :value="resident.id">
+                  {{ resident.first_name }} {{ resident.middle_name }} {{ resident.last_name }}
+                </option>
+              </Mult>
             </div>
           </div>
 
