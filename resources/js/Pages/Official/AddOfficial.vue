@@ -1,12 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useOfficialStore } from '@/Stores'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast'
+import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const { showToast } = useToast()
 const officialStore = useOfficialStore()
+const { officials } = storeToRefs(officialStore)
 
 const officialDataForm = ref({
   firstName: '',
@@ -20,33 +22,105 @@ const officialDataForm = ref({
   start_date: '',
   end_date: '',
   description: '',
+  resident_id: null
+})
+
+// Position options with their limits
+const positionOptions = [
+  // Barangay Officials
+  { value: 'Barangay Captain', label: 'Barangay Captain', limit: 1, section: 'Barangay Officials' },
+  { value: 'Barangay Secretary', label: 'Barangay Secretary', limit: 1, section: 'Barangay Officials' },
+  { value: 'Barangay Treasurer', label: 'Barangay Treasurer', limit: 1, section: 'Barangay Officials' },
+  { value: 'Barangay Councilor', label: 'Barangay Councilor', limit: 7, section: 'Barangay Officials' },
+  { value: 'SK Chairman', label: 'SK Chairman', limit: 1, section: 'Barangay Officials' },
+  { value: 'SK Secretary', label: 'SK Secretary', limit: 1, section: 'Barangay Officials' },
+  { value: 'SK Treasurer', label: 'SK Treasurer', limit: 1, section: 'Barangay Officials' },
+  { value: 'Youth Councilor', label: 'Youth Councilor', limit: 7, section: 'Barangay Officials' },
+
+  // Volunteer and Functional Personnel
+  { value: 'Barangay Tanod', label: 'Barangay Tanod', limit: 20, section: 'Volunteer and Functional Personnel' },
+  { value: 'Barangay Health Workers', label: 'Barangay Health Workers', limit: 10, section: 'Volunteer and Functional Personnel' },
+  { value: 'Barangay Nutrition Scholars', label: 'Barangay Nutrition Scholars', limit: 3, section: 'Volunteer and Functional Personnel' },
+  { value: 'Lupon Tagapamayapa', label: 'Lupon Tagapamayapa', limit: 10, section: 'Volunteer and Functional Personnel' },
+  { value: 'BADAC Members', label: 'BADAC Members (Barangay Anti-Drug Council)', limit: 999, section: 'Volunteer and Functional Personnel' },
+  { value: 'BCPC Members', label: 'BCPC Members (Barangay Council for the Protection of Children)', limit: 999, section: 'Volunteer and Functional Personnel' },
+
+  // Program Based Committees
+  { value: 'BDRRMC', label: 'BDRRMC (Barangay Disaster Risk Reduction and Management Committee)', limit: 15, section: 'Barangay Program Based-Committees' },
+  { value: 'BPOC', label: 'BPOC (Barangay Peace and Order Council)', limit: 15, section: 'Barangay Program Based-Committees' },
+  { value: 'Barangay Environment Committee', label: 'Barangay Environment Committee', limit: 10, section: 'Barangay Program Based-Committees' },
+  { value: 'GAD Committee', label: 'GAD Committee (Gender and Development)', limit: 8, section: 'Barangay Program Based-Committees' },
+  { value: 'VAWC Desk', label: 'VAWC Desk (Anti-Violence Against Women and Children)', limit: 3, section: 'Barangay Program Based-Committees' },
+  { value: 'BPLO Section', label: 'BPLO Section (Business Permit and Licensing)', limit: 3, section: 'Barangay Program Based-Committees' }
+]
+
+// Group positions by section
+const groupedPositions = computed(() => {
+  const groups = {}
+  positionOptions.forEach(option => {
+    if (!groups[option.section]) {
+      groups[option.section] = []
+    }
+    groups[option.section].push(option)
+  })
+  return groups
+})
+
+// Check if position has reached its limit
+const checkPositionLimit = (position) => {
+  const positionOption = positionOptions.find(opt => opt.value === position)
+  if (!positionOption) return { canAdd: true, message: '' }
+
+  const currentCount = officials.value.filter(official =>
+    official.position && official.position.toLowerCase().includes(position.toLowerCase())
+  ).length
+
+  if (positionOption.limit === 999) {
+    return { canAdd: true, message: `Current count: ${currentCount} (varies)` }
+  }
+
+  const canAdd = currentCount < positionOption.limit
+  const message = canAdd
+    ? `Current count: ${currentCount}/${positionOption.limit}`
+    : `Limit reached: ${currentCount}/${positionOption.limit}`
+
+  return { canAdd, message }
+}
+
+// Computed property for position validation
+const positionValidation = computed(() => {
+  if (!officialDataForm.value.position) return { canAdd: true, message: '' }
+  return checkPositionLimit(officialDataForm.value.position)
 })
 
 // Validate all fields filled
 const validateForm = () => {
-  return [
+  const requiredFields = [
     officialDataForm.value.firstName,
-    officialDataForm.value.middleName,
     officialDataForm.value.lastName,
     officialDataForm.value.position,
-    officialDataForm.value.termFrom,
-    officialDataForm.value.termTo,
-    officialDataForm.value.no_of_per_term,
-    officialDataForm.value.elected_date,
-    officialDataForm.value.start_date,
-    officialDataForm.value.end_date,
-    officialDataForm.value.description,
-  ].every(field => field !== '' && field !== null)
+  ]
+
+  if (!requiredFields.every(field => field !== '' && field !== null)) {
+    showToast({ icon: 'error', title: 'Please fill all required fields before submitting.' })
+    return false
+  }
+
+  if (!positionValidation.value.canAdd) {
+    showToast({ icon: 'error', title: 'Position limit reached', text: positionValidation.value.message })
+    return false
+  }
+
+  return true
 }
 
 const createOfficial = async () => {
-  if (!validateForm()) {
-    showToast({ icon: 'error', title: 'Please fill all fields before submitting.' })
-    return
-  }
+  if (!validateForm()) return
 
   // Compose term as YY-YY string
-  const term = `${officialDataForm.value.termFrom}-${officialDataForm.value.termTo}`
+  const term = officialDataForm.value.termFrom && officialDataForm.value.termTo
+    ? `${officialDataForm.value.termFrom}-${officialDataForm.value.termTo}`
+    : ''
 
   // Compose full name
   const name = `${officialDataForm.value.firstName} ${officialDataForm.value.middleName} ${officialDataForm.value.lastName}`.trim()
@@ -61,6 +135,7 @@ const createOfficial = async () => {
       start_date: officialDataForm.value.start_date,
       end_date: officialDataForm.value.end_date,
       description: officialDataForm.value.description,
+      resident_id: officialDataForm.value.resident_id
     })
     showToast({ icon: 'success', title: 'Official created successfully' })
     router.push('/officials')
@@ -74,110 +149,164 @@ const createOfficial = async () => {
 }
 </script>
 
-
 <template>
   <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
     <form @submit.prevent="createOfficial">
       <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-5xl">
-        <h1 class="text-2xl font-bold mb-6">Add New Official</h1>
-        <h2 class="text-lg font-semibold mb-4">Official Profile</h2>
+        <h1 class="text-3xl font-bold mb-2 text-center">Add New Official</h1>
+        <h2 class="text-lg font-semibold mb-6 text-center text-gray-600">Official Profile Information</h2>
 
-        <div class="grid grid-cols-12 gap-4">
+        <div class="grid grid-cols-12 gap-6">
           <!-- Image Placeholder -->
-          <div class="col-span-4 row-span-2 flex justify-center items-center">
-            <div class="w-40 h-40 bg-gray-200 rounded-md"></div>
-          </div>
-          <!-- First Name -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">First Name</label>
-            <input type="text" v-model="officialDataForm.firstName" placeholder="Juan" required
-              class="border border-gray-200 rounded-md px-4 py-2" />
-          </div>
-
-          <!-- Middle Name -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Middle Name</label>
-            <input type="text" v-model="officialDataForm.middleName" placeholder="Dela" required
-              class="border border-gray-200 rounded-md px-4 py-2" />
+          <div class="col-span-12 md:col-span-4 lg:col-span-3 flex justify-center items-center">
+            <div
+              class="w-40 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
+              <div class="text-center">
+                <div class="text-4xl text-gray-400 mb-2">📸</div>
+                <p class="text-sm text-gray-500">Upload Photo</p>
+              </div>
+            </div>
           </div>
 
-          <!-- Last Name -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Last Name</label>
-            <input type="text" v-model="officialDataForm.lastName" placeholder="Cruz" required
-              class="border border-gray-200 rounded-md px-4 py-2" />
+          <!-- Personal Information -->
+          <div class="col-span-12 md:col-span-8 lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- First Name -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">First Name *</label>
+              <input type="text" v-model="officialDataForm.firstName" placeholder="Juan" required
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+
+            <!-- Middle Name -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">Middle Name</label>
+              <input type="text" v-model="officialDataForm.middleName" placeholder="Dela"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+
+            <!-- Last Name -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">Last Name *</label>
+              <input type="text" v-model="officialDataForm.lastName" placeholder="Cruz" required
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+
+            <!-- Resident ID -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">Resident ID</label>
+              <input type="number" v-model="officialDataForm.resident_id" placeholder="Enter Resident ID"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
           </div>
 
-          <!-- Position -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Position</label>
-            <input type="text" v-model="officialDataForm.position" placeholder="Barangay Captain" required
-              class="border border-gray-200 rounded-md px-4 py-2" />
+          <!-- Position Selection -->
+          <div class="col-span-12 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-700">Position *</label>
+            <select v-model="officialDataForm.position" required
+              class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              :class="{ 'border-red-500': !positionValidation.canAdd }">
+              <option value="">Select Position</option>
+              <optgroup v-for="(positions, section) in groupedPositions" :key="section" :label="section">
+                <option v-for="position in positions" :key="position.value" :value="position.value">
+                  {{ position.label }} (Max: {{ position.limit === 999 ? 'Varies' : position.limit }})
+                </option>
+              </optgroup>
+            </select>
+            <div v-if="positionValidation.message" :class="positionValidation.canAdd ? 'text-blue-600' : 'text-red-600'"
+              class="text-sm mt-1">
+              {{ positionValidation.message }}
+            </div>
           </div>
 
-          <!-- Term From -->
-          <div class="col-span-2 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Term From (Year)</label>
-            <input type="number" v-model="officialDataForm.termFrom" required min="1900" max="2099" placeholder="22"
-              class="border border-gray-200 rounded-md px-4 py-2" />
+          <!-- Terms Information -->
+          <div class="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Term From -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">Term From (Year)</label>
+              <input type="number" v-model="officialDataForm.termFrom" min="2000" max="2099" placeholder="2022"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+
+            <!-- Term To -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">Term To (Year)</label>
+              <input type="number" v-model="officialDataForm.termTo" min="2000" max="2099" placeholder="2025"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+
+            <!-- Number of Terms -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">Number of Terms</label>
+              <input type="number" v-model="officialDataForm.no_of_per_term" min="1" placeholder="1"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+
+            <!-- Elected Date -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">Elected Date</label>
+              <input type="date" v-model="officialDataForm.elected_date"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
           </div>
 
-          <!-- Term To -->
-          <div class="col-span-2 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Term To (Year)</label>
-            <input type="number" v-model="officialDataForm.termTo" required min="1900" max="2099" placeholder="25"
-              class="border border-gray-200 rounded-md px-4 py-2" />
-          </div>
-          <!-- Resident ID -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Resident ID</label>
-            <input type="text" v-model="officialDataForm.resident_id" placeholder="Resident ID"
-              class="border border-gray-200 rounded-md px-4 py-2" />
+          <!-- Service Dates -->
+          <div class="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Start Date -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">Start Date</label>
+              <input type="date" v-model="officialDataForm.start_date"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+
+            <!-- End Date -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-gray-700">End Date</label>
+              <input type="date" v-model="officialDataForm.end_date"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
           </div>
 
-          <!-- Number of term -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Number of Term</label>
-            <input type="number" v-model="officialDataForm.no_of_per_term"
-              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
-          </div>
-
-          <!-- Elected Date -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Elected Date</label>
-            <input type="date" v-model="officialDataForm.elected_date"
-              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
-          </div>
-
-          <!-- Start Date -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Start Date</label>
-            <input type="date" v-model="officialDataForm.start_date"
-              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
-          </div>
-
-          <!-- End Date -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">End Date</label>
-            <input type="date" v-model="officialDataForm.end_date"
-              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
-          </div>
-
-          <!-- Description (full width) -->
-          <div class="col-span-12 flex flex-col gap-2 mt-4">
-            <label class="text-sm font-semibold text-gray-600">Description</label>
-            <textarea v-model="officialDataForm.description" placeholder="Enter a detailed description..." rows="4"
-              class="resize-y border border-gray-200 rounded-md px-4 py-2"></textarea>
+          <!-- Description -->
+          <div class="col-span-12 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-700">Description</label>
+            <textarea v-model="officialDataForm.description"
+              placeholder="Enter a detailed description about the official's role, responsibilities, and achievements..."
+              rows="4"
+              class="resize-y border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></textarea>
           </div>
         </div>
 
+        <!-- Action Buttons -->
         <div class="flex justify-center mt-10 gap-4">
-          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">
-            Save
+          <button type="submit" :disabled="!positionValidation.canAdd"
+            :class="positionValidation.canAdd ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'"
+            class="text-white px-8 py-3 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105">
+            <span class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Save Official
+            </span>
           </button>
-          <router-link to="/officials" class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200">
+          <router-link to="/officials"
+            class="bg-white border-2 border-gray-300 hover:border-gray-400 px-8 py-3 rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-105 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
             Cancel
           </router-link>
+        </div>
+
+        <!-- Position Limits Legend -->
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Position Limits Guide:</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-gray-600">
+            <div v-for="position in positionOptions.slice(0, 6)" :key="position.value">
+              <span class="font-medium">{{ position.value }}:</span>
+              <span>{{ position.limit === 999 ? 'Varies' : position.limit }} max</span>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-2">* Some positions have flexible limits based on barangay needs</p>
         </div>
       </div>
     </form>
