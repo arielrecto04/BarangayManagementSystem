@@ -93,7 +93,42 @@ public function store(Request $request)
      */
     public function show(string $id)
     {
-        return Blotter::findOrFail($id);
+        $blotter = Blotter::findOrFail($id);
+        $documents = [];
+        
+        if (!empty($blotter->supporting_documents)) {
+            $decoded = json_decode($blotter->supporting_documents, true);
+            if (is_array($decoded)) {
+                $documents = array_map(function ($doc) {
+                    return [
+                        'name' => $doc['name'] ?? basename($doc['path']),
+                        'url' => asset('storage/' . $doc['path']),
+                        'mime_type' => $doc['mime_type'] ?? null,
+                        'path' => $doc['path'] ?? null,
+                    ];
+                }, $decoded);
+            }
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $blotter->id,
+                'blotter_no' => $blotter->blotter_no,
+                'filing_date' => $blotter->filing_date,
+                'title_case' => $blotter->title_case,
+                'nature_of_case' => $blotter->nature_of_case,
+                'complainants_id' => $blotter->complainants_id,
+                'respondents_id' => $blotter->respondents_id,
+                'place' => $blotter->place,
+                'datetime_of_incident' => $blotter->datetime_of_incident,
+                'blotter_type' => $blotter->blotter_type,
+                'barangay_case_no' => $blotter->barangay_case_no,
+                'status' => $blotter->status,
+                'description' => $blotter->description,
+                'witness' => $blotter->witness,
+                'supporting_documents' => $documents
+            ]
+        ]);
     }
 
     /**
@@ -123,8 +158,20 @@ public function store(Request $request)
         ]);
 
         $blotter = Blotter::findOrFail($id);
-        $fileData = [];
+        
+        // Handle file uploads if new files are provided
         if ($request->hasFile('supporting_documents')) {
+            $fileData = [];
+            
+            // Keep existing documents
+            if (!empty($blotter->supporting_documents)) {
+                $existingDocuments = json_decode($blotter->supporting_documents, true);
+                if (is_array($existingDocuments)) {
+                    $fileData = $existingDocuments;
+                }
+            }
+            
+            // Add new files
             foreach ($request->file('supporting_documents') as $file) {
                 $originalName = $file->getClientOriginalName();
                 $path = $file->store('documents', 'public');
@@ -136,6 +183,7 @@ public function store(Request $request)
             }
             $validated['supporting_documents'] = json_encode($fileData);
         }
+        
         $blotter->update($validated);
 
         return response()->json([

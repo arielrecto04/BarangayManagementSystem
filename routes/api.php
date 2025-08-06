@@ -44,3 +44,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('documents', DocumentController::class);
     Route::apiResource('document-requests', DocumentRequestController::class);
 });
+    
