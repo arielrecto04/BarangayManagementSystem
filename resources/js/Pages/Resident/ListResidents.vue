@@ -41,9 +41,6 @@ const columns = [
         key: "avatar", label: "Image"
     },
     {
-        key: "resident_number", label: "Resident Number"
-    },
-    {
         key: "last_name", label: "Last Name"
     },
     {
