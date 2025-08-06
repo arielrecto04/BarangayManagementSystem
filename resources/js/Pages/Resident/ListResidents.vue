@@ -44,6 +44,9 @@ const columns = [
         key: "resident_number", label: "Resident Number"
     },
     {
+        key: "resident_number", label: "Resident Number"
+    },
+    {
         key: "first_name", label: "First Name"
     },
     {
