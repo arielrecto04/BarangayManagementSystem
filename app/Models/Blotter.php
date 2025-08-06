@@ -27,7 +27,8 @@ class Blotter extends Model
 
     protected $casts = [
         'filing_date' => 'date',
-        'datetime_of_incident' => 'date'
+        'datetime_of_incident' => 'date',
+        'supporting_documents' => 'array',
     ];
 
     public function complainant()

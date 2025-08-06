@@ -61,8 +61,23 @@ public function store(Request $request)
         'total_cases' => 'required',
         'status' => 'required|in:Open,In Progress,Resolved',
         'description' => 'required|string|max:1000',
-        'witness' => 'nullable|string|max:255'
+        'witness' => 'nullable|string|max:255',
+        'supporting_documents' => 'nullable|array',
+        'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
     ]);
+
+    $fileData = [];
+    if ($request->hasFile('supporting_documents')) {
+        foreach ($request->file('supporting_documents') as $file) {
+            $originalName = $file->getClientOriginalName();
+            $path = $file->store('documents', 'public');
+            $fileData[] = [
+                'name' => $originalName,
+                'path' => $path,
+            ];
+        }
+        $validated['supporting_documents'] = json_encode($fileData);
+    }
 
     $blotter = Blotter::create($validated);
 
@@ -70,7 +85,7 @@ public function store(Request $request)
         'message' => 'Blotter created successfully',
         'data' => $blotter,
     ], 201);
-}
+} 
 
     /**
      * Display the specified resource.
@@ -101,10 +116,24 @@ public function store(Request $request)
             'total_cases' => 'nullable',
             'status' => 'required|in:Open,In Progress,Resolved',
             'description' => 'required|string|max:1000',
-            'witness' => 'nullable|string|max:255'
+            'witness' => 'nullable|string|max:255',
+            'supporting_documents' => 'nullable|array',
+            'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
         ]);
 
         $blotter = Blotter::findOrFail($id);
+        $fileData = [];
+        if ($request->hasFile('supporting_documents')) {
+            foreach ($request->file('supporting_documents') as $file) {
+                $originalName = $file->getClientOriginalName();
+                $path = $file->store('documents', 'public');
+                $fileData[] = [
+                    'name' => $originalName,
+                    'path' => $path,
+                ];
+            }
+            $validated['supporting_documents'] = json_encode($fileData);
+        }
         $blotter->update($validated);
 
         return response()->json([
