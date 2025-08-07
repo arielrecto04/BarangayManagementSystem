@@ -101,8 +101,8 @@ public function store(Request $request)
             if (is_array($decoded)) {
                 $documents = array_map(function ($doc) {
                     return [
-                        'name' => $doc['name'] ?? basename($doc['path']),
-                        'url' => asset('storage/' . $doc['path']),
+                        'name' => $doc['name'] ?? basename($doc['path'] ?? ''),
+                        'url' => isset($doc['path']) ? asset('storage/' . $doc['path']) : null,
                         'mime_type' => $doc['mime_type'] ?? null,
                         'path' => $doc['path'] ?? null,
                     ];
@@ -155,40 +155,74 @@ public function store(Request $request)
             'witness' => 'nullable|string|max:255',
             'supporting_documents' => 'nullable|array',
             'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
+            'existing_documents' => 'nullable|string', // For existing documents info
         ]);
 
         $blotter = Blotter::findOrFail($id);
         
-        // Handle file uploads if new files are provided
-        if ($request->hasFile('supporting_documents')) {
-            $fileData = [];
-            
-            // Keep existing documents
-            if (!empty($blotter->supporting_documents)) {
-                $existingDocuments = json_decode($blotter->supporting_documents, true);
-                if (is_array($existingDocuments)) {
-                    $fileData = $existingDocuments;
-                }
+        // Handle file uploads
+        $finalDocuments = [];
+        
+        // First, handle existing documents that should be kept
+        if ($request->has('existing_documents') && !empty($request->existing_documents)) {
+            $existingDocs = json_decode($request->existing_documents, true);
+            if (is_array($existingDocs)) {
+                $finalDocuments = $existingDocs;
             }
-            
-            // Add new files
+        }
+        
+        // Then, handle new file uploads
+        if ($request->hasFile('supporting_documents')) {
             foreach ($request->file('supporting_documents') as $file) {
                 $originalName = $file->getClientOriginalName();
                 $path = $file->store('documents', 'public');
-                $fileData[] = [
+                $finalDocuments[] = [
                     'name' => $originalName,
                     'path' => $path,
                     'mime_type' => $file->getClientMimeType(),
                 ];
             }
-            $validated['supporting_documents'] = json_encode($fileData);
+        } else if (!$request->has('existing_documents')) {
+            // If no new files and no existing documents specified, keep current documents
+            if (!empty($blotter->supporting_documents)) {
+                $currentDocs = json_decode($blotter->supporting_documents, true);
+                if (is_array($currentDocs)) {
+                    $finalDocuments = $currentDocs;
+                }
+            }
+        }
+        
+        // Update supporting documents if there are any changes
+        if (!empty($finalDocuments)) {
+            $validated['supporting_documents'] = json_encode($finalDocuments);
+        } else {
+            $validated['supporting_documents'] = null;
         }
         
         $blotter->update($validated);
 
+        // Return the updated blotter with processed documents for response
+        $documents = [];
+        if (!empty($blotter->supporting_documents)) {
+            $decoded = json_decode($blotter->supporting_documents, true);
+            if (is_array($decoded)) {
+                $documents = array_map(function ($doc) {
+                    return [
+                        'name' => $doc['name'] ?? basename($doc['path'] ?? ''),
+                        'url' => isset($doc['path']) ? asset('storage/' . $doc['path']) : null,
+                        'mime_type' => $doc['mime_type'] ?? null,
+                        'path' => $doc['path'] ?? null,
+                    ];
+                }, $decoded);
+            }
+        }
+
+        $responseData = $blotter->toArray();
+        $responseData['supporting_documents'] = $documents;
+
         return response()->json([
             'message' => 'Blotter updated successfully',
-            'data' => $blotter,
+            'data' => $responseData,
         ], 200);
     }
 

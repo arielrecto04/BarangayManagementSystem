@@ -18,33 +18,13 @@ const selectedRespondent = ref(null);
 
 const { blotter, isLoading } = storeToRefs(blotterStore);
 const blotterId = router.currentRoute.value.params.id;
-const blotterDataForm = ref({
-    blotter_no: '',
-    filing_date: '',
-    title_case: '',
-    nature_of_case: '',
-    complainants_id: '',
-    respondents_id: '',
-    complainants_type: 'App\\Models\\Resident',
-    respondents_type: 'App\\Models\\Resident',
-    place: '',
-    datetime_of_incident: '',
-    blotter_type: '',
-    barangay_case_no: '',
-    total_cases: '0',
-    open_cases: '0',
-    in_progress: '0',
-    resolved: '0',
-    status: '',
-    description: '',
-    witness: '',
-    supporting_documents: []
-});
+
 const formatDateForInput = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toISOString().slice(0, 16);
 };
+
 const existingSupportingDocuments = ref([]);
 const newSupportingDocuments = ref([]);
 const formErrors = ref({});
@@ -52,79 +32,109 @@ const isDestroyed = ref(false);
 
 // Add this cleanup function
 const cleanup = () => {
+    isDestroyed.value = true;
     selectedComplainant.value = null;
     selectedRespondent.value = null;
     blotterStore._blotter = null;
-    isDestroyed.value = true;
+    existingSupportingDocuments.value = [];
+    newSupportingDocuments.value = [];
 };
 
 const updateBlotterData = async () => {
     try {
         if (!blotter.value) return;
         
-        // If there are new documents to upload, create FormData
+        // Prepare the update data - don't include supporting documents in the JSON payload
+        const updateData = {
+            blotter_no: blotter.value.blotter_no,
+            filing_date: blotter.value.filing_date,
+            title_case: blotter.value.title_case,
+            nature_of_case: blotter.value.nature_of_case,
+            complainants_id: blotter.value.complainants_id,
+            respondents_id: blotter.value.respondents_id,
+            complainants_type: 'App\\Models\\Resident',
+            respondents_type: 'App\\Models\\Resident',
+            place: blotter.value.place,
+            datetime_of_incident: blotter.value.datetime_of_incident,
+            blotter_type: blotter.value.blotter_type,
+            barangay_case_no: blotter.value.barangay_case_no,
+            total_cases: '0',
+            status: blotter.value.status,
+            description: blotter.value.description,
+            witness: blotter.value.witness || ''
+        };
+
+        // Always use FormData to handle document changes properly
+        const formData = new FormData();
+        
+        // Append all form fields
+        Object.entries(updateData).forEach(([key, value]) => {
+            formData.append(key, value || '');
+        });
+        
+        // Append new files if any
         if (newSupportingDocuments.value.length > 0) {
-            const formData = new FormData();
-            
-            // Add all blotter fields
-            Object.entries(blotter.value).forEach(([key, value]) => {
-                if (key !== 'supporting_documents' && value !== null && value !== undefined) {
-                    formData.append(key, value);
-                }
-            });
-            
-            // Add new supporting documents
             newSupportingDocuments.value.forEach(file => {
                 formData.append('supporting_documents[]', file);
             });
-            
-            await blotterStore.updateBlotter(blotterId, formData);
-        } else {
-            // No new files, just update the data
-            await blotterStore.updateBlotter(blotterId, blotter.value);
         }
+        
+        // Always send existing documents info (even if empty array - this tells backend what to keep)
+        formData.append('existing_documents', JSON.stringify(existingSupportingDocuments.value));
+        
+        await blotterStore.updateBlotter(blotterId, formData);
         
         showToast({ icon: 'success', title: 'Blotter updated successfully' });
         cleanup();
         router.push('/blotter');
     } catch (error) {
-        showToast({ icon: 'error', title: error.message });
+        console.error('Update error:', error);
+        showToast({ icon: 'error', title: error.message || 'Failed to update blotter' });
     }
 }
 
 // Add beforeUnmount hook
 onBeforeUnmount(() => {
-    isDestroyed.value = true;
     cleanup();
 });
 
 onMounted(async () => {
-    await residentStore.getResidents();
-    residents.value = residentStore.residents;
-    await blotterStore.getBlotterById(blotterId);
-    // Format dates after loading
-     if (blotter.value) {
-        blotter.value.filing_date = blotter.value.filing_date?.split('T')[0] || '';
-        blotter.value.datetime_of_incident = formatDateForInput(blotter.value.datetime_of_incident);
+    try {
+        await residentStore.getResidents();
+        residents.value = residentStore.residents;
+        await blotterStore.getBlotterById(blotterId);
+        
+        // Format dates after loading
+        if (blotter.value) {
+            blotter.value.filing_date = blotter.value.filing_date?.split('T')[0] || '';
+            blotter.value.datetime_of_incident = formatDateForInput(blotter.value.datetime_of_incident);
+            
+            // Load existing supporting documents
+            if (blotter.value.supporting_documents && Array.isArray(blotter.value.supporting_documents)) {
+                existingSupportingDocuments.value = [...blotter.value.supporting_documents];
+            }
+        }
+    } catch (error) {
+        console.error('Mount error:', error);
+        showToast({ icon: 'error', title: 'Failed to load blotter data' });
     }
 });
 
 watch(() => blotter.value, (newBlotter) => {
-    if (newBlotter) {
+    if (newBlotter && !isDestroyed.value) {
         selectedComplainant.value = residents.value.find(r => r.id == newBlotter.complainants_id);
         selectedRespondent.value = residents.value.find(r => r.id == newBlotter.respondents_id);
 
         newBlotter.filing_date = newBlotter.filing_date?.split('T')[0] || '';
         newBlotter.datetime_of_incident = formatDateForInput(newBlotter.datetime_of_incident);
         
-        // Handle existing supporting documents
+        // Load existing supporting documents
         if (newBlotter.supporting_documents && Array.isArray(newBlotter.supporting_documents)) {
             existingSupportingDocuments.value = [...newBlotter.supporting_documents];
-        } else {
-            existingSupportingDocuments.value = [];
         }
     }
 }, { immediate: true });
+
 // Helper function to get filename from document object
 const getFileName = (doc) => {
   try {
@@ -145,11 +155,7 @@ const handleFileUpload = (event) => {
   if (isDestroyed.value) return; // Prevent operations after destruction
 
   const newFiles = Array.from(event.target.files);
-  blotterDataForm.value.supporting_documents = [
-    ...blotterDataForm.value.supporting_documents || [],    
-    ...newFiles
-  ];
-    
+  
   const existingNames = new Set(
     newSupportingDocuments.value.map(file => file.name)
   );
@@ -173,18 +179,9 @@ const removeNewDocument = (index) => {
   if (isDestroyed.value) return;
   newSupportingDocuments.value.splice(index, 1);
 };
+
 const handleCancel = () => {
-  // Clean up Multiselect references
-  selectedComplainant.value = null;
-  selectedRespondent.value = null;
-  
-  // Reset the current blotter in store
-  blotterStore._blotter = null;
-  
-  // Mark as destroyed
-  isDestroyed.value = true;
-  
-  // Navigate back to parent blotter route
+  cleanup();
   router.push('/blotter');
 };
 </script>
@@ -274,16 +271,74 @@ const handleCancel = () => {
                         </div>
                         <div class="flex flex-col gap-2">
                             <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
-                            <textarea id="witness" type="text" v-model="blotter.witness" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                            <textarea id="witness" v-model="blotter.witness" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
-                        <div class="flex flex-col gap-2 justify-center">
+                        <div class="flex flex-col gap-2">
                             <label for="status" class="text-sm font-semibold text-gray-600">Status</label>
                             <select id="status" v-model="blotter.status" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2">
                                 <option value="Open">Open</option>
                                 <option value="In Progress">In Progress</option>
                                 <option value="Resolved">Resolved</option>
                             </select>
-                                            <div class="flex justify-center mt-10 gap-4">
+                        </div>
+                        
+                        <!-- Existing Supporting Documents -->
+                        <div class="col-span-2 flex flex-col gap-2" v-if="existingSupportingDocuments.length > 0">
+                            <label class="text-sm font-semibold text-gray-600">Current Supporting Documents</label>
+                            <div class="space-y-1 text-sm text-gray-700">
+                                <div v-for="(doc, index) in existingSupportingDocuments" :key="index" class="flex items-center gap-2 justify-between bg-blue-50 rounded px-2 py-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-blue-600">📄</span>
+                                        <span>{{ getFileName(doc) }}</span>
+                                        <a v-if="doc.url" :href="doc.url" target="_blank" class="text-blue-500 hover:underline text-xs">(View)</a>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        class="text-red-500 hover:underline"
+                                        @click="removeExistingDocument(index)"
+                                        aria-label="Remove existing document"
+                                    >✖</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- New Supporting Documents Upload -->
+                        <div class="col-span-2 flex flex-col gap-2">
+                            <label for="new_supporting_documents" class="text-sm font-semibold text-gray-600">Add New Supporting Documents</label>
+                            <input 
+                                id="new_supporting_documents"
+                                type="file" 
+                                multiple 
+                                class="hidden" 
+                                @change="handleFileUpload" 
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" 
+                                ref="fileInput"
+                            />
+                            <button
+                                type="button"
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md w-fit"
+                                @click="$refs.fileInput.click()"
+                            >
+                                Upload Files
+                            </button>
+                            <div v-if="newSupportingDocuments.length" class="mt-2 space-y-1 text-sm text-gray-700">
+                                <div v-for="(file, index) in newSupportingDocuments" :key="index" class="flex items-center gap-2 justify-between bg-green-50 rounded px-2 py-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">📄</span>
+                                        <span>{{ file.name }}</span>
+                                        <span class="text-green-600 text-xs">(New)</span>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        class="text-red-500 hover:underline"
+                                        @click="removeNewDocument(index)"
+                                        aria-label="Remove new document"
+                                    >✖</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center mt-10 gap-4">
                         <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">Save</button>
                         <button 
                              @click="handleCancel"
@@ -292,11 +347,42 @@ const handleCancel = () => {
                             Cancel
                         </button>
                     </div>
-
-                        </div>
-                    </div>
                 </div>
             </form>
         </template>
     </div>
 </template>
+
+<style>
+.multiselect {
+  min-height: auto;
+}
+
+.multiselect__tags {
+  min-height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+}
+
+.multiselect__input,
+.multiselect__single {
+  font-size: 1rem;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.multiselect__placeholder {
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-left: 0;
+}
+
+.multiselect__option--highlight {
+  background: #3b82f6;
+}
+
+.multiselect__option--highlight::after {
+  background: #3b82f6;
+}
+</style>

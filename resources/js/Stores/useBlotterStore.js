@@ -46,10 +46,11 @@ export const useBlotterStore = defineStore('blotter', {
             this._error = null;
             try {
                 const response = await axios.get(`/blotters/${id}`);
-                this._blotter = response.data.data; // Fix: access the data property
+                this._blotter = response.data.data;
             } catch (error) {
                 console.error(`Error fetching blotter ID ${id}:`, error);
                 this._error = error;
+                throw error;
             } finally {
                 this._isLoading = false;
             }
@@ -84,70 +85,73 @@ export const useBlotterStore = defineStore('blotter', {
                 this._isLoading = false;
             }
         },
+        
         async getBlotterById(id) {
             return await this.fetchBlotter(id);
         },
 
-        // Update the updateBlotter method to:
-async updateBlotter(id, data) {
-    this._isLoading = true;
-    this._error = null;
-    try {
-        let response;
-        let url = `/blotters/${id}`;
-        
-        if (data instanceof FormData) {
-            data.append('_method', 'PATCH');
-            response = await axios.post(url, data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
+        async updateBlotter(id, data) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                let response;
+                let url = `/blotters/${id}`;
+                
+                if (data instanceof FormData) {
+                    // Handle FormData for file uploads
+                    data.append('_method', 'PATCH');
+                    response = await axios.post(url, data, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                } else {
+                    // Handle regular JSON data
+                    const payload = {
+                        ...data,
+                        complainants_type: data.complainants_type || 'App\\Models\\Resident',
+                        respondents_type: data.respondents_type || 'App\\Models\\Resident',
+                        total_cases: data.total_cases || '0',
+                        witness: data.witness || ''
+                    };
+                    
+                    response = await axios.patch(url, payload);
                 }
-            });
-        } else {
-            // Ensure required fields are included
-            const payload = {
-                ...data,
-                complainants_type: 'App\\Models\\Resident',
-                respondents_type: 'App\\Models\\Resident',
-                filing_date: data.filing_date ? new Date(data.filing_date).toISOString() : null,
-                datetime_of_incident: data.datetime_of_incident ? new Date(data.datetime_of_incident).toISOString() : null
-            };
-            
-            response = await axios.patch(url, payload);
-        }
 
-        // Update local state
-        const index = this._blotters.findIndex(b => b.id === id);
-        if (index !== -1) {
-            this._blotters[index] = response.data.data;
-        }
-        
-        // Update current blotter if it's the one being edited
-        if (this._blotter?.id === id) {
-            this._blotter = response.data.data;
-        }
-        
-        return response.data;
-    } catch (error) {
-        console.error(`Error updating blotter ID ${id}:`, error);
-        
-        // Enhanced error handling
-        let errorMessage = 'Failed to update blotter';
-        if (error.response?.status === 422) {
-            const errors = error.response.data.errors;
-            errorMessage = Object.entries(errors)
-                .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
-                .join('\n');
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-        
-        this._error = errorMessage;
-        throw new Error(errorMessage);
-    } finally {
-        this._isLoading = false;
-    }
-},
+                // Update local state
+                const index = this._blotters.findIndex(b => b.id == id);
+                if (index !== -1) {
+                    this._blotters[index] = response.data.data;
+                }
+                
+                // Update current blotter if it's the one being edited
+                if (this._blotter?.id == id) {
+                    this._blotter = response.data.data;
+                }
+                
+                return response.data;
+            } catch (error) {
+                console.error(`Error updating blotter ID ${id}:`, error);
+                
+                // Enhanced error handling
+                let errorMessage = 'Failed to update blotter';
+                if (error.response?.status === 422) {
+                    const errors = error.response.data.errors;
+                    errorMessage = Object.entries(errors)
+                        .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+                        .join('\n');
+                } else if (error.response?.data?.message) {
+                    errorMessage = error.response.data.message;
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                this._error = errorMessage;
+                throw new Error(errorMessage);
+            } finally {
+                this._isLoading = false;
+            }
+        },
 
         async deleteBlotter(id) {
             this._isLoading = true;
