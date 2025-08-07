@@ -5,21 +5,32 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
-import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
 const { showToast } = useToast();
 const blotterStore = useBlotterStore();
 const residentStore = useResidentStore();
-
-// Refs
 const residents = ref([]);
 const errors = ref({});
 const selectedComplainant = ref(null);
 const selectedRespondent = ref(null);
-const fileInput = ref(null); // Add ref for file input
 
-// Form data
+onMounted(async () => {
+    await residentStore.getResidents();
+    residents.value = residentStore.residents;
+});
+
+watch(selectedComplainant, (val) => {
+    blotterDataForm.value.complainants_id = val?.id ?? '';
+});
+
+watch(selectedRespondent, (val) => {
+    blotterDataForm.value.respondents_id = val?.id ?? '';
+});
+
+
+
+
 const blotterDataForm = ref({
     blotter_no: '',
     filing_date: '',
@@ -204,7 +215,7 @@ const createBlotter = async () => {
                             <option value="criminal case">Criminal Case</option>
                         </select>
                         <span v-if="errors.nature_of_case" class="text-red-500 text-xs mt-1">{{ errors.nature_of_case
-                            }}</span>
+                        }}</span>
                     </div>
 
 
@@ -222,7 +233,7 @@ const createBlotter = async () => {
                             placeholder="Search or select complainant" :searchable="true" :show-labels="false"
                             @select="val => blotterDataForm.complainants_id = val?.id" />
                         <span v-if="errors.complainants_id" class="text-red-500 text-xs mt-1">{{ errors.complainants_id
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="complainant_address" class="text-sm font-semibold text-gray-600">Complainant
@@ -241,7 +252,7 @@ const createBlotter = async () => {
                             placeholder="Search or select respondent" :searchable="true" :show-labels="false"
                             @select="val => blotterDataForm.respondents_id = val?.id" />
                         <span v-if="errors.respondents_id" class="text-red-500 text-xs mt-1">{{ errors.respondents_id
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="respondent_address" class="text-sm font-semibold text-gray-600">Respondent
@@ -295,7 +306,7 @@ const createBlotter = async () => {
                             rows="4"
                             :class="['input-style w-full border border-gray-200 rounded-md px-4 py-2', errors.description ? 'border-red-500' : 'border-gray-200']"></textarea>
                         <span v-if="errors.description" class="text-red-500 text-xs mt-1">{{ errors.description
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
