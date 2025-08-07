@@ -28,8 +28,8 @@ const blotterDataForm = ref({
     respondents_id: '',
     complainant_address: '',
     respondent_address: '',
-    complainants_name: 'App\\Models\\Resident',
-    respondents_name: 'App\\Models\\Resident',
+    complainants_name: ['App\\Models\\Resident'],
+    respondents_name: ['App\\Models\\Resident'],
     place: '',
     datetime_of_incident: '',
     blotter_type: '',
@@ -62,7 +62,27 @@ onMounted(async () => {
     await residentStore.getResidents();
     residents.value = residentStore.residents;
 });
-
+// Watchers for form fields to clear errors when changed
+watch(() => blotterDataForm.value.blotter_no, () => clearError('blotter_no'));
+watch(() => blotterDataForm.value.filing_date, () => clearError('filing_date'));
+watch(() => blotterDataForm.value.title_case, () => clearError('title_case'));
+watch(() => blotterDataForm.value.nature_of_case, () => clearError('nature_of_case'));
+watch(() => blotterDataForm.value.complainants_id, () => clearError('complainants_id'));
+watch(() => blotterDataForm.value.respondents_id, () => clearError('respondents_id'));
+watch(() => blotterDataForm.value.complainant_address, () => clearError('complainant_address'));
+watch(() => blotterDataForm.value.respondent_address, () => clearError('respondent_address'));
+watch(() => blotterDataForm.value.place, () => clearError('place'));
+watch(() => blotterDataForm.value.datetime_of_incident, () => clearError('datetime_of_incident'));
+watch(() => blotterDataForm.value.blotter_type, () => clearError('blotter_type'));
+watch(() => blotterDataForm.value.barangay_case_no, () => clearError('barangay_case_no'));
+watch(() => blotterDataForm.value.status, () => clearError('status'));
+watch(() => blotterDataForm.value.description, () => clearError('description'));
+watch(() => blotterDataForm.value.witness, () => clearError('witness'));
+const clearError = (fieldName) => {
+    if (errors.value[fieldName]) {
+        errors.value[fieldName] = '';
+    }
+};
 // Watchers
 watch(selectedComplainant, (val) => {
     blotterDataForm.value.complainants_id = val?.id ?? '';
