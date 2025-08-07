@@ -41,11 +41,16 @@ class Resident extends Model
     {
         return $this->hasMany(Complaint::class, 'complainant_id');
     }
+
+    public function household()
+    {
+        return $this->belongsTo(Household::class);
+    }
+
     public function assignable()
     {
         return $this->morphTo();
     }
-
     public function documentRequests()
     {
         return $this->morphMany(DocumentRequest::class, 'requestable');
