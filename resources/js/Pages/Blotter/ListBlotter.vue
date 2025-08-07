@@ -2,7 +2,7 @@
 import { AuthLayout } from "@/Layouts";
 import { Table } from '@/Components'
 import { useRoute } from "vue-router";
-import { useBlotterStore } from '@/Stores'
+import { useBlotterStore, useResidentStore } from '@/Stores'
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from "vue";
 import useToast from '@/Utils/useToast';
@@ -11,14 +11,23 @@ const { showToast } = useToast();
 
 const route = useRoute();   
 const blotterStore = useBlotterStore();
+const residentStore = useResidentStore();
+const { residents } = storeToRefs(residentStore);
 const { blotters, isLoading } = storeToRefs(blotterStore);
 
 const showModal = ref(false);
 const selectedBlotter = ref(null);
 
-const openModal = (blotter) => {
-    selectedBlotter.value = blotter;
-    showModal.value = true;
+const openModal = async (blotter) => {
+    try {
+        // Fetch detailed blotter data to get supporting documents
+        await blotterStore.getBlotterById(blotter.id);
+        selectedBlotter.value = blotterStore.blotter;
+        showModal.value = true;
+    } catch (error) {
+        console.error('Error fetching blotter details:', error);
+        showToast({ icon: 'error', title: 'Failed to load blotter details' });
+    }
 };
 
 const closeModal = () => {
@@ -36,11 +45,94 @@ const formatDate = (dateString) => {
     });
 };
 
+// Updated getResidentName function to handle both ID and name
+const getResidentName = (id) => {
+    if (!id) return 'N/A';
+    const resident = residents.value.find(r => r.id == id);
+    return resident ? `${resident.first_name} ${resident.last_name}` : 'N/A';
+};
+
+// Helper function to check if supporting documents exist and are valid
+const getSupportingDocuments = (blotter) => {
+    if (!blotter?.supporting_documents) return [];
+
+    // Handle both array and string cases
+    if (Array.isArray(blotter.supporting_documents)) {
+        // New format: array of objects with 'path' and 'name'
+        return blotter.supporting_documents.filter(doc => {
+            // Handle new format (objects with path and name)
+            if (typeof doc === 'object' && doc.path && doc.name) {
+                return true;
+            }
+            // Handle old format (just strings)
+            if (typeof doc === 'string') {
+                return true;
+            }
+            return false;
+        });
+    }
+
+    // If it's a string (JSON), try to parse it
+    if (typeof blotter.supporting_documents === 'string') {
+        try {
+            const parsed = JSON.parse(blotter.supporting_documents);
+            return Array.isArray(parsed) ? parsed.filter(doc => {
+                if (typeof doc === 'object' && doc.path && doc.name) {
+                    return true;
+                }
+                if (typeof doc === 'string') {
+                    return true;
+                }
+                return false;
+            }) : [];
+        } catch (e) {
+            console.warn('Failed to parse supporting documents:', e);
+            return [];
+        }
+    }
+
+    return [];
+};
+
+// Helper function to get filename - handles both old and new formats
+const getFileName = (doc) => {
+    // New format: object with name property
+    if (typeof doc === 'object' && doc.name) {
+        return doc.name;
+    }
+    // Old format: just file path string
+    if (typeof doc === 'string') {
+        return doc.split('/').pop() || 'Unknown file';
+    }
+    return 'Unknown file';
+};
+
+// Helper function to get file path - handles both old and new formats
+const getFilePath = (doc) => {
+    // New format: object with path property
+    if (typeof doc === 'object' && doc.path) {
+        return doc.path;
+    }
+    // Old format: just file path string
+    if (typeof doc === 'string') {
+        return doc;
+    }
+    return '';
+};
+
 const columns = [
     { key: "blotter_no", label: "Blotter ID" },
     { key: "title_case", label: "Title" },
-    { key: "complainants_id", label: "Complainant ID" },
-    { key: "respondents_id", label: "Respondent ID" },
+    { 
+        key: "complainants_id", 
+        label: "Complainant", 
+        formatter: (value) => getResidentName(value) 
+    },
+    { 
+        key: "respondents_id", 
+        label: "Respondent", 
+        formatter: (value) => getResidentName(value) 
+    },
     { key: "status", label: "Status" },
     { 
         key: "filing_date", 
@@ -60,6 +152,7 @@ const deleteBlotter = async (blotterId) => {
 
 onMounted(() => {
     blotterStore.getBlotters();
+    residentStore.getResidents(); // Make sure residents are loaded
 })
 </script>   
 
@@ -81,7 +174,7 @@ onMounted(() => {
 
         <!-- Modal -->
         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-4xl shadow-xl max-h-[90vh] overflow-y-auto">
                 <!-- Close Button -->
                 <button @click="closeModal" class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">&times;</button>
 
@@ -98,24 +191,34 @@ onMounted(() => {
                         <strong>Filing Date:</strong><br />
                         {{ formatDate(selectedBlotter?.filing_date) }}
                     </div>
-                    <div>
+                    <div class="capitalize">
                         <strong>Title Case:</strong><br />
                         {{ selectedBlotter?.title_case }}
                     </div>
-                    <div>
+                    <div class="capitalize">
                         <strong>Nature of Case:</strong><br />
                         {{ selectedBlotter?.nature_of_case }}
                     </div>
                     <div>
-                        <strong>Complainant ID:</strong><br />
-                        {{ String(selectedBlotter?.complainants_id).padStart(4, '0') }}
+                        <strong>Complainant:</strong><br />
+                        {{ getResidentName(selectedBlotter?.complainants_id) }}
+                        <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.complainants_id).padStart(4, '0') }})</span>
                     </div>
                     <div>
-                        <strong>Respondent ID:</strong><br />
-                        {{ String(selectedBlotter?.respondents_id).padStart(4, '0') }}
+                        <strong>Complainant Address:</strong><br />
+                        {{ selectedBlotter?.complainant_address }}
                     </div>
                     <div>
-                        <strong>Place:</strong><br />
+                        <strong>Respondent:</strong><br />
+                        {{ getResidentName(selectedBlotter?.respondents_id) }}
+                        <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.respondents_id).padStart(4, '0') }})</span>
+                    </div>
+                    <div>
+                        <strong>Respondent Address:</strong><br />
+                        {{ selectedBlotter?.respondent_address }}
+                    </div>
+                    <div>
+                        <strong>Location of Incident:</strong><br />
                         {{ selectedBlotter?.place }}
                     </div>
                     <div>
@@ -124,28 +227,39 @@ onMounted(() => {
                     </div>
                     <div>
                         <strong>Status:</strong><br />
-                        {{ selectedBlotter?.status }}
+                        <span :class="{
+                            'text-green-600 font-semibold': selectedBlotter?.status === 'Resolved',
+                            'text-yellow-600 font-semibold': selectedBlotter?.status === 'In Progress',
+                            'text-red-600 font-semibold': selectedBlotter?.status === 'Open'
+                        }">
+                            {{ selectedBlotter?.status }}
+                        </span>
                     </div>
                     <div>
                         <strong>Barangay Case No:</strong><br />
                         {{ selectedBlotter?.barangay_case_no }}
                     </div>
                    
-                    <div class="col-span-2">
-    <strong class="block mb-2">Witness:</strong>
-    <div v-if="selectedBlotter?.witness" class="pl-2">
-        <ul class="list-disc pl-5 space-y-1">
-            <li v-for="(witness, index) in selectedBlotter.witness.split('\n').filter(name => name.trim())" 
-                :key="index" 
-                class="text-gray-800">
-                {{ witness.trim() }}
-            </li>
-        </ul>
-    </div>
-    <div v-else class="text-gray-400 italic">
-        No witnesses listed
-    </div>
-</div>
+                    <div class="">
+                        <strong class="block mb-2">Witness:</strong>
+                        <div v-if="selectedBlotter?.witness" class="pl-2">
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li v-for="(witness, index) in selectedBlotter.witness.split('\n').filter(name => name.trim())" 
+                                    :key="index" 
+                                    class="text-gray-800">
+                                    {{ witness.trim() }}
+                                </li>
+                            </ul>
+                        </div>
+                        <div v-else class="text-gray-400 italic">
+                            No witnesses listed
+                        </div>
+                    </div>
+                    <div>
+                        <strong>Blotter Type:</strong><br />
+                        <span class="capitalize">{{ selectedBlotter?.blotter_type }}</span>
+                    </div>
+                    
                     <div class="col-span-2">
                         <strong>Description:</strong><br />
                         <textarea
@@ -153,6 +267,23 @@ onMounted(() => {
                             class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
                             :value="selectedBlotter?.description"
                         ></textarea>
+                    </div>
+
+                    <!-- Supporting Documents Section -->
+                    <div class="col-span-2">
+                        <strong>Supporting Documents:</strong><br />
+                        <div v-if="getSupportingDocuments(selectedBlotter).length > 0">
+                            <ul class="list-disc pl-5">
+                                <li v-for="(doc, index) in getSupportingDocuments(selectedBlotter)" :key="index">
+                                    <a :href="`/storage/${getFilePath(doc)}`" target="_blank" class="text-blue-500 hover:underline">
+                                        {{ getFileName(doc) }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div v-else class="text-gray-500 italic">
+                            No supporting documents available
+                        </div>
                     </div>
                 </div>
             </div>
@@ -192,5 +323,23 @@ onMounted(() => {
 .multiselect__option--highlight::after {
   background: #3b82f6;
 }
+
+/* Custom scrollbar for modal */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
 </style>
- 

@@ -11,10 +11,13 @@ class Blotter extends Model
         'filing_date',
         'title_case',
         'nature_of_case',
-        'complainants_type',
+        'complainants_name',
         'complainants_id',
-        'respondents_type',
+
+        'respondents_name',
         'respondents_id',
+        'complainant_address',
+        'respondent_address',
         'place',
         'datetime_of_incident',
         'blotter_type',
@@ -34,12 +37,12 @@ class Blotter extends Model
 
     public function complainant()
     {
-        return $this->morphTo('complainant', 'complainants_type', 'complainants_id');
+        return $this->morphTo('complainant', 'complainants_name', 'complainants_id');
     }
 
     public function respondent()
     {
-        return $this->morphTo('respondent', 'respondents_type', 'respondents_id');
+        return $this->morphTo('respondent', 'respondents_name', 'respondents_id');
     }
 
     protected $with = ['complainant', 'respondent'];

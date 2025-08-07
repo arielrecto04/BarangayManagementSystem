@@ -17,10 +17,13 @@ return new class extends Migration
             $table->date('filing_date');
             $table->string('title_case');
             $table->string('nature_of_case');
-            $table->string('complainants_type');
+            $table->string('complainants_name');
             $table->string('complainants_id');
-            $table->string('respondents_type');
+
+            $table->string('respondents_name');
             $table->string('respondents_id');
+            $table->string('complainant_address');
+            $table->string('respondent_address');
             $table->string('place');
             $table->date('datetime_of_incident');
             $table->longText('blotter_type');

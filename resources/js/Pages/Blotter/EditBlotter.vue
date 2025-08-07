@@ -1,6 +1,6 @@
 <script setup>
 import { useBlotterStore, useResidentStore } from '@/Stores'
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
 import { storeToRefs } from 'pinia';
@@ -30,6 +30,49 @@ const newSupportingDocuments = ref([]);
 const formErrors = ref({});
 const isDestroyed = ref(false);
 
+// Computed properties for filtered lists (added from addblotter.vue)
+const filteredComplainants = computed(() => {
+    return residents.value.filter(resident => 
+        !selectedRespondent.value || resident.id !== selectedRespondent.value.id
+    );
+});
+
+const filteredRespondents = computed(() => {
+    return residents.value.filter(resident => 
+        !selectedComplainant.value || resident.id !== selectedComplainant.value.id
+    );
+});
+
+// Watch for complainant selection and auto-fill address
+watch(selectedComplainant, (val) => {
+    if (blotter.value && !isDestroyed.value) {
+        blotter.value.complainants_id = val?.id ?? '';
+        blotter.value.complainant_address = val?.address ?? '';
+        
+        // Clear respondent if same as complainant (added from addblotter.vue)
+        if (val && selectedRespondent.value && val.id === selectedRespondent.value.id) {
+            selectedRespondent.value = null;
+            blotter.value.respondents_id = '';
+            blotter.value.respondent_address = '';
+        }
+    }
+});
+
+// Watch for respondent selection and auto-fill address
+watch(selectedRespondent, (val) => {
+    if (blotter.value && !isDestroyed.value) {
+        blotter.value.respondents_id = val?.id ?? '';
+        blotter.value.respondent_address = val?.address ?? '';
+        
+        // Clear complainant if same as respondent (added from addblotter.vue)
+        if (val && selectedComplainant.value && val.id === selectedComplainant.value.id) {
+            selectedComplainant.value = null;
+            blotter.value.complainants_id = '';
+            blotter.value.complainant_address = '';
+        }
+    }
+});
+
 // Add this cleanup function
 const cleanup = () => {
     isDestroyed.value = true;
@@ -52,8 +95,10 @@ const updateBlotterData = async () => {
             nature_of_case: blotter.value.nature_of_case,
             complainants_id: blotter.value.complainants_id,
             respondents_id: blotter.value.respondents_id,
-            complainants_type: 'App\\Models\\Resident',
-            respondents_type: 'App\\Models\\Resident',
+            complainant_address: blotter.value.complainant_address,
+            respondent_address: blotter.value.respondent_address,
+            complainants_name: 'App\\Models\\Resident',
+            respondents_name: 'App\\Models\\Resident',
             place: blotter.value.place,
             datetime_of_incident: blotter.value.datetime_of_incident,
             blotter_type: blotter.value.blotter_type,
@@ -227,7 +272,7 @@ const handleCancel = () => {
                             <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant</label>
                             <Multiselect
                                 v-model="selectedComplainant"
-                                :options="residents"
+                                :options="filteredComplainants"
                                 :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
                                 track-by="id"
                                 placeholder="Search or select complainant"
@@ -237,16 +282,38 @@ const handleCancel = () => {
                             />
                         </div>
                         <div class="flex flex-col gap-2">
+                            <label for="complainant_address" class="text-sm font-semibold text-gray-600">Complainant Address</label>
+                            <input 
+                                id="complainant_address" 
+                                type="text" 
+                                placeholder="Complainant address will auto-fill" 
+                                v-model="blotter.complainant_address" 
+                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2"
+                                readonly
+                            />
+                        </div>
+                        <div class="flex flex-col gap-2">
                             <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent</label>
                             <Multiselect
                                 v-model="selectedRespondent"
-                                :options="residents"
+                                :options="filteredRespondents"
                                 :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
                                 track-by="id"
                                 placeholder="Search or select respondent"
                                 :searchable="true"
                                 :show-labels="false"
                                 @input="val => blotter.respondents_id = val?.id"
+                            />
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label for="respondent_address" class="text-sm font-semibold text-gray-600">Respondent Address</label>
+                            <input 
+                                id="respondent_address" 
+                                type="text" 
+                                placeholder="Respondent address will auto-fill" 
+                                v-model="blotter.respondent_address" 
+                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2"
+                                readonly
                             />
                         </div>
                         <div class="flex flex-col gap-2">
