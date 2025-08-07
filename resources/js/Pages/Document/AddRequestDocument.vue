@@ -29,7 +29,7 @@ const form = ref({
     remarks: '',
     files: [],
     status: 'pending',
-    resident: resident.value?.id,
+    resident_id: '',
 });
 
 const residentNumber = ref('');
@@ -87,6 +87,7 @@ watch(resident, () => {
         form.value.requestor_contact = resident.value.contact_number;
         form.value.requestor_address = resident.value.address;
         form.value.requestor_email = resident.value.email;
+        form.value.resident_id = resident.value.id;
     }
 });
 
@@ -129,6 +130,8 @@ const submitForm = async () => {
         await documentRequestStore.addDocumentRequest(formData);
 
         showToast({ icon: 'success', title: 'Document request created successfully' });
+
+        router.push({ name: 'Document Dashboard', query: { viewType: 'list' } });
 
     } catch (error) {
         console.log(error);

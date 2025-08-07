@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Resident;
 use Illuminate\Http\Request;
 use App\Models\DocumentRequest;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ class DocumentRequestController extends Controller
      */
     public function index()
     {
-        return DocumentRequest::latest()->paginate(10);
+        return DocumentRequest::with('requestable')->latest()->paginate(10);
     }
 
     /**
@@ -29,9 +30,6 @@ class DocumentRequestController extends Controller
      */
     public function store(Request $request)
     {
-
-
-
         $request->validate([
             'document_type' => 'required',
             'remarks' => 'required',
@@ -39,7 +37,9 @@ class DocumentRequestController extends Controller
             'requestor_contact' => 'required',
             'requestor_address' => 'nullable',
             'requestor_email' => 'required',
+            'resident_id' => 'nullable',
         ]);
+
 
         $documentRequest = DocumentRequest::create([
             'document_type' => $request->document_type,
@@ -51,7 +51,16 @@ class DocumentRequestController extends Controller
         ]);
 
 
-        return $documentRequest;
+        if ($request->resident_id) {
+            $resident = Resident::find($request->resident_id);
+            $documentRequest->update([
+                'requestable_id' => $resident->id,
+                'requestable_type' => Resident::class,
+            ]);
+        }
+
+
+        return $documentRequest->load('requestable')->refresh();
     }
 
     /**
@@ -59,7 +68,7 @@ class DocumentRequestController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return DocumentRequest::with('requestable')->findOrFail($id);
     }
 
     /**
@@ -75,7 +84,31 @@ class DocumentRequestController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'document_type' => 'required',
+            'remarks' => 'required',
+            'requestor_name' => 'required',
+            'requestor_contact' => 'required',
+            'requestor_address' => 'nullable',
+            'requestor_email' => 'required',
+            'resident_id' => 'nullable',
+        ]);
+
+        $documentRequest = DocumentRequest::findOrFail($id);
+        $documentRequest->update([
+            'document_type' => $request->document_type,
+            'remarks' => $request->remarks,
+            'requestor_name' => $request->requestor_name,
+            'requestor_contact' => $request->requestor_contact,
+            'requestor_address' => $request->requestor_address,
+            'requestor_email' => $request->requestor_email,
+            'resident_id' => $request->resident_id,
+        ]);
+
+        return response()->json([
+            'message' => 'Document request updated successfully.',
+            'document_request' => $documentRequest
+        ]);
     }
 
     /**
@@ -83,7 +116,12 @@ class DocumentRequestController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $documentRequest = DocumentRequest::findOrFail($id);
+        $documentRequest->delete();
+
+        return response()->json([
+            'message' => 'Document request deleted successfully.',
+        ]);
     }
 
     public function statistic()
@@ -125,7 +163,7 @@ class DocumentRequestController extends Controller
     public function search(Request $request)
     {
         $search = $request->search;
-        $documentRequests = DocumentRequest::where('requestor_name', 'like', "%{$search}%")
+        $documentRequests = DocumentRequest::with('requestable')->where('requestor_name', 'like', "%{$search}%")
             ->orWhere('requestor_email', 'like', "%{$search}%")
             ->orWhere('requestor_contact_number', 'like', "%{$search}%")
             ->orWhere('requestor_address', 'like', "%{$search}%")
@@ -150,7 +188,7 @@ class DocumentRequestController extends Controller
 
         return response()->json([
             'message' => 'Document request status updated successfully.',
-            'document_request' => $documentRequest
+            'document_request' => $documentRequest->load('requestable')
         ]);
     }
 }
