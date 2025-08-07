@@ -1,4 +1,9 @@
 {
+    "system_information": {
+        "title": "BIMS",
+        "description": "Barangay Information Management System",
+        "logo": "https://camarinesnorte.gov.ph/wp-content/uploads/2023/12/logo-header-colored.png"
+    },
     "document_requests": {
         "title": "Document Requests",
         "description": "Manage and track document requests across different stages",
