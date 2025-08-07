@@ -365,12 +365,6 @@ const routes = [
             },
             {
                 path: "settings",
-                name: "Manage Health Services",
-                meta: {
-                    title: "Manage Health Services",
-                    requiresAuth: true,
-                },
-                component: () => import("@/Pages/Dashboard/HealthServices.vue"),
             },
         ],
     },

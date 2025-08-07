@@ -34,12 +34,23 @@ class Blotter extends Model
 
     public function complainant()
     {
-        return $this->morphToMany(Resident::class, 'complainant');
+        return $this->morphTo('complainant', 'complainants_type', 'complainants_id');
     }
 
-    public function respondents()
+    public function respondent()
     {
-        return $this->morphToMany(Resident::class, 'respondent');
+        return $this->morphTo('respondent', 'respondents_type', 'respondents_id');
+    }
+
+    protected $with = ['complainant', 'respondent'];
+    public function getSupportingDocumentsAttribute($value)
+    {
+        return json_decode($value, true) ?: [];
+    }
+
+    public function setSupportingDocumentsAttribute($value)
+    {
+        $this->attributes['supporting_documents'] = json_encode($value);
     }
 
     protected $with = ['complainant', 'respondent'];

@@ -2,13 +2,37 @@
 import Multiselect from 'vue-multiselect';
 import { useBlotterStore, useResidentStore } from '@/Stores'
 import { ref, watch, onMounted } from 'vue'
+import Multiselect from 'vue-multiselect';
+import { useBlotterStore, useResidentStore } from '@/Stores'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
 const { showToast } = useToast();
 const blotterStore = useBlotterStore();
+const residentStore = useResidentStore();
+const residents = ref([]);
+const errors = ref({});
+const selectedComplainant = ref(null);
+const selectedRespondent = ref(null);
+
+onMounted(async () => {
+    await residentStore.getResidents();
+    residents.value = residentStore.residents;
+});
+
+watch(selectedComplainant, (val) => {
+    blotterDataForm.value.complainants_id = val?.id ?? '';
+});
+
+watch(selectedRespondent, (val) => {
+    blotterDataForm.value.respondents_id = val?.id ?? '';
+});
+
+
 const residentStore = useResidentStore();
 const residents = ref([]);
 const errors = ref({});
@@ -98,8 +122,8 @@ const validateForm = () => {
 
 const createBlotter = async () => {
     try {
-        if (!blotterDataForm.value.status) {
-            showToast({ icon: 'error', title: 'Please select a status' });
+        if (!validateForm()) {
+            showToast({ icon: 'error', title: 'Please fill in all required fields' });
             return;
         }
          const formData = new FormData();
@@ -161,6 +185,7 @@ const createBlotter = async () => {
                         </select>
                         <span v-if="errors.nature_of_case" class="text-red-500 text-xs mt-1">{{ errors.nature_of_case }}</span>
                     </div>
+
 
                     <div class="flex flex-col gap-2">
                         <label for="complainants_type" class="text-sm font-semibold text-gray-600">Complainant Type</label>

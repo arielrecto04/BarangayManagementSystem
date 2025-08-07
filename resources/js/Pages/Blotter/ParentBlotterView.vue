@@ -1,8 +1,31 @@
 <script setup>
 import { AuthLayout } from "@/Layouts";
+import { useBlotterStore } from "@/Stores"; // You should have this store created
+import { storeToRefs } from "pinia";
+import { onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import {
+    FolderIcon,
+    CheckCircleIcon,
+    ChartPieIcon,
+    ArrowPathIcon,
+    PlusIcon,
+    XMarkIcon
+} from "@heroicons/vue/24/outline";
+
 const router = useRouter();
+const blotterStore = useBlotterStore();
+const { blotters } = storeToRefs(blotterStore);
+
+onMounted(() => {
+    blotterStore.getBlotters(); // Fetch blotter data
+});
+
+// Placeholder counts from blotters
+const totalCases = computed(() => blotters.value.length);
+const inProgress = computed(() => blotters.value.filter(b => b.status === 'In Progress').length);
+const openCases = computed(() => blotters.value.filter(b => b.status === 'Open').length);
+const resolved = computed(() => blotters.value.filter(b => b.status === 'Resolved').length);
 </script>
 
 <template>

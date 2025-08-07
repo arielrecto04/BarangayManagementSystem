@@ -1,15 +1,20 @@
 <script setup>
 import { useBlotterStore, useResidentStore } from '@/Stores'
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { useBlotterStore, useResidentStore } from '@/Stores'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
 import { storeToRefs } from 'pinia';
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
 const { showToast } = useToast();
 
+const blotterStore = useBlotterStore();
 const blotterStore = useBlotterStore();
 const residentStore = useResidentStore();
 const residents = ref([]);
@@ -97,7 +102,21 @@ onBeforeUnmount(() => {
     isDestroyed.value = true;
     cleanup();
 });
+// Add beforeUnmount hook
+onBeforeUnmount(() => {
+    isDestroyed.value = true;
+    cleanup();
+});
 
+onMounted(async () => {
+    await residentStore.getResidents();
+    residents.value = residentStore.residents;
+    await blotterStore.getBlotterById(blotterId);
+    // Format dates after loading
+     if (blotter.value) {
+        blotter.value.filing_date = blotter.value.filing_date?.split('T')[0] || '';
+        blotter.value.datetime_of_incident = formatDateForInput(blotter.value.datetime_of_incident);
+    }
 onMounted(async () => {
     await residentStore.getResidents();
     residents.value = residentStore.residents;
@@ -191,47 +210,67 @@ const handleCancel = () => {
 
 <template>
     <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
-        <template v-if="isLoading || !resident">
+        <template v-if="isLoading || !blotter">
             <div class="flex justify-center items-center">
                 <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
             </div>
         </template>
         <template v-else>
-            <form @submit.prevent="updateResidentData">
+            <form @submit.prevent="updateBlotterData">
                 <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-5xl">
-                    <h1 class="text-2xl font-bold mb-6">Edit Resident</h1>
-                    <h2 class="text-lg font-semibold mb-4">Resident Profile</h2>
-
-                    <div class="grid grid-cols-3 gap-4">
-                        <!-- First Row -->
-
+                    <h1 class="text-2xl font-bold mb-6">Edit Blotter</h1>
+                    <h2 class="text-lg font-semibold mb-4">Blotter Details</h2>
+                    <div class="grid grid-cols-2 gap-4">
                         <div class="flex flex-col gap-2">
-                            <label for="first_name" class="text-sm font-semibold text-gray-600">First Name</label>
-                            <input type="text" placeholder="First Name" v-model="resident.first_name"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-
+                            <label for="blotter_no" class="text-sm font-semibold text-gray-600">Blotter No</label>
+                            <input id="blotter_no" type="text" v-model="blotter.blotter_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label for="last_name" class="text-sm font-semibold text-gray-600">Last Name</label>
-                            <input type="text" placeholder="Last Name" v-model="resident.last_name"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="row-span-3 flex justify-center items-center">
-                            <div class="w-50 h-50 bg-gray-200 rounded-md"></div>
-                        </div>
-
-                        <!-- Second Row -->
-                        <div class="flex flex-col gap-2">
-                            <label for="birthday" class="text-sm font-semibold text-gray-600">Birthday</label>
-                            <input type="date" placeholder="Birthday" v-model="resident.birthday"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                            <label for="filing_date" class="text-sm font-semibold text-gray-600">Filing Date</label>
+                            <input id="filing_date" type="date" v-model="blotter.filing_date" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label for="age" class="text-sm font-semibold text-gray-600">Age</label>
-                            <input type="number" placeholder="Age" v-model="resident.age"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                            <label for="title_case" class="text-sm font-semibold text-gray-600">Title Case</label>
+                            <input id="title_case" type="text" v-model="blotter.title_case" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
-
+                        <div class="flex flex-col gap-2">
+                        <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of Case</label>
+                            <select
+                                id="nature_of_case"
+                                v-model="blotter.nature_of_case"
+                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2"
+                            >
+                                <option value="" disabled>Select Nature of Case</option>
+                                <option value="Civil case">Civil Case</option>
+                                <option value="Criminal case">Criminal Case</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant</label>
+                            <Multiselect
+                                v-model="selectedComplainant"
+                                :options="residents"
+                                :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
+                                track-by="id"
+                                placeholder="Search or select complainant"
+                                :searchable="true"
+                                :show-labels="false"
+                                @input="val => blotter.complainants_id = val?.id"
+                            />
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent</label>
+                            <Multiselect
+                                v-model="selectedRespondent"
+                                :options="residents"
+                                :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
+                                track-by="id"
+                                placeholder="Search or select respondent"
+                                :searchable="true"
+                                :show-labels="false"
+                                @input="val => blotter.respondents_id = val?.id"
+                            />
+                        </div>
                         <div class="flex flex-col gap-2">
                         <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of Case</label>
                             <select
@@ -277,8 +316,12 @@ const handleCancel = () => {
                         <div class="flex flex-col gap-2">
                             <label for="datetime_of_incident" class="text-sm font-semibold text-gray-600">Date/Time of Incident</label>
                             <input id="datetime_of_incident" type="datetime-local" v-model="blotter.datetime_of_incident" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                            <label for="datetime_of_incident" class="text-sm font-semibold text-gray-600">Date/Time of Incident</label>
+                            <input id="datetime_of_incident" type="datetime-local" v-model="blotter.datetime_of_incident" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
                         <div class="flex flex-col gap-2">
+                            <label for="blotter_type" class="text-sm font-semibold text-gray-600">Blotter Type</label>
+                            <input id="blotter_type" type="text" v-model="blotter.blotter_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                             <label for="blotter_type" class="text-sm font-semibold text-gray-600">Blotter Type</label>
                             <input id="blotter_type" type="text" v-model="blotter.blotter_type" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
@@ -289,8 +332,16 @@ const handleCancel = () => {
                         <div class="col-span-2 flex flex-col gap-2">
                             <label for="description" class="text-sm font-semibold text-gray-600">Description</label>
                             <textarea id="description" v-model="blotter.description" class="input-style col-span-2 border border-gray-200 rounded-md px-4 py-2" rows="4"></textarea>
+                            <label for="barangay_case_no" class="text-sm font-semibold text-gray-600">Barangay Case No</label>
+                            <input id="barangay_case_no" type="text" v-model="blotter.barangay_case_no" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
+                        </div>
+                        <div class="col-span-2 flex flex-col gap-2">
+                            <label for="description" class="text-sm font-semibold text-gray-600">Description</label>
+                            <textarea id="description" v-model="blotter.description" class="input-style col-span-2 border border-gray-200 rounded-md px-4 py-2" rows="4"></textarea>
                         </div>
                         <div class="flex flex-col gap-2">
+                            <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
+                            <textarea id="witness" type="text" v-model="blotter.witness" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                             <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
                             <textarea id="witness" type="text" v-model="blotter.witness" class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
@@ -311,6 +362,7 @@ const handleCancel = () => {
                         </button>
                     </div>
 
+                        </div>
                         </div>
                     </div>
                 </div>

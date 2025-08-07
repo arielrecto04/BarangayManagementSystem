@@ -31,6 +31,10 @@ return new class extends Migration
             $table->string('witness')->nullable();
             // Store both file paths and original names
             $table->json('supporting_documents')->nullable(); // Array of objects with 'path
+            $table->longText('description');
+            $table->string('witness')->nullable();
+            // Store both file paths and original names
+            $table->json('supporting_documents')->nullable(); // Array of objects with 'path
             $table->timestamps();
         });
     }

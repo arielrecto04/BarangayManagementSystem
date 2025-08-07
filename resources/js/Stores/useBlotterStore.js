@@ -6,9 +6,13 @@ export const useBlotterStore = defineStore('blotter', {
         _blotters: [],
         _blotter: null,
         _paginate: null,
+        _blotter: null,
+        _paginate: null,
         _isLoading: false,
         _error: null,
+        _error: null,
     }),
+
 
     getters: {
         blotters: (state) => state._blotters,
@@ -89,65 +93,65 @@ export const useBlotterStore = defineStore('blotter', {
         },
 
         // Update the updateBlotter method to:
-async updateBlotter(id, data) {
-    this._isLoading = true;
-    this._error = null;
-    try {
-        let response;
-        let url = `/blotters/${id}`;
-        
-        if (data instanceof FormData) {
-            data.append('_method', 'PATCH');
-            response = await axios.post(url, data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-        } else {
-            // Ensure required fields are included
-            const payload = {
-                ...data,
-                complainants_type: 'App\\Models\\Resident',
-                respondents_type: 'App\\Models\\Resident',
-                filing_date: data.filing_date ? new Date(data.filing_date).toISOString() : null,
-                datetime_of_incident: data.datetime_of_incident ? new Date(data.datetime_of_incident).toISOString() : null
-            };
-            
-            response = await axios.patch(url, payload);
-        }
+        async updateBlotter(id, data) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                let response;
+                let url = `/blotters/${id}`;
 
-        // Update local state
-        const index = this._blotters.findIndex(b => b.id === id);
-        if (index !== -1) {
-            this._blotters[index] = response.data.data;
-        }
-        
-        // Update current blotter if it's the one being edited
-        if (this._blotter?.id === id) {
-            this._blotter = response.data.data;
-        }
-        
-        return response.data;
-    } catch (error) {
-        console.error(`Error updating blotter ID ${id}:`, error);
-        
-        // Enhanced error handling
-        let errorMessage = 'Failed to update blotter';
-        if (error.response?.status === 422) {
-            const errors = error.response.data.errors;
-            errorMessage = Object.entries(errors)
-                .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
-                .join('\n');
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-        
-        this._error = errorMessage;
-        throw new Error(errorMessage);
-    } finally {
-        this._isLoading = false;
-    }
-},
+                if (data instanceof FormData) {
+                    data.append('_method', 'PATCH');
+                    response = await axios.post(url, data, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                } else {
+                    // Ensure required fields are included
+                    const payload = {
+                        ...data,
+                        complainants_type: 'App\\Models\\Resident',
+                        respondents_type: 'App\\Models\\Resident',
+                        filing_date: data.filing_date ? new Date(data.filing_date).toISOString() : null,
+                        datetime_of_incident: data.datetime_of_incident ? new Date(data.datetime_of_incident).toISOString() : null
+                    };
+
+                    response = await axios.patch(url, payload);
+                }
+
+                // Update local state
+                const index = this._blotters.findIndex(b => b.id === id);
+                if (index !== -1) {
+                    this._blotters[index] = response.data.data;
+                }
+
+                // Update current blotter if it's the one being edited
+                if (this._blotter?.id === id) {
+                    this._blotter = response.data.data;
+                }
+
+                return response.data;
+            } catch (error) {
+                console.error(`Error updating blotter ID ${id}:`, error);
+
+                // Enhanced error handling
+                let errorMessage = 'Failed to update blotter';
+                if (error.response?.status === 422) {
+                    const errors = error.response.data.errors;
+                    errorMessage = Object.entries(errors)
+                        .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+                        .join('\n');
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                this._error = errorMessage;
+                throw new Error(errorMessage);
+            } finally {
+                this._isLoading = false;
+            }
+        },
 
         async deleteBlotter(id) {
             this._isLoading = true;
@@ -167,7 +171,6 @@ async updateBlotter(id, data) {
 
         prepareFormData(blotterData) {
             const formData = new FormData();
-
             Object.entries(blotterData).forEach(([key, value]) => {
                 if (key === 'supporting_documents' && Array.isArray(value)) {
                     value.forEach(file => {
