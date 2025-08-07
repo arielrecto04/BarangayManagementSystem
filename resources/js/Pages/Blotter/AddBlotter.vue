@@ -2,12 +2,8 @@
 import Multiselect from 'vue-multiselect';
 import { useBlotterStore, useResidentStore } from '@/Stores'
 import { ref, watch, onMounted } from 'vue'
-import Multiselect from 'vue-multiselect';
-import { useBlotterStore, useResidentStore } from '@/Stores'
-import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
-import 'vue-multiselect/dist/vue-multiselect.min.css';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
@@ -32,25 +28,6 @@ watch(selectedRespondent, (val) => {
     blotterDataForm.value.respondents_id = val?.id ?? '';
 });
 
-
-const residentStore = useResidentStore();
-const residents = ref([]);
-const errors = ref({});
-const selectedComplainant = ref(null);
-const selectedRespondent = ref(null);
-
-onMounted(async () => {
-    await residentStore.getResidents();
-    residents.value = residentStore.residents;
-});
-
-watch(selectedComplainant, (val) => {
-    blotterDataForm.value.complainants_id = val?.id ?? '';
-});
-
-watch(selectedRespondent, (val) => {
-    blotterDataForm.value.respondents_id = val?.id ?? '';
-});
 
 
 
