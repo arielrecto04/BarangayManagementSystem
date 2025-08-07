@@ -1,4 +1,6 @@
 <script setup>
+
+import { Municipal_Information, Barangay_Information } from '@/Lang/en';
 defineProps({
     /**
      * Information about the barangay and municipality.
@@ -7,11 +9,11 @@ defineProps({
         type: Object,
         required: true,
         default: () => ({
-            name: 'Barangay Name',
-            municipality: 'Municipality Name',
-            province: 'Province Name',
+            name: Barangay_Information.title,
+            municipality: Municipal_Information.municipality,
+            province: Municipal_Information.province,
             captainName: 'Captain Name',
-            logoUrl: 'https://via.placeholder.com/100/CCCCCC/FFFFFF?text=Barangay+Logo'
+            logoUrl: Barangay_Information.barangay_seal
         })
     },
     /**
@@ -26,6 +28,7 @@ defineProps({
             memberNumber: '12345',
             address: 'Complete Address',
             dateOfBirth: 'YYYY-MM-DD',
+            photoUrl: 'https://via.placeholder.com/100/CCCCCC/FFFFFF?text=Member+Photo'
         }),
     },
     /**
