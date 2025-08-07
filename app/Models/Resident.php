@@ -23,7 +23,7 @@ class Resident extends Model
     ];
     public function complainantBlotter()
     {
-        return $this->hasMany(Blotter::class,'complainant');
+        return $this->hasMany(Blotter::class, 'complainant');
     }
     public function officialRecords()
     {
@@ -31,17 +31,22 @@ class Resident extends Model
     }
     public function respondentComplaints()
     {
-        return $this->hasMany(Complaint::class,'respondent_id');
+        return $this->hasMany(Complaint::class, 'respondent_id');
     }
     public function complainantComplaints()
     {
-        return $this->hasMany(Complaint::class,'complainant_id');
+        return $this->hasMany(Complaint::class, 'complainant_id');
     }
+
+    public function household()
+    {
+        return $this->belongsTo(Household::class);
+    }
+
     public function assignable()
     {
         return $this->morphTo();
     }
-
     public function documentRequests()
     {
         return $this->morphMany(DocumentRequest::class,'requestable');

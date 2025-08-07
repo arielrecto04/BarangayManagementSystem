@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('contact_number')->nullable();
             $table->string('family_member')->nullable();
             $table->string('emergency_contact')->nullable();
+            $table->foreignId('household_id')->nullable()->after('id')->constrained('households')->onDelete('set null');
             $table->timestamps();
         });
     }

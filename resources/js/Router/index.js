@@ -233,13 +233,76 @@ const routes = [
                     title: "Health Dashboard",
                     requiresAuth: true,
                 }, 
-                component: () => import("@/Pages/Dashboard/HealthServices.vue"),
+                component: () => import("@/Pages/HealthService/Dashboard.vue"),
             },
             {
-                path: "inventory",
-                name: "Medicine Inventory",
+                path: "clinic-visits",
+                name: "Clinic Visits",
                 meta: {
-                    title: "Medicine Inventory",
+                    title: "Clinic Visits Log",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/HealthService/ClinicVisit/ClinicVisits.vue"),
+            },
+            {
+                path: "immunizations",
+                name: "Immunizations",
+                meta: {
+                    title: "Immunization Records",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/HealthService/Immunization/ImmunizationRecords.vue"),
+            },
+            {
+                path: "mch",
+                name: "Maternal & Child Health",
+                component: () => import("@/Pages/HealthService/MaternalChildHealth/MaternalChildHealth.vue"),
+                redirect: { name: 'Prenatal Records' }, 
+                children: [
+                    {
+                        path: "prenatal",
+                        name: "Prenatal Records",
+                        component: () => import("@/Pages/HealthService/MaternalChildHealth/PrenatalRecords.vue"),
+                    },
+                    {
+                        path: "child-growth",
+                        name: "Child Growth Records",
+                        component: () => import("@/Pages/HealthService/MaternalChildHealth/ChildGrowthRecords.vue"),
+                    }
+                ]
+            },
+            {
+                path: "programs",
+                name: "Community Programs",
+                component: () => import("@/Pages/HealthService/CommunityProgram/CommunityPrograms.vue"),
+                redirect: { name: 'Family Planning' }, // Default to the first sub-tab
+                children: [
+                    {
+                        path: "family-planning",
+                        name: "Family Planning",
+                        component: () => import("@/Pages/HealthService/CommunityProgram/FamilyPlanning.vue"),
+                    },
+                    {
+                        path: "nutrition-status",
+                        name: "Nutrition Status",
+                        component: () => import("@/Pages/HealthService/CommunityProgram/NutritionStatus.vue"),
+                    }
+                ]
+            },
+            {
+                path: "reports",
+                name: "Health Reports",
+                meta: {
+                    title: "Health Reports",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/HealthService/HealthReports.vue"),
+            },
+            {
+                path: "settings",
+                name: "Manage Health Services",
+                meta: {
+                    title: "Manage Health Services",
                     requiresAuth: true,
                 },
                 component: () => import("@/Pages/Dashboard/HealthServices.vue"),

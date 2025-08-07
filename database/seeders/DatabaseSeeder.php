@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             ResidentSeeder::class,
             ProjectSeeder::class,
             DocumentSeeder::class,
+            ClinicVisitSeeder::class,
         ]);
     }
 }

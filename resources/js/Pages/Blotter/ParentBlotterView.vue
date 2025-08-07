@@ -38,18 +38,21 @@ const router = useRouter();
                 <div class="w-1/4 max-w-sm mx-auto ml-2">
                     <!-- Route of Add Blotter -->
                     <template v-if="router.currentRoute.value.path == '/blotter/list-blotter'">
-                       <router-link to="/blotter/add-blotter" class="block">
-  <div class="bg-green-700 shadow-md rounded-lg p-3 cursor-pointer flex justify-center items-center">
-    <div class="flex items-center gap-2 text-lg font-bold text-white">
-      <PlusIcon class="w-6 h-6" /> Add Blotter
-    </div>
-  </div>
-</router-link>
+                        <router-link to="/blotter/add-blotter" class="block">
+                            <div
+                                class="bg-green-700 shadow-md rounded-lg p-3 cursor-pointer flex justify-center items-center">
+                                <div class="flex items-center gap-2 text-lg font-bold text-white">
+                                    <PlusIcon class="w-6 h-6" /> Add Blotter
+                                </div>
+                            </div>
+                        </router-link>
                     </template>
                     <template v-else>
                         <router-link to="/blotter" class="block">
                             <div class="shadow-md rounded-lg p-3  cursor-pointer flex justify-center items-center">
-                                <div class="flex items-center gap-2 text-lg font-bold text-center"><XMarkIcon class="w-6 h-6" /> Cancel</div>
+                                <div class="flex items-center gap-2 text-lg font-bold text-center">
+                                    <XMarkIcon class="w-6 h-6" /> Cancel
+                                </div>
                             </div>
                         </router-link>
                     </template>
