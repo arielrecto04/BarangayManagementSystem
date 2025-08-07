@@ -1,19 +1,21 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { AuthLayout } from '@/Layouts';
 import { DocumentIcon, XMarkIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
 import { DocumentTypeEnum } from '@/Enums'
-import { useDocumentRequestStore } from '@/Stores'
+import { useDocumentRequestStore, useResidentStore } from '@/Stores'
 import useToast from '@/Utils/useToast'
 import { storeToRefs } from 'pinia'
-
+import { debounce } from '@/Utils'
 const router = useRouter();
 const route = useRoute();
 const documentRequestStore = useDocumentRequestStore();
+const residentStore = useResidentStore();
 
 const initDocumentType = route.query.documentType;
 const { isSubmitting } = storeToRefs(documentRequestStore);
+const { resident, error } = storeToRefs(residentStore);
 const { showToast } = useToast();
 
 
@@ -27,7 +29,10 @@ const form = ref({
     remarks: '',
     files: [],
     status: 'pending',
+    resident_id: '',
 });
+
+const residentNumber = ref('');
 
 // UI State
 const uploadedFiles = ref([]);
@@ -47,7 +52,6 @@ const requestableTypes = [
 const selectRequestType = (type) => {
     console.log(type, 'type selected');
     form.value.requestable_type = type;
-
 };
 
 const handleFileUpload = (event) => {
@@ -71,7 +75,32 @@ const resetForm = () => {
     errors.value = {};
 };
 
+watch(residentNumber, () => {
+    if (residentNumber.value) {
+        getResidentByNumber();
+    }
+});
 
+watch(resident, () => {
+    if (resident.value) {
+        form.value.requestor_name = resident.value.first_name + ' ' + resident.value.last_name;
+        form.value.requestor_contact = resident.value.contact_number;
+        form.value.requestor_address = resident.value.address;
+        form.value.requestor_email = resident.value.email;
+        form.value.resident_id = resident.value.id;
+    }
+});
+
+
+const getResidentByNumber = debounce(async () => {
+    if (!residentNumber.value) return;
+    try {
+        await residentStore.getResidentByNumber(`RES-${residentNumber.value}`);
+    } catch (error) {
+        console.log(error, 'error');
+    }
+
+}, 500);
 
 const submitForm = async () => {
     try {
@@ -102,6 +131,8 @@ const submitForm = async () => {
 
         showToast({ icon: 'success', title: 'Document request created successfully' });
 
+        router.push({ name: 'Document Dashboard', query: { viewType: 'list' } });
+
     } catch (error) {
         console.log(error);
         showToast({ icon: 'error', title: error.message });
@@ -111,9 +142,20 @@ const submitForm = async () => {
 };
 
 
+console.log(resident.value, 'resident');
+
+
 onMounted(() => {
     form.value.document_type = requestTypes.find((type) => type === initDocumentType);
 });
+
+
+
+onUnmounted(() => {
+    residentStore.removeResident();
+});
+
+
 </script>
 
 
@@ -123,7 +165,8 @@ onMounted(() => {
             <!-- Form Header -->
             <div class="px-6 py-5 border-b border-gray-200">
                 <div class="flex items-center gap-2">
-                    <router-link to="/documents/dashboard" class="text-green-700 hover:text-white hover:bg-green-700 p-2 rounded-lg transition-colors duration-200">
+                    <router-link to="/documents/dashboard"
+                        class="text-green-700 hover:text-white hover:bg-green-700 p-2 rounded-lg transition-colors duration-200">
                         <ArrowLeftIcon class="w-4 h-4" />
                     </router-link>
                     <h2 class="text-2xl font-semibold text-gray-800">Document Request Form</h2>
@@ -188,35 +231,95 @@ onMounted(() => {
 
                     <!-- For Individual -->
                     <div v-if="form.requestable_type == 'Resident'">
-                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-                            <div>
-                                <label for="first_name" class="block text-sm font-medium text-gray-700">
-                                    Name <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" id="first_name" v-model="form.requestor_name"
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    :class="{ 'border-red-300': errors['requestable.first_name'] }" required>
+
+                        <template v-if="resident">
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <!-- Resident Header -->
+                                <div class="flex items-center space-x-4 mb-6 pb-4 border-b">
+                                    <img :src="resident.avatar" :alt="`${resident.first_name} ${resident.last_name}`"
+                                        class="w-16 h-16 rounded-full object-cover border-2 border-green-100">
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">
+                                            {{ resident.first_name }} {{ resident.last_name }}
+                                        </h3>
+                                        <p class="text-sm text-gray-500">Resident ID: RES-{{ residentNumber }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Personal Information -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Basic Details -->
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                                            <input type="text" v-model="form.requestor_name"
+                                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3
+                                                          focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                                                :class="{ 'border-red-300': errors['requestor_name'] }" readonly>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Age</label>
+                                            <input type="text" v-model="resident.age" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3
+                                                          bg-gray-50 sm:text-sm" readonly>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Gender</label>
+                                            <input type="text" v-model="resident.gender" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3
+                                                          bg-gray-50 sm:text-sm" readonly>
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact Information -->
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Contact
+                                                Number</label>
+                                            <input type="tel" v-model="form.requestor_contact"
+                                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3
+                                                          focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                                                :class="{ 'border-red-300': errors['requestor_contact'] }">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                                            <input type="email" readonly v-model="form.requestor_email"
+                                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3
+                                                          focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                                                :class="{ 'border-red-300': errors['requestor_email'] }" required>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Address</label>
+                                            <textarea v-model="form.requestor_address" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3
+                                                       bg-gray-50 sm:text-sm" readonly></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Emergency Contact -->
+                                <div class="mt-6 pt-6 border-t">
+                                    <h4 class="text-sm font-medium text-gray-900 mb-4">Emergency Contact Information
+                                    </h4>
+                                    <div class="bg-gray-50 p-3 rounded-md">
+                                        <p class="text-sm text-gray-600">{{ resident.emergency_contact }}</p>
+                                    </div>
+                                </div>
                             </div>
+                        </template>
 
-                        </div>
-
-                        <div class="mt-4">
-                            <label for="email" class="block text-sm font-medium text-gray-700">
-                                Email <span class="text-red-500">*</span>
-                            </label>
-                            <input type="email" id="email" v-model="form.requestor_email"
-                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                :class="{ 'border-red-300': errors['requestor_email'] }" required>
-                        </div>
-
-                        <div class="mt-4">
-                            <label for="contact_number" class="block text-sm font-medium text-gray-700">
-                                Contact Number <span class="text-red-500">*</span>
-                            </label>
-                            <input type="tel" id="contact_number" v-model="form.requestor_contact"
-                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                :class="{ 'border-red-300': errors['requestor_contact'] }" required>
-                        </div>
+                        <template v-else>
+                            <div class="flex justify-center items-center">
+                                <div class="flex flex-col items-center w-1/3">
+                                    <p class="text-sm text-gray-500">Input a valid resident number</p>
+                                    <p v-if="error?.status == 404" class="text-red-500 text-sm">Resident not found</p>
+                                    <input type="number" v-model="residentNumber" placeholder="000000"
+                                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-700 focus:border-green-700 sm:text-sm"
+                                        :class="{ 'border-red-300': errors['residentNumber'] }">
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- For Business -->

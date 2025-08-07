@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router';
 import { ref } from 'vue';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
+import { system_information } from '@/Lang/en';
 const route = useRoute();
 const menuLinks = [
     {
@@ -94,7 +95,7 @@ const toggleSubMenu = (index) => {
                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0v-4m0 4h5m0 0v-4m0 4h5m0 0v-4m0 4h5M5 21v-4a2 2 0 012-2h10a2 2 0 012 2v4">
                 </path>
             </svg>
-            <h1 class="text-2xl font-bold text-gray-700">BIMS</h1>
+            <h1 class="text-2xl font-bold text-gray-700">{{ system_information.title }}</h1>
         </div>
         <template v-for="(menuLink, index) in menuLinks" :key="index">
 

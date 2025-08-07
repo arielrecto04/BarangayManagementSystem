@@ -117,6 +117,15 @@ const routes = [
                 },
                 component: () => import("@/Pages/Document/AddRequestDocument.vue"),
             },
+            {
+                path: "stage-document/:documentType",
+                name: "Stage Request Document",
+                meta: {
+                    title: "Stage Request Document",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Document/StageRequestDocument.vue"),
+            }
         ],
     },
     {
@@ -135,7 +144,7 @@ const routes = [
             title: "Blotter",
             requiresAuth: true,
         },
-        redirect:{ name: "List Blotter" },
+        redirect: { name: "List Blotter" },
         component: () => import("@/Pages/Blotter/ParentBlotterView.vue"),
         children: [
             {
@@ -198,7 +207,7 @@ const routes = [
             {
                 path: "add-official",
                 name: "Add Official",
-                meta:{
+                meta: {
                     title: "Add Official",
                     requiresAuth: true,
                 },

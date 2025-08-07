@@ -2,6 +2,7 @@
 import { HomeIcon, BellIcon, UserIcon, CogIcon, ArrowRightIcon } from "@heroicons/vue/24/outline";
 import { ref } from "vue";
 import { useAuthenticationStore } from "@/Stores";
+import { system_information } from "@/Lang/en";
 
 const authStore = useAuthenticationStore();
 
@@ -16,7 +17,7 @@ const toggleDropdown = () => {
 
 <template>
     <div class="flex justify-between p-5 bg-white shadow-sm rounded-lg">
-        <h1 class="text-xl font-bold">Barangay Management System</h1>
+        <h1 class="text-xl font-bold">{{ system_information.title }}</h1>
         <div class="flex gap-4 items-center">
             <!-- <HomeIcon class="w-6 h-6 cursor-pointer" />
             <div class="relative cursor-pointer">

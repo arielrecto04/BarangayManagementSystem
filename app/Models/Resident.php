@@ -14,6 +14,8 @@ class Resident extends Model
         'first_name',
         'last_name',
         'birthday',
+        'resident_number',
+        'email',
         'age',
         'gender',
         'address',
@@ -49,6 +51,6 @@ class Resident extends Model
     }
     public function documentRequests()
     {
-        return $this->morphMany(DocumentRequest::class,'requestable');
+        return $this->morphMany(DocumentRequest::class, 'requestable');
     }
 }
