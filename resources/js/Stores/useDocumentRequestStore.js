@@ -6,6 +6,7 @@ export const useDocumentRequestStore = defineStore("document-request", {
         documentRequests: [],
         isLoading: false,
         isSubmitting: false,
+        documentRequest: null,
         paginate: {
             total: 0,
             per_page: 0,
@@ -21,6 +22,15 @@ export const useDocumentRequestStore = defineStore("document-request", {
         },
     }),
     actions: {
+
+
+        selectDocumentRequest(documentRequest) {
+            this.documentRequest = documentRequest;
+        },
+        removeDocumentRequest() {
+            this.documentRequest = null;
+        },
+
         async fetchDocumentRequests() {
             try {
                 this.isLoading = true;
@@ -70,6 +80,8 @@ export const useDocumentRequestStore = defineStore("document-request", {
                 console.log(search, 'search');
                 const response = await axios.get(`/document-requests/search?search=${search}`);
                 this.documentRequests = response.data.data;
+
+                console.log(this.documentRequests, 'documentRequests');
                 this.paginate = {
                     total: response.data.total,
                     per_page: response.data.per_page,

@@ -1,19 +1,19 @@
 <script setup>
-import { onMounted, watch, ref } from 'vue';
+import { onMounted, watch, ref, onUnmounted } from 'vue';
 import { AuthLayout } from '@/Layouts';
 import draggable from 'vuedraggable';
 import { useDocumentRequestStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
-import { DocumentIcon, ClockIcon, ArrowLeftIcon, Squares2X2Icon, TableCellsIcon, EyeIcon } from '@heroicons/vue/24/outline';
+import { DocumentIcon, ClockIcon, ArrowLeftIcon, Squares2X2Icon, TableCellsIcon, EyeIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { useRouter } from 'vue-router';
 import { useDraggable } from '@/Components/Composables/useDraggable';
 import { Table } from '@/Components';
-import { CertificateOfResidency, BarangayID } from '@/Components/documents';
+import { CertificateOfResidency, BarangayID, BarangayClearance, CertificateOfIndigency, BusinessPermit } from '@/Components/documents';
 import { DocumentTypeEnum } from '@/Enums';
 
 const documentRequestStore = useDocumentRequestStore();
 const router = useRouter();
-const { documentRequests, isLoading } = storeToRefs(documentRequestStore);
+const { documentRequests, isLoading, documentRequest } = storeToRefs(documentRequestStore);
 
 
 
@@ -35,8 +35,8 @@ const documentTypeValue = ref(router.currentRoute.value.params.documentType);
 
 
 
-
 const viewType = ref(router.currentRoute.value.query.view || 'kanban');
+
 
 
 
@@ -51,6 +51,14 @@ const handleViewChange = (type) => {
     viewType.value = type;
 };
 
+
+const previewDocumentRequest = (documentRequest) => {
+    documentRequestStore.selectDocumentRequest(documentRequest);
+}
+
+
+
+
 watch(() => documentRequests.value, updateStages,
     { immediate: true });
 
@@ -63,7 +71,12 @@ onMounted(async () => {
         console.error('Error fetching document requests:', error);
     }
 });
+
+onUnmounted(() => {
+    documentRequestStore.removeDocumentRequest();
+});
 </script>
+
 
 <template>
     <AuthLayout>
@@ -102,7 +115,7 @@ onMounted(async () => {
 
 
             <div class="w-full mt-4">
-                <div class="flex space-x-4 overflow-x-auto pb-4" v-show="viewType === 'kanban'">
+                <div class="flex space-x-4 overflow-x-auto pb-4" v-show="viewType == 'kanban'">
                     <div v-for="stage in stages" :key="stage.id"
                         class="flex-1 min-w-[320px] bg-white rounded-lg shadow-sm">
                         <!-- Stage Header -->
@@ -173,21 +186,64 @@ onMounted(async () => {
 
                     </div>
                 </div>
+                <div v-show="viewType == 'list'">
 
-                <Table :columns="columns" :rows="documentRequests" v-show="viewType == 'list'">
+                    <Table :columns="columns" :rows="documentRequests">
 
-                    <template #cell(status)="{ row }">
-                        <span :class="getStatusColor(row.status)" class="px-2 py-1 text-xs rounded-full">{{ row.status
-                        }}</span>
+                        <template #cell(status)="{ row }">
+                            <span :class="getStatusColor(row.status)" class="px-2 py-1 text-xs rounded-full">{{
+                                row.status
+                            }}</span>
 
+                        </template>
+
+                        <template #actions="{ row }">
+                            <button @click="previewDocumentRequest(row)"
+                                class="bg-green-700 text-white px-2 py-1 rounded hover:bg-green-800 transition-colors duration-200">
+                                <EyeIcon class="w-4 h-4" />
+                            </button>
+                        </template>
+                    </Table>
+
+
+                    <template v-if="documentRequest">
+                        <CertificateOfResidency :resident="{
+                            name: documentRequest.requestor_name,
+                            address: documentRequest.requestable.address,
+                            contact: documentRequest.requestable.contact,
+                            email: documentRequest.requestable.email,
+
+                        }" v-if="documentTypeValue == 'Certificate of Residency'" />
+                        <BarangayID :memberInfo="{
+                            name: documentRequest.requestor_name,
+                            address: documentRequest.requestable.address,
+                            contact: documentRequest.requestable.contact,
+                            email: documentRequest.requestable.email,
+                            photoUrl: documentRequest.requestable.avatar,
+                            position: 'Resident',
+                            memberNumber: documentRequest.requestable.resident_number,
+                            dateOfBirth: documentRequest.requestable.birthday,
+                            sex: documentRequest.requestable.gender,
+                            emergencyContact: documentRequest.requestable.emergency_contact,
+                        }" v-if="documentTypeValue == 'Barangay ID'" />
+
+                        <BarangayClearance :applicantInfo="{
+                            name: documentRequest.requestor_name,
+                            activity: documentRequest.remarks,
+                            location: documentRequest.requestable.address
+                        }" v-if="documentTypeValue == 'Barangay Clearance'" />
+
+                        <CertificateOfIndigency :applicantInfo="{
+                            name: documentRequest.requestor_name,
+                            civilStatus: documentRequest.requestable.civil_status,
+                            contactNumber: documentRequest.requestable.contact,
+                        }" v-if="documentTypeValue == 'Certificate of Indigency'" />
+
+                        <BusinessPermit v-if="documentTypeValue == 'Business Permit'" />
                     </template>
+                </div>
 
-                    <template #actions="{ row }">
-                        <button class="bg-green-700 text-white px-2 py-1 rounded">
-                            <EyeIcon class="w-4 h-4"></EyeIcon>
-                        </button>
-                    </template>
-                </Table>
+
 
 
             </div>
@@ -196,8 +252,6 @@ onMounted(async () => {
 
 
 
-      <CertificateOfResidency/>
-      <BarangayID/>
 
     </AuthLayout>
 </template>
