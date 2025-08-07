@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { Municipal_Information, Barangay_Information } from '@/Lang/en';
 
 const props = defineProps({
     /**
@@ -9,7 +10,6 @@ const props = defineProps({
         type: Object,
         required: true,
         default: () => ({
-            title: 'Mr./Ms.',
             name: 'Resident Name',
             civilStatus: 'Single',
             citizenship: 'Filipino'
@@ -23,9 +23,9 @@ const props = defineProps({
         required: true,
 
         default: () => ({
-            name: 'Barangay Name',
-            municipality: 'Municipality Name',
-            province: 'Province Name',
+            name: Barangay_Information.title,
+            municipality: Municipal_Information.municipality,
+            province: Municipal_Information.province,
             captainName: 'Captain Name'
         })
     },
@@ -49,20 +49,20 @@ const props = defineProps({
      */
     leftSealUrl: {
         type: String,
-        default: 'https://via.placeholder.com/100/CCCCCC/FFFFFF?text=Municipal+Seal'
+        default: Municipal_Information.municipal_seal
     },
     /**
      * URL for the right seal (e.g., Barangay seal).
      */
     rightSealUrl: {
         type: String,
-        default: 'https://via.placeholder.com/100/CCCCCC/FFFFFF?text=Barangay+Seal'
+        default: Barangay_Information.barangay_seal
     }
 });
 
 // Computed property to format the resident's full name
 const fullResidentName = computed(() => {
-    return `${props.resident.title} ${props.resident.name.toUpperCase()}`;
+    return `Mr./Ms. ${props.resident.name.toUpperCase()}`;
 });
 </script>
 

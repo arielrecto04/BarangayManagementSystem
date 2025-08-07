@@ -1,0 +1,28 @@
+{
+    "document_requests": {
+        "title": "Document Requests",
+        "description": "Manage and track document requests across different stages",
+        "kanban": "Kanban",
+        "list": "List"
+    },
+    "Municipal_Information": {
+        "title": "Provincial Information of Camarines Norte",
+        "description": "Official information about the Provincial Government of Camarines Norte.",
+        "municipal_seal": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/CamNor_Seal.svg/2048px-CamNor_Seal.svg.png",
+        "address": "Provincial Capitol, F. Pimentel Avenue, Daet, 4600 Camarines Norte, Philippines",
+        "contact": "(054) 721-1259",
+        "email": "pgocn.info@gmail.com",
+        "website": "https://camarinesnorte.gov.ph/",
+        "logo": "https://camarinesnorte.gov.ph/wp-content/uploads/2023/12/logo-header-colored.png"
+    },
+    "Barangay_Information": {
+        "title": "San Pascual",
+        "description": "Template for Barangay San Pascual",
+        "barangay_seal": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLU69xgQMXEQm_p4TshTY3Eq88UpjUzdVrnQ&s",
+        "address": "San Pascual,Basud, Camarines Norte, Philippines",
+        "contact": "(054) 721-1259",
+        "email": "pgocn.info@gmail.com",
+        "website": "https://camarinesnorte.gov.ph/",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLU69xgQMXEQm_p4TshTY3Eq88UpjUzdVrnQ&s"
+    }
+}
