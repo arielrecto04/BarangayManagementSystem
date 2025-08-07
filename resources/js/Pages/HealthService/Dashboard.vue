@@ -1,17 +1,19 @@
 <script setup>
 import { ref } from 'vue';
-// --- Hardcoded data for the dashboard is now part of this component ---
+
+// --- Updated hardcoded data for the new dashboard layout ---
 const stats = ref({
-    lowStockItems: 4,
+    activePrenatalCases: 12, // NEW
     profilesCreated: 128,
     consultationsLastMonth: 82, // Data for July 2025
     immunizationRate: '88%',
 });
 
-const lowStockMedicines = ref([
-    { id: 1, name: 'Paracetamol 500mg', stock: 8 },
-    { id: 2, name: 'Amoxicillin 250mg', stock: 5 },
-    { id: 3, name: 'Lagundi Syrup', stock: 3 },
+const topDiagnoses = ref([ // NEW
+    { name: 'Common Cold / URI', count: 45 },
+    { name: 'Hypertension', count: 28 },
+    { name: 'Gastritis', count: 18 },
+    { name: 'Minor Wounds', count: 15 },
 ]);
 
 const recentActivities = ref([
@@ -25,9 +27,10 @@ const recentActivities = ref([
     <div class="mx-3 -mt-10 space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="bg-white p-5 shadow-lg rounded-lg">
-                <div class="text-3xl font-bold text-red-600">{{ stats.lowStockItems }}</div>
-                <div class="text-gray-500 font-semibold">Medicines Low on Stock</div>
+                <div class="text-3xl font-bold text-pink-600">{{ stats.activePrenatalCases }}</div>
+                <div class="text-gray-500 font-semibold">Active Prenatal Cases</div>
             </div>
+
             <div class="bg-white p-5 shadow-lg rounded-lg">
                 <div class="text-3xl font-bold text-blue-600">{{ stats.profilesCreated }}</div>
                 <div class="text-gray-500 font-semibold">Resident Health Profiles</div>
@@ -44,15 +47,16 @@ const recentActivities = ref([
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white p-5 shadow-lg rounded-lg">
-                <h3 class="text-xl font-bold border-b pb-2 mb-4">Medicines to Re-stock</h3>
+                <h3 class="text-xl font-bold border-b pb-2 mb-4">Top Diagnoses This Month</h3>
                 <ul>
-                    <li v-for="med in lowStockMedicines" :key="med.id"
+                    <li v-for="illness in topDiagnoses" :key="illness.name"
                         class="flex justify-between items-center py-2 border-b last:border-0">
-                        <span class="font-semibold">{{ med.name }}</span>
-                        <span class="text-sm font-bold text-red-600">Stock: {{ med.stock }}</span>
+                        <span class="font-semibold">{{ illness.name }}</span>
+                        <span class="text-sm font-bold text-gray-600">{{ illness.count }} cases</span>
                     </li>
                 </ul>
             </div>
+
             <div class="bg-white p-5 shadow-lg rounded-lg">
                 <h3 class="text-xl font-bold border-b pb-2 mb-4">Recent Activity</h3>
                 <ul>
