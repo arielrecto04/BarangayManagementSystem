@@ -7,7 +7,6 @@ import useToast from '@/Utils/useToast';
 const router = useRouter();
 const { showToast } = useToast();
 const fieldErrors = ref({});
-const fieldErrors = ref({});
 
 const residentStore = useResidentStore();
 
@@ -381,14 +380,22 @@ const createResident = async () => {
                         <div>
                             <label for="emergency_contact"
                                 class="block text-sm font-semibold mb-2 text-gray-700">Emergency Contact</label>
-                            <input id="emergency_contact" type="text" maxlength="11" placeholder="09123456789"
+                            <input id="emergency_contact" type="text" maxlength="11" placeholder="09123456789" <input
+                                id="emergency_contact" type="text" maxlength="11" placeholder="09123456789"
                                 v-model="residentDataForm.emergency_contact"
                                 @input="validatePhoneInput('emergency_contact')"
                                 class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm" />
                             <p v-if="fieldErrors.emergency_contact" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.emergency_contact[0] }}
                             </p>
+                            @input="validatePhoneInput('emergency_contact')"
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent text-sm" />
+                            <p v-if="fieldErrors.emergency_contact" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.emergency_contact[0] }}
+                            </p>
                         </div>
+
 
 
                         <!-- Contact Person -->
@@ -426,7 +433,38 @@ const createResident = async () => {
                             <p v-if="fieldErrors.email" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.email[0] }}
                             </p>
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent"
+                            @input="clearFieldError('contact_person')" />
+                            <p v-if="fieldErrors.contact_person" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.contact_person[0] }}
+                            </p>
                         </div>
+
+                        <!-- Resident Number -->
+                        <div>
+                            <label for="resident_number" class="block text-sm font-semibold mb-2 text-gray-700">Resident
+                                Number</label>
+                            <input id="resident_number" type="text" placeholder="Resident Number"
+                                v-model="residentDataForm.resident_number"
+                                class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                                @input="clearFieldError('resident_number')" />
+                            <p v-if="fieldErrors.resident_number" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.resident_number[0] }}
+                            </p>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label for="email" class="block text-sm font-semibold mb-2 text-gray-700">Email</label>
+                            <input id="email" type="email" placeholder="Email address" v-model="residentDataForm.email"
+                                class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                                @input="clearFieldError('email')" />
+                            <p v-if="fieldErrors.email" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.email[0] }}
+                            </p>
+                        </div>
+
 
                     </div>
 
