@@ -86,108 +86,130 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
-    <template v-if="isLoading || !official">
-      <div class="animate-spin h-20 w-20 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-    </template>
+    <form v-if="!isLoading && official" @submit.prevent="updateOfficialData" class="w-full max-w-6xl">
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
 
-    <template v-else>
-      <form @submit.prevent="updateOfficialData" class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-5xl">
-        <h1 class="text-2xl font-bold mb-6">Edit Official</h1>
-        <h2 class="text-lg font-semibold mb-4">Official Profile</h2>
+        <!-- Left Column -->
+        <div
+          class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
+          <h1 class="text-2xl font-bold mb-4 text-center">Edit Official</h1>
+          <h2 class="text-base font-medium mb-6 text-center text-gray-600">Update Official Information</h2>
 
-        <div class="grid grid-cols-12 gap-4">
-          <!-- Avatar Placeholder - Moved to top left -->
-          <div class="col-span-4 row-span-2 flex justify-center items-center">
-            <div class="w-40 h-40 bg-gray-200 rounded-md"></div>
+          <!-- Image Placeholder -->
+          <div
+            class="w-40 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
+            <div class="text-center">
+              <div class="text-4xl text-gray-400 mb-2">📸</div>
+              <p class="text-sm text-gray-500">Upload Photo</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column (Form Fields) -->
+        <div class="p-8 md:w-2/3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- First Name -->
+            <div>
+              <label class="text-sm font-semibold text-gray-700">First Name *</label>
+              <input type="text" v-model="officialForm.firstName" placeholder="Juan" required
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
+            </div>
+
+            <!-- Middle Name -->
+            <div>
+              <label class="text-sm font-semibold text-gray-700">Middle Name</label>
+              <input type="text" v-model="officialForm.middleName" placeholder="Dela"
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
+            </div>
+
+            <!-- Last Name -->
+            <div>
+              <label class="text-sm font-semibold text-gray-700">Last Name *</label>
+              <input type="text" v-model="officialForm.lastName" placeholder="Cruz" required
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
+            </div>
+
+            <!-- Position -->
+            <div>
+              <label class="text-sm font-semibold text-gray-700">Position *</label>
+              <input type="text" v-model="officialForm.position" placeholder="Barangay Captain" required
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
+            </div>
           </div>
 
-          <!-- First Name -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">First Name</label>
-            <input type="text" v-model="officialForm.firstName" placeholder="Juan" required
-              class="border border-gray-200 rounded-md px-4 py-2" />
+          <!-- Terms -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <div>
+              <label class="text-sm font-semibold text-gray-700">Term From (Year)</label>
+              <input type="number" v-model="officialForm.termFrom" min="1900" max="2099" placeholder="2022"
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-gray-700">Term To (Year)</label>
+              <input type="number" v-model="officialForm.termTo" min="1900" max="2099" placeholder="2025"
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-gray-700">Number of Term</label>
+              <input type="number" v-model="officialForm.no_of_per_term"
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-gray-700">Elected Date</label>
+              <input type="date" v-model="officialForm.elected_date"
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
           </div>
 
-          <!-- Middle Name -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Middle Name</label>
-            <input type="text" v-model="officialForm.middleName" placeholder="Dela" required
-              class="border border-gray-200 rounded-md px-4 py-2" />
-          </div>
-
-          <!-- Last Name -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Last Name</label>
-            <input type="text" v-model="officialForm.lastName" placeholder="Cruz" required
-              class="border border-gray-200 rounded-md px-4 py-2" />
-          </div>
-
-          <!-- Position -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Position</label>
-            <input type="text" v-model="officialForm.position" placeholder="Barangay Captain" required
-              class="border border-gray-200 rounded-md px-4 py-2" />
-          </div>
-
-          <!-- Term From -->
-          <div class="col-span-2 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Term From (Year)</label>
-            <input type="number" v-model="officialForm.termFrom" required min="1900" max="2099" placeholder="22"
-              class="border border-gray-200 rounded-md px-4 py-2" />
-          </div>
-
-          <!-- Term To -->
-          <div class="col-span-2 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Term To (Year)</label>
-            <input type="number" v-model="officialForm.termTo" required min="1900" max="2099" placeholder="25"
-              class="border border-gray-200 rounded-md px-4 py-2" />
-          </div>
-
-          <!-- Number of Term -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Number of Term</label>
-            <input type="number" v-model="officialForm.no_of_per_term"
-              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
-          </div>
-
-          <!-- Elected Date -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Elected Date</label>
-            <input type="date" v-model="officialForm.elected_date"
-              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
-          </div>
-
-          <!-- Start Date -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">Start Date</label>
-            <input type="date" v-model="officialForm.start_date"
-              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
-          </div>
-
-          <!-- End Date -->
-          <div class="col-span-4 flex flex-col gap-2">
-            <label class="text-sm font-semibold text-gray-600">End Date</label>
-            <input type="date" v-model="officialForm.end_date"
-              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
+          <!-- Dates -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label class="text-sm font-semibold text-gray-700">Start Date</label>
+              <input type="date" v-model="officialForm.start_date"
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-gray-700">End Date</label>
+              <input type="date" v-model="officialForm.end_date"
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
           </div>
 
           <!-- Description -->
-          <div class="col-span-12 flex flex-col gap-2 mt-4">
-            <label class="text-sm font-semibold text-gray-600">Description</label>
-            <textarea v-model="officialForm.description" placeholder="Enter a detailed description..." rows="4"
-              class="resize-y border border-gray-200 rounded-md px-4 py-2"></textarea>
+          <div class="mt-4">
+            <label class="text-sm font-semibold text-gray-700">Description</label>
+            <textarea v-model="officialForm.description" placeholder="Enter details about the official's role..."
+              rows="4"
+              class="resize-y border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></textarea>
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex justify-center mt-8 gap-4">
+            <button type="submit"
+              class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Save Changes
+            </button>
+
+            <router-link to="/officials"
+              class="bg-white border-2 border-gray-300 hover:border-gray-400 px-8 py-3 rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-105 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              Cancel
+            </router-link>
+
+
           </div>
         </div>
+      </div>
+    </form>
 
-        <div class="flex justify-center mt-10 gap-4">
-          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">
-            Save
-          </button>
-          <router-link to="/officials" class="bg-white px-6 py-2 rounded-xl shadow-xl font-bold hover:bg-gray-200">
-            Cancel
-          </router-link>
-        </div>
-      </form>
-    </template>
+    <!-- Loading Spinner -->
+    <div v-else class="flex justify-center items-center">
+      <div class="animate-spin h-16 w-16 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+    </div>
   </div>
 </template>

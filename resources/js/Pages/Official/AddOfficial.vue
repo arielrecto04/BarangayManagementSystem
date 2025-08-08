@@ -151,59 +151,62 @@ const createOfficial = async () => {
 
 <template>
   <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
-    <form @submit.prevent="createOfficial">
-      <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-5xl">
-        <h1 class="text-3xl font-bold mb-2 text-center">Add New Official</h1>
-        <h2 class="text-lg font-semibold mb-6 text-center text-gray-600">Official Profile Information</h2>
+    <form @submit.prevent="createOfficial" class="w-full max-w-6xl">
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
 
-        <div class="grid grid-cols-12 gap-6">
+        <!-- Left Column -->
+        <div
+          class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
+          <h1 class="text-2xl font-bold mb-4 text-center">Add New Official</h1>
+          <h2 class="text-base font-medium mb-6 text-center text-gray-600">Official Profile Information</h2>
+
           <!-- Image Placeholder -->
-          <div class="col-span-12 md:col-span-4 lg:col-span-3 flex justify-center items-center">
-            <div
-              class="w-40 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
-              <div class="text-center">
-                <div class="text-4xl text-gray-400 mb-2">📸</div>
-                <p class="text-sm text-gray-500">Upload Photo</p>
-              </div>
+          <div
+            class="w-40 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
+            <div class="text-center">
+              <div class="text-4xl text-gray-400 mb-2">📸</div>
+              <p class="text-sm text-gray-500">Upload Photo</p>
             </div>
           </div>
+        </div>
 
-          <!-- Personal Information -->
-          <div class="col-span-12 md:col-span-8 lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Right Column (Form) -->
+        <div class="p-8 md:w-2/3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- First Name -->
-            <div class="flex flex-col gap-2">
+            <div>
               <label class="text-sm font-semibold text-gray-700">First Name *</label>
               <input type="text" v-model="officialDataForm.firstName" placeholder="Juan" required
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
             </div>
 
             <!-- Middle Name -->
-            <div class="flex flex-col gap-2">
+            <div>
               <label class="text-sm font-semibold text-gray-700">Middle Name</label>
               <input type="text" v-model="officialDataForm.middleName" placeholder="Dela"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
             </div>
 
             <!-- Last Name -->
-            <div class="flex flex-col gap-2">
+            <div>
               <label class="text-sm font-semibold text-gray-700">Last Name *</label>
               <input type="text" v-model="officialDataForm.lastName" placeholder="Cruz" required
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
             </div>
 
             <!-- Resident ID -->
-            <div class="flex flex-col gap-2">
+            <div>
               <label class="text-sm font-semibold text-gray-700">Resident ID</label>
               <input type="number" v-model="officialDataForm.resident_id" placeholder="Enter Resident ID"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
             </div>
           </div>
 
-          <!-- Position Selection -->
-          <div class="col-span-12 flex flex-col gap-2">
+          <!-- Position -->
+          <div class="mt-4">
             <label class="text-sm font-semibold text-gray-700">Position *</label>
             <select v-model="officialDataForm.position" required
-              class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               :class="{ 'border-red-500': !positionValidation.canAdd }">
               <option value="">Select Position</option>
               <optgroup v-for="(positions, section) in groupedPositions" :key="section" :label="section">
@@ -218,95 +221,72 @@ const createOfficial = async () => {
             </div>
           </div>
 
-          <!-- Terms Information -->
-          <div class="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- Term From -->
-            <div class="flex flex-col gap-2">
+          <!-- Terms -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <div>
               <label class="text-sm font-semibold text-gray-700">Term From (Year)</label>
               <input type="number" v-model="officialDataForm.termFrom" min="2000" max="2099" placeholder="2022"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
-
-            <!-- Term To -->
-            <div class="flex flex-col gap-2">
+            <div>
               <label class="text-sm font-semibold text-gray-700">Term To (Year)</label>
               <input type="number" v-model="officialDataForm.termTo" min="2000" max="2099" placeholder="2025"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
-
-            <!-- Number of Terms -->
-            <div class="flex flex-col gap-2">
+            <div>
               <label class="text-sm font-semibold text-gray-700">Number of Terms</label>
               <input type="number" v-model="officialDataForm.no_of_per_term" min="1" placeholder="1"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
-
-            <!-- Elected Date -->
-            <div class="flex flex-col gap-2">
+            <div>
               <label class="text-sm font-semibold text-gray-700">Elected Date</label>
               <input type="date" v-model="officialDataForm.elected_date"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
           </div>
 
-          <!-- Service Dates -->
-          <div class="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Start Date -->
-            <div class="flex flex-col gap-2">
+          <!-- Dates -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
               <label class="text-sm font-semibold text-gray-700">Start Date</label>
               <input type="date" v-model="officialDataForm.start_date"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
-
-            <!-- End Date -->
-            <div class="flex flex-col gap-2">
+            <div>
               <label class="text-sm font-semibold text-gray-700">End Date</label>
               <input type="date" v-model="officialDataForm.end_date"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
           </div>
 
           <!-- Description -->
-          <div class="col-span-12 flex flex-col gap-2">
+          <div class="mt-4">
             <label class="text-sm font-semibold text-gray-700">Description</label>
-            <textarea v-model="officialDataForm.description"
-              placeholder="Enter a detailed description about the official's role, responsibilities, and achievements..."
+            <textarea v-model="officialDataForm.description" placeholder="Enter details about the official's role..."
               rows="4"
-              class="resize-y border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></textarea>
+              class="resize-y border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></textarea>
           </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="flex justify-center mt-10 gap-4">
-          <button type="submit" :disabled="!positionValidation.canAdd"
-            :class="positionValidation.canAdd ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'"
-            class="text-white px-8 py-3 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105">
-            <span class="flex items-center gap-2">
+          <!-- Buttons -->
+          <div class="flex justify-center mt-8 gap-4">
+            <button type="submit" :disabled="!positionValidation.canAdd"
+              :class="positionValidation.canAdd ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'"
+              class="text-white px-8 py-3 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105">
+              <span class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Save Official
+              </span>
+            </button>
+            <router-link to="/officials"
+              class="bg-white border-2 border-gray-300 hover:border-gray-400 px-8 py-3 rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-105 flex items-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
-              Save Official
-            </span>
-          </button>
-          <router-link to="/officials"
-            class="bg-white border-2 border-gray-300 hover:border-gray-400 px-8 py-3 rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-105 flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            Cancel
-          </router-link>
-        </div>
-
-        <!-- Position Limits Legend -->
-        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">Position Limits Guide:</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-gray-600">
-            <div v-for="position in positionOptions.slice(0, 6)" :key="position.value">
-              <span class="font-medium">{{ position.value }}:</span>
-              <span>{{ position.limit === 999 ? 'Varies' : position.limit }} max</span>
-            </div>
+              Cancel
+            </router-link>
           </div>
-          <p class="text-xs text-gray-500 mt-2">* Some positions have flexible limits based on barangay needs</p>
         </div>
       </div>
     </form>
