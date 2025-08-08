@@ -7,6 +7,7 @@ import useToast from '@/Utils/useToast';
 const router = useRouter();
 const { showToast } = useToast();
 const fieldErrors = ref({});
+const fieldErrors = ref({});
 
 const residentStore = useResidentStore();
 
@@ -271,6 +272,12 @@ const createResident = async () => {
                             <p v-if="fieldErrors.first_name" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.first_name[0] }}
                             </p>
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent"
+                            @input="clearFieldError('first_name')" />
+                            <p v-if="fieldErrors.first_name" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.first_name[0] }}
+                            </p>
                         </div>
 
                         <!-- Middle Name -->
@@ -281,6 +288,12 @@ const createResident = async () => {
                                 v-model="residentDataForm.middle_name"
                                 class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent"
                                 @input="clearFieldError('middle_name')" />
+                            <p v-if="fieldErrors.middle_name" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.middle_name[0] }}
+                            </p>
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent"
+                            @input="clearFieldError('middle_name')" />
                             <p v-if="fieldErrors.middle_name" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.middle_name[0] }}
                             </p>
@@ -297,6 +310,12 @@ const createResident = async () => {
                             <p v-if="fieldErrors.last_name" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.last_name[0] }}
                             </p>
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent"
+                            @input="clearFieldError('last_name')" />
+                            <p v-if="fieldErrors.last_name" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.last_name[0] }}
+                            </p>
                         </div>
 
                         <!-- Birthday -->
@@ -306,6 +325,12 @@ const createResident = async () => {
                             <input id="birthday" type="date" placeholder="Birthday" v-model="residentDataForm.birthday"
                                 class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent"
                                 @input="clearFieldError('birthday')" />
+                            <p v-if="fieldErrors.birthday" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.birthday[0] }}
+                            </p>
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent"
+                            @input="clearFieldError('birthday')" />
                             <p v-if="fieldErrors.birthday" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.birthday[0] }}
                             </p>
@@ -320,6 +345,12 @@ const createResident = async () => {
                             <p v-if="fieldErrors.age" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.age[0] }}
                             </p>
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent"
+                            @input="clearFieldError('age')" />
+                            <p v-if="fieldErrors.age" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.age[0] }}
+                            </p>
                         </div>
 
                         <!-- Gender -->
@@ -328,10 +359,16 @@ const createResident = async () => {
                             <select id="gender" v-model="residentDataForm.gender"
                                 class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent"
                                 @input="clearFieldError('gender')">
+                                class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                                focus:ring-green-400 focus:border-transparent"
+                                @input="clearFieldError('gender')">
                                 <option value="" disabled selected>Select Gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
+                            <p v-if="fieldErrors.gender" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.gender[0] }}
+                            </p>
                             <p v-if="fieldErrors.gender" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.gender[0] }}
                             </p>
@@ -348,6 +385,12 @@ const createResident = async () => {
                             <p v-if="fieldErrors.address" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.address[0] }}
                             </p>
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent"
+                            @input="clearFieldError('address')" />
+                            <p v-if="fieldErrors.address" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.address[0] }}
+                            </p>
                         </div>
 
                         <!-- Contact Number -->
@@ -360,7 +403,14 @@ const createResident = async () => {
                             <p v-if="fieldErrors.contact_number" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.contact_number[0] }}
                             </p>
+                            <input id="contact_number" type="text" maxlength="11" placeholder="09123456789"
+                                v-model="residentDataForm.contact_number" @input="validatePhoneInput('contact_number')"
+                                class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm" />
+                            <p v-if="fieldErrors.contact_number" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.contact_number[0] }}
+                            </p>
                         </div>
+
 
 
                         <!-- Family Member -->
@@ -371,6 +421,12 @@ const createResident = async () => {
                                 v-model="residentDataForm.family_member"
                                 class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent"
                                 @input="clearFieldError('family_member')" />
+                            <p v-if="fieldErrors.family_member" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.family_member[0] }}
+                            </p>
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2
+                            focus:ring-green-400 focus:border-transparent"
+                            @input="clearFieldError('family_member')" />
                             <p v-if="fieldErrors.family_member" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.family_member[0] }}
                             </p>
@@ -464,6 +520,7 @@ const createResident = async () => {
                                 {{ fieldErrors.email[0] }}
                             </p>
                         </div>
+
 
 
                     </div>
