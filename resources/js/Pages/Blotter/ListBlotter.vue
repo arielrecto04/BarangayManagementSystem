@@ -9,7 +9,7 @@ import useToast from '@/Utils/useToast';
 
 const { showToast } = useToast();
 
-const route = useRoute();   
+const route = useRoute();
 const blotterStore = useBlotterStore();
 const residentStore = useResidentStore();
 const { residents } = storeToRefs(residentStore);
@@ -123,19 +123,19 @@ const getFilePath = (doc) => {
 const columns = [
     { key: "blotter_no", label: "Blotter ID" },
     { key: "title_case", label: "Title" },
-    { 
-        key: "complainants_id", 
-        label: "Complainant", 
-        formatter: (value) => getResidentName(value) 
+    {
+        key: "complainants_id",
+        label: "Complainant",
+        formatter: (value) => getResidentName(value)
     },
-    { 
-        key: "respondents_id", 
-        label: "Respondent", 
-        formatter: (value) => getResidentName(value) 
+    {
+        key: "respondents_id",
+        label: "Respondent",
+        formatter: (value) => getResidentName(value)
     },
     { key: "status", label: "Status" },
-    { 
-        key: "filing_date", 
+    {
+        key: "filing_date",
         label: "Date",
         formatter: (value) => formatDate(value)
     }
@@ -154,7 +154,7 @@ onMounted(() => {
     blotterStore.getBlotters();
     residentStore.getResidents(); // Make sure residents are loaded
 })
-</script>   
+</script>
 
 <template>
     <div class="flex flex-col gap-2">
@@ -165,9 +165,12 @@ onMounted(() => {
         <Table v-else :columns="columns" :rows="blotters">
             <template #actions="{ row }">
                 <div class="flex justify-center gap-2">
-                    <router-link :to="`/blotter/edit-blotter/${row.id}`" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Edit</router-link>
-                    <button @click="deleteBlotter(row.id)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
-                    <button @click="openModal(row)" class="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600">View</button>
+                    <router-link :to="`/blotter/edit-blotter/${row.id}`"
+                        class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Edit</router-link>
+                    <button @click="deleteBlotter(row.id)"
+                        class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+                    <button @click="openModal(row)"
+                        class="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600">View</button>
                 </div>
             </template>
         </Table>
@@ -176,7 +179,8 @@ onMounted(() => {
         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-4xl shadow-xl max-h-[90vh] overflow-y-auto">
                 <!-- Close Button -->
-                <button @click="closeModal" class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">&times;</button>
+                <button @click="closeModal"
+                    class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">&times;</button>
 
                 <!-- Modal Title -->
                 <h2 class="text-lg font-bold mb-6 text-gray-700">Blotter Details</h2>
@@ -202,7 +206,9 @@ onMounted(() => {
                     <div>
                         <strong>Complainant:</strong><br />
                         {{ getResidentName(selectedBlotter?.complainants_id) }}
-                        <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.complainants_id).padStart(4, '0') }})</span>
+                        <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.complainants_id).padStart(4,
+                            '0')
+                        }})</span>
                     </div>
                     <div>
                         <strong>Complainant Address:</strong><br />
@@ -211,7 +217,9 @@ onMounted(() => {
                     <div>
                         <strong>Respondent:</strong><br />
                         {{ getResidentName(selectedBlotter?.respondents_id) }}
-                        <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.respondents_id).padStart(4, '0') }})</span>
+                        <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.respondents_id).padStart(4,
+                            '0')
+                        }})</span>
                     </div>
                     <div>
                         <strong>Respondent Address:</strong><br />
@@ -239,14 +247,13 @@ onMounted(() => {
                         <strong>Barangay Case No:</strong><br />
                         {{ selectedBlotter?.barangay_case_no }}
                     </div>
-                   
+
                     <div class="">
                         <strong class="block mb-2">Witness:</strong>
                         <div v-if="selectedBlotter?.witness" class="pl-2">
                             <ul class="list-disc pl-5 space-y-1">
-                                <li v-for="(witness, index) in selectedBlotter.witness.split('\n').filter(name => name.trim())" 
-                                    :key="index" 
-                                    class="text-gray-800">
+                                <li v-for="(witness, index) in selectedBlotter.witness.split('\n').filter(name => name.trim())"
+                                    :key="index" class="text-gray-800">
                                     {{ witness.trim() }}
                                 </li>
                             </ul>
@@ -259,14 +266,12 @@ onMounted(() => {
                         <strong>Blotter Type:</strong><br />
                         <span class="capitalize">{{ selectedBlotter?.blotter_type }}</span>
                     </div>
-                    
+
                     <div class="col-span-2">
                         <strong>Description:</strong><br />
-                        <textarea
-                            readonly
+                        <textarea readonly
                             class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
-                            :value="selectedBlotter?.description"
-                        ></textarea>
+                            :value="selectedBlotter?.description"></textarea>
                     </div>
 
                     <!-- Supporting Documents Section -->
@@ -275,7 +280,8 @@ onMounted(() => {
                         <div v-if="getSupportingDocuments(selectedBlotter).length > 0">
                             <ul class="list-disc pl-5">
                                 <li v-for="(doc, index) in getSupportingDocuments(selectedBlotter)" :key="index">
-                                    <a :href="`/storage/${getFilePath(doc)}`" target="_blank" class="text-blue-500 hover:underline">
+                                    <a :href="`/storage/${getFilePath(doc)}`" target="_blank"
+                                        class="text-blue-500 hover:underline">
                                         {{ getFileName(doc) }}
                                     </a>
                                 </li>
@@ -293,53 +299,53 @@ onMounted(() => {
 
 <style>
 .multiselect {
-  min-height: auto;
+    min-height: auto;
 }
 
 .multiselect__tags {
-  min-height: 44px;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  padding: 0.5rem;
+    min-height: 44px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
 }
 
 .multiselect__input,
 .multiselect__single {
-  font-size: 1rem;
-  margin-bottom: 0;
-  padding: 0;
+    font-size: 1rem;
+    margin-bottom: 0;
+    padding: 0;
 }
 
 .multiselect__placeholder {
-  margin-bottom: 0;
-  padding-top: 0;
-  padding-left: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-left: 0;
 }
 
 .multiselect__option--highlight {
-  background: #3b82f6;
+    background: #3b82f6;
 }
 
 .multiselect__option--highlight::after {
-  background: #3b82f6;
+    background: #3b82f6;
 }
 
 /* Custom scrollbar for modal */
 .overflow-y-auto::-webkit-scrollbar {
-  width: 6px;
+    width: 6px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+    background: #f1f1f1;
+    border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+    background: #c1c1c1;
+    border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+    background: #a8a8a8;
 }
 </style>

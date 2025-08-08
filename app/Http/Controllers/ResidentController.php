@@ -95,15 +95,13 @@ class ResidentController extends Controller
             'last_name' => 'required|string|max:255',
             'birthday' => 'required|date',
             'age' => 'required|integer|min:0|max:150',
-            'gender' => 'required|string|in:Male,Female',
+            'gender' => 'required|string|in:Male,Female,Not Specified',
             'address' => 'required|string|max:500',
-            'contact_number' => 'required|regex:/^0\d{10}$/',
+            'contact_number' => 'required|string|max:20',
             'contact_person' => 'nullable|string|max:255',
-            'family_member' => 'nullable|string|max:255',
-            'emergency_contact' => 'nullable|regex:/^0\d{10}$/',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'email' => 'nullable|email|max:255|unique:residents,email,',
-            'resident_number' => 'required|string|max:255|unique:residents,resident_number,',
+            'family_member' => 'required|string|max:255',
+            'emergency_contact' => 'required|string|max:255',
+            'avatar' => 'nullable|url',
         ]);
 
         $resident = Resident::create($request->all());
@@ -145,15 +143,13 @@ class ResidentController extends Controller
             'last_name' => 'required|string|max:255',
             'birthday' => 'required|date',
             'age' => 'required|integer|min:0|max:150',
-            'gender' => 'required|string|in:Male,Female',
+            'gender' => 'required|string|in:Male,Female,Not Specified',
             'address' => 'required|string|max:500',
-            'contact_number' => 'required|regex:/^0\d{10}$/',
+            'contact_number' => 'required|string|max:20',
             'contact_person' => 'nullable|string|max:255',
-            'family_member' => 'nullable|string|max:255',
-            'emergency_contact' => 'nullable|regex:/^0\d{10}$/',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'email' => 'nullable|email|max:255|unique:residents,email,',
-            'resident_number' => 'required|string|max:255|unique:residents,resident_number,',
+            'family_member' => 'required|string|max:255',
+            'emergency_contact' => 'required|string|max:255',
+            'avatar' => 'nullable|url',
         ]);
 
         $resident = Resident::findOrFail($id);

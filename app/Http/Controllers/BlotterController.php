@@ -40,34 +40,6 @@ class BlotterController extends Controller
             'per_page' => $blotters->perPage(),
             'total' => $blotters->total()
         ]);
-        $blotters = Blotter::with(['complainant', 'respondent'])->paginate(10);
-        return response()->json([
-            'data' => $blotters->map(function ($blotter) {
-                return [
-                    'id' => $blotter->id,
-                    'blotter_no' => $blotter->blotter_no,
-                    'filing_date' => $blotter->filing_date,
-                    'title_case' => $blotter->title_case,
-                    'nature_of_case' => $blotter->nature_of_case,
-                    'complainants_id' => str_pad($blotter->complainants_id, 4, '0', STR_PAD_LEFT),
-                    'respondents_id' =>  str_pad($blotter->respondents_id, 4, '0', STR_PAD_LEFT),
-                    'complainant_address' => $blotter->complainant_address,
-                    'respondent_address' => $blotter->respondent_address,
-                    'place' => $blotter->place,
-                    'datetime_of_incident' => $blotter->datetime_of_incident,
-                    'blotter_type' => $blotter->blotter_type,
-                    'barangay_case_no' => $blotter->barangay_case_no,
-                    'status' => $blotter->status,
-                    'description' => $blotter->description,
-                    'witness' => $blotter->witness,
-
-                ];
-            }),
-            'current_page' => $blotters->currentPage(),
-            'last_page' => $blotters->lastPage(),
-            'per_page' => $blotters->perPage(),
-            'total' => $blotters->total()
-        ]);
     }
 
     /**
@@ -93,7 +65,9 @@ class BlotterController extends Controller
             'total_cases' => 'required',
             'status' => 'required|in:Open,In Progress,Resolved',
             'description' => 'required|string|max:1000',
-            'witness' => 'required|string|max:255'
+            'witness' => 'nullable|string|max:255',
+            'supporting_documents' => 'nullable|array',
+            'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
         ]);
 
         $fileData = [];

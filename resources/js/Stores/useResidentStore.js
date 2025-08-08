@@ -219,6 +219,6 @@ export const useResidentStore = defineStore("resident", {
                     }
                 }
             }
-        }
+        },
     },
 });

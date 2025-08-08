@@ -45,6 +45,7 @@ class Blotter extends Model
         return $this->morphTo('respondent', 'respondents_name', 'respondents_id');
     }
 
+    protected $with = ['complainant', 'respondent'];
     public function getSupportingDocumentsAttribute($value)
     {
         return json_decode($value, true) ?: [];
@@ -54,5 +55,4 @@ class Blotter extends Model
     {
         $this->attributes['supporting_documents'] = json_encode($value);
     }
-
 }

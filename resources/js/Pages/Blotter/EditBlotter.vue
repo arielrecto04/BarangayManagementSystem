@@ -6,13 +6,10 @@ import useToast from '@/Utils/useToast';
 import { storeToRefs } from 'pinia';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
-import Multiselect from 'vue-multiselect';
-import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
 const { showToast } = useToast();
 
-const blotterStore = useBlotterStore();
 const blotterStore = useBlotterStore();
 const residentStore = useResidentStore();
 const residents = ref([]);
@@ -86,7 +83,7 @@ const cleanup = () => {
     newSupportingDocuments.value = [];
 };
 
-const updateResidentData = async () => {
+const updateBlotterData = async () => {
     try {
         if (!blotter.value) return;
 
@@ -145,10 +142,6 @@ const updateResidentData = async () => {
 onBeforeUnmount(() => {
     cleanup();
 });
-// Add beforeUnmount hook
-onBeforeUnmount(() => {
-    cleanup();
-});
 
 onMounted(async () => {
     try {
@@ -170,92 +163,72 @@ onMounted(async () => {
         console.error('Mount error:', error);
         showToast({ icon: 'error', title: 'Failed to load blotter data' });
     }
-    onMounted(async () => {
-        try {
-            await residentStore.getResidents();
-            residents.value = residentStore.residents;
-            await blotterStore.getBlotterById(blotterId);
+});
 
-            // Format dates after loading
-            if (blotter.value) {
-                blotter.value.filing_date = blotter.value.filing_date?.split('T')[0] || '';
-                blotter.value.datetime_of_incident = formatDateForInput(blotter.value.datetime_of_incident);
+watch(() => blotter.value, (newBlotter) => {
+    if (newBlotter && !isDestroyed.value) {
+        selectedComplainant.value = residents.value.find(r => r.id == newBlotter.complainants_id);
+        selectedRespondent.value = residents.value.find(r => r.id == newBlotter.respondents_id);
 
-                // Load existing supporting documents
-                if (blotter.value.supporting_documents && Array.isArray(blotter.value.supporting_documents)) {
-                    existingSupportingDocuments.value = [...blotter.value.supporting_documents];
-                }
-            }
-        } catch (error) {
-            console.error('Mount error:', error);
-            showToast({ icon: 'error', title: 'Failed to load blotter data' });
+        newBlotter.filing_date = newBlotter.filing_date?.split('T')[0] || '';
+        newBlotter.datetime_of_incident = formatDateForInput(newBlotter.datetime_of_incident);
+
+        // Load existing supporting documents
+        if (newBlotter.supporting_documents && Array.isArray(newBlotter.supporting_documents)) {
+            existingSupportingDocuments.value = [...newBlotter.supporting_documents];
         }
-    });
+    }
+}, { immediate: true });
 
-    watch(() => blotter.value, (newBlotter) => {
-        if (newBlotter && !isDestroyed.value) {
-            selectedComplainant.value = residents.value.find(r => r.id == newBlotter.complainants_id);
-            selectedRespondent.value = residents.value.find(r => r.id == newBlotter.respondents_id);
-
-            newBlotter.filing_date = newBlotter.filing_date?.split('T')[0] || '';
-            newBlotter.datetime_of_incident = formatDateForInput(newBlotter.datetime_of_incident);
-
-            // Load existing supporting documents
-            if (newBlotter.supporting_documents && Array.isArray(newBlotter.supporting_documents)) {
-                existingSupportingDocuments.value = [...newBlotter.supporting_documents];
-            }
+// Helper function to get filename from document object
+const getFileName = (doc) => {
+    try {
+        if (typeof doc === 'object' && doc && doc.name) {
+            return doc.name;
         }
-    }, { immediate: true });
-
-    // Helper function to get filename from document object
-    const getFileName = (doc) => {
-        try {
-            if (typeof doc === 'object' && doc && doc.name) {
-                return doc.name;
-            }
-            if (typeof doc === 'string' && doc.length > 0) {
-                return doc.split('/').pop() || 'Unknown file';
-            }
-            return 'Unknown file';
-        } catch (error) {
-            console.error('Error getting filename:', error);
-            return 'Unknown file';
+        if (typeof doc === 'string' && doc.length > 0) {
+            return doc.split('/').pop() || 'Unknown file';
         }
-    };
+        return 'Unknown file';
+    } catch (error) {
+        console.error('Error getting filename:', error);
+        return 'Unknown file';
+    }
+};
 
-    const handleFileUpload = (event) => {
-        if (isDestroyed.value) return; // Prevent operations after destruction
+const handleFileUpload = (event) => {
+    if (isDestroyed.value) return; // Prevent operations after destruction
 
-        const newFiles = Array.from(event.target.files);
+    const newFiles = Array.from(event.target.files);
 
-        const existingNames = new Set(
-            newSupportingDocuments.value.map(file => file.name)
-        );
+    const existingNames = new Set(
+        newSupportingDocuments.value.map(file => file.name)
+    );
 
-        const uniqueNewFiles = newFiles.filter(file => !existingNames.has(file.name));
+    const uniqueNewFiles = newFiles.filter(file => !existingNames.has(file.name));
 
-        newSupportingDocuments.value = [
-            ...newSupportingDocuments.value,
-            ...uniqueNewFiles
-        ];
+    newSupportingDocuments.value = [
+        ...newSupportingDocuments.value,
+        ...uniqueNewFiles
+    ];
 
-        event.target.value = '';
-    };
+    event.target.value = '';
+};
 
-    const removeExistingDocument = (index) => {
-        if (isDestroyed.value) return;
-        existingSupportingDocuments.value.splice(index, 1);
-    };
+const removeExistingDocument = (index) => {
+    if (isDestroyed.value) return;
+    existingSupportingDocuments.value.splice(index, 1);
+};
 
-    const removeNewDocument = (index) => {
-        if (isDestroyed.value) return;
-        newSupportingDocuments.value.splice(index, 1);
-    };
+const removeNewDocument = (index) => {
+    if (isDestroyed.value) return;
+    newSupportingDocuments.value.splice(index, 1);
+};
 
-    const handleCancel = () => {
-        cleanup();
-        router.push('/blotter');
-    };
+const handleCancel = () => {
+    cleanup();
+    router.push('/blotter');
+};
 </script>
 
 <template>
@@ -335,31 +308,13 @@ onMounted(async () => {
                             <input id="datetime_of_incident" type="datetime-local"
                                 v-model="blotter.datetime_of_incident"
                                 class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                            <label for="datetime_of_incident" class="text-sm font-semibold text-gray-600">Date/Time of
-                                Incident</label>
-                            <input id="datetime_of_incident" type="datetime-local"
-                                v-model="blotter.datetime_of_incident"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
                         <div class="flex flex-col gap-2">
                             <label for="blotter_type" class="text-sm font-semibold text-gray-600">Blotter Type</label>
                             <input id="blotter_type" type="text" v-model="blotter.blotter_type"
                                 class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                            <label for="blotter_type" class="text-sm font-semibold text-gray-600">Blotter Type</label>
-                            <input id="blotter_type" type="text" v-model="blotter.blotter_type"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
                         </div>
                         <div class="flex flex-col gap-2">
-                            <label for="barangay_case_no" class="text-sm font-semibold text-gray-600">Barangay Case
-                                No</label>
-                            <input id="barangay_case_no" type="text" v-model="blotter.barangay_case_no"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="col-span-2 flex flex-col gap-2">
-                            <label for="description" class="text-sm font-semibold text-gray-600">Description</label>
-                            <textarea id="description" v-model="blotter.description"
-                                class="input-style col-span-2 border border-gray-200 rounded-md px-4 py-2"
-                                rows="4"></textarea>
                             <label for="barangay_case_no" class="text-sm font-semibold text-gray-600">Barangay Case
                                 No</label>
                             <input id="barangay_case_no" type="text" v-model="blotter.barangay_case_no"

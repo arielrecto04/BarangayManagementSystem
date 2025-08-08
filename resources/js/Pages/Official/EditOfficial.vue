@@ -1,65 +1,17 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
-import { useOfficialStore, useResidentStore } from '@/Stores';
+import { useOfficialStore } from '@/Stores';
 import useToast from '@/Utils/useToast';
-import Multiselect from 'vue-multiselect';
-import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const router = useRouter();
 const { showToast } = useToast();
 const officialStore = useOfficialStore();
-const residentStore = useResidentStore();
 const { official, isLoading } = storeToRefs(officialStore);
-const officials = officialStore.officials || [];
 const officialId = router.currentRoute.value.params.id;
 
-const selectedResident = ref(null);
-const residents = ref([]);
-const residentSearch = ref('');
-
-const filteredResidents = computed(() => {
-  return residents.value.filter(resident => {
-    const fullName = `${resident.first_name} ${resident.middle_name ?? ''} ${resident.last_name}`.toLowerCase();
-    return fullName.includes(residentSearch.value.toLowerCase());
-  });
-});
-
-const positionOptions = [
-  { value: 'Barangay Captain', label: 'Barangay Captain', limit: 1, section: 'Barangay Officials' },
-  { value: 'Barangay Secretary', label: 'Barangay Secretary', limit: 1, section: 'Barangay Officials' },
-  // ... (include all position options, same as AddOfficial.vue)
-];
-
-const groupedPositions = computed(() => {
-  const groups = {};
-  positionOptions.forEach(option => {
-    if (!groups[option.section]) groups[option.section] = [];
-    groups[option.section].push(option);
-  });
-  return groups;
-});
-
-const checkPositionLimit = (position) => {
-  const positionOption = positionOptions.find(opt => opt.value === position);
-  if (!positionOption) return { canAdd: true, message: '' };
-  const currentCount = officials.filter(o =>
-    o.position && o.position.toLowerCase() === position.toLowerCase() && o.id !== official.value?.id // exclude current official
-  ).length;
-
-  if (positionOption.limit === 999) {
-    return { canAdd: true, message: `Current count: ${currentCount} (varies)` };
-  }
-
-  const canAdd = currentCount < positionOption.limit;
-  const message = canAdd
-    ? `Current count: ${currentCount}/${positionOption.limit}`
-    : `Limit reached: ${currentCount}/${positionOption.limit}`;
-
-  return { canAdd, message };
-};
-
+// Create local form object
 const officialForm = ref({
   firstName: '',
   middleName: '',
@@ -71,233 +23,169 @@ const officialForm = ref({
   elected_date: '',
   start_date: '',
   end_date: '',
-  description: '',
-  resident_id: null,
+  description: ''
 });
 
-const positionValidation = computed(() => {
-  if (!officialForm.value.position) return { canAdd: true, message: '' };
-  return checkPositionLimit(officialForm.value.position);
-});
-
-watch(selectedResident, (val) => {
-  officialForm.value.resident_id = val?.id ?? null;
-  officialForm.value.firstName = val?.first_name ?? '';
-  officialForm.value.middleName = val?.middle_name ?? '';
-  officialForm.value.lastName = val?.last_name ?? '';
-});
-
+// Watch for official data and split into form fields
 watch(() => official.value, (newVal) => {
   if (newVal) {
+    // Split full name into components
     const nameParts = newVal.name ? newVal.name.split(' ') : [];
     officialForm.value.firstName = nameParts[0] || '';
     officialForm.value.lastName = nameParts[nameParts.length - 1] || '';
     officialForm.value.middleName = nameParts.slice(1, nameParts.length - 1).join(' ') || '';
 
+    // Split terms string
     if (newVal.terms) {
       const termParts = newVal.terms.split('-');
       officialForm.value.termFrom = termParts[0] || '';
       officialForm.value.termTo = termParts[1] || '';
     }
 
+    // Copy other fields
     officialForm.value.position = newVal.position || '';
     officialForm.value.no_of_per_term = newVal.no_of_per_term || null;
     officialForm.value.elected_date = newVal.elected_date || '';
     officialForm.value.start_date = newVal.start_date || '';
     officialForm.value.end_date = newVal.end_date || '';
     officialForm.value.description = newVal.description || '';
-
-    if (newVal.resident_id && residents.value.length > 0) {
-      const found = residents.value.find(r => r.id === newVal.resident_id);
-      if (found) selectedResident.value = found;
-    }
   }
 });
 
-const validateForm = () => {
-  const requiredFields = [
-    officialForm.value.firstName,
-    officialForm.value.lastName,
-    officialForm.value.position,
-  ];
-
-  if (!requiredFields.every(field => field !== '' && field !== null)) {
-    showToast({ icon: 'error', title: 'Please fill all required fields before submitting.' });
-    return false;
-  }
-  if (!positionValidation.value.canAdd) {
-    showToast({ icon: 'error', title: 'Position limit reached', text: positionValidation.value.message });
-    return false;
-  }
-  return true;
-};
-
 const updateOfficialData = async () => {
-  if (!validateForm()) return;
-
-  const payload = {
-    name: `${officialForm.value.firstName} ${officialForm.value.middleName} ${officialForm.value.lastName}`.trim(),
-    position: officialForm.value.position,
-    terms: `${officialForm.value.termFrom}-${officialForm.value.termTo}`,
-    no_of_per_term: officialForm.value.no_of_per_term,
-    elected_date: officialForm.value.elected_date,
-    start_date: officialForm.value.start_date,
-    end_date: officialForm.value.end_date,
-    description: officialForm.value.description,
-    resident_id: officialForm.value.resident_id,
-  };
-
   try {
+    // Compose server-expected fields ONLY
+    const payload = {
+      name: `${officialForm.value.firstName} ${officialForm.value.middleName} ${officialForm.value.lastName}`.trim(),
+      position: officialForm.value.position,
+      terms: `${officialForm.value.termFrom}-${officialForm.value.termTo}`,
+      no_of_per_term: officialForm.value.no_of_per_term,
+      elected_date: officialForm.value.elected_date,
+      start_date: officialForm.value.start_date,
+      end_date: officialForm.value.end_date,
+      description: officialForm.value.description
+    };
+
     await officialStore.updateOfficial(payload);
+
     showToast({ icon: 'success', title: 'Official updated successfully' });
     router.push('/officials');
   } catch (error) {
-    const errorMsg = error.response?.data?.message || error.response?.data?.errors?.join(', ') || error.message;
+    const errorMsg = error.response?.data?.message ||
+      error.response?.data?.errors?.join(', ') ||
+      error.message;
     showToast({ icon: 'error', title: 'Failed to update official', text: errorMsg });
   }
 };
 
-onMounted(async () => {
-  await residentStore.getResidents();
-  residents.value = residentStore.residents;
 
-  if (official.value?.resident_id) {
-    const found = residents.value.find(r => r.id === official.value.resident_id);
-    if (found) selectedResident.value = found;
-  }
-
-  await officialStore.getOfficialById(officialId);
+onMounted(() => {
+  officialStore.getOfficialById(officialId);
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 flex justify-center items-center p-5">
+  <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
     <template v-if="isLoading || !official">
       <div class="animate-spin h-20 w-20 border-4 border-blue-600 border-t-transparent rounded-full"></div>
     </template>
+
     <template v-else>
-      <form @submit.prevent="updateOfficialData"
-        class="w-full max-w-5xl bg-white rounded-2xl shadow-2xl p-0 overflow-hidden">
-        <div class="flex flex-col md:flex-row">
-          <!-- Left Panel -->
-          <div
-            class="md:w-1/3 bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center p-8 border-b md:border-b-0 md:border-r border-gray-200">
-            <div
-              class="w-40 h-40 mb-8 grid place-items-center bg-white rounded-xl border-2 border-dashed border-gray-300 shadow">
-              <div class="text-center">
-                <div class="text-4xl text-gray-400 mb-2">👤</div>
-                <p class="text-sm text-gray-500">Upload Photo</p>
-              </div>
-            </div>
-            <h1 class="text-2xl font-bold text-gray-800 mb-1 text-center">Edit Official</h1>
-            <h2 class="text-md font-medium text-gray-600 text-center">Official Profile Information</h2>
+      <form @submit.prevent="updateOfficialData" class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-5xl">
+        <h1 class="text-2xl font-bold mb-6">Edit Official</h1>
+        <h2 class="text-lg font-semibold mb-4">Official Profile</h2>
+
+        <div class="grid grid-cols-12 gap-4">
+          <!-- Avatar Placeholder - Moved to top left -->
+          <div class="col-span-4 row-span-2 flex justify-center items-center">
+            <div class="w-40 h-40 bg-gray-200 rounded-md"></div>
           </div>
 
-          <!-- Right Panel -->
-          <div class="md:w-2/3 p-8">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <!-- Resident Multiselect -->
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-gray-700">Select Resident <span
-                    class="text-red-500">*</span></label>
-                <Multiselect v-model="selectedResident" :options="filteredResidents"
-                  :custom-label="resident => `${resident.first_name} ${resident.middle_name ? resident.middle_name + ' ' : ''}${resident.last_name}`"
-                  track-by="id" placeholder="Search or select resident" :searchable="true" :show-labels="false"
-                  class="rounded-lg border border-gray-300 ring-0 focus:ring-2 focus:ring-green-400" />
-              </div>
-
-              <!-- Position Select -->
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-gray-700">Position <span
-                    class="text-red-500">*</span></label>
-                <select v-model="officialForm.position" required
-                  class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent"
-                  :class="{ 'border-red-500': !positionValidation.canAdd }">
-                  <option value="">Select Position</option>
-                  <optgroup v-for="(positions, section) in groupedPositions" :key="section" :label="section">
-                    <option v-for="position in positions" :key="position.value" :value="position.value">
-                      {{ position.label }} (Max: {{ position.limit === 999 ? 'Varies' : position.limit }})
-                    </option>
-                  </optgroup>
-                </select>
-                <div v-if="positionValidation.message"
-                  :class="positionValidation.canAdd ? 'text-green-600' : 'text-red-600'" class="text-xs mt-2">
-                  {{ positionValidation.message }}
-                </div>
-              </div>
-
-              <!-- Term From -->
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-gray-700">Term From (Year) <span
-                    class="text-red-500">*</span></label>
-                <input type="number" v-model="officialForm.termFrom" min="1900" max="2099" placeholder="22" required
-                  class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent" />
-              </div>
-
-              <!-- Term To -->
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-gray-700">Term To (Year) <span
-                    class="text-red-500">*</span></label>
-                <input type="number" v-model="officialForm.termTo" min="1900" max="2099" placeholder="25" required
-                  class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent" />
-              </div>
-
-              <!-- Number of Terms -->
-              <div class="sm:col-span-1">
-                <label class="block text-sm font-semibold mb-2 text-gray-700">Number of Terms</label>
-                <input type="number" v-model="officialForm.no_of_per_term" min="1" placeholder="1"
-                  class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent" />
-              </div>
-
-              <!-- Elected Date -->
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-gray-700">Elected Date</label>
-                <input type="date" v-model="officialForm.elected_date"
-                  class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent" />
-              </div>
-
-              <!-- Start Date -->
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-gray-700">Start Date</label>
-                <input type="date" v-model="officialForm.start_date"
-                  class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent" />
-              </div>
-
-              <!-- End Date -->
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-gray-700">End Date</label>
-                <input type="date" v-model="officialForm.end_date"
-                  class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent" />
-              </div>
-            </div>
-
-            <!-- Description -->
-            <div class="mt-6">
-              <label class="block text-sm font-semibold mb-2 text-gray-700">Description</label>
-              <textarea v-model="officialForm.description" rows="4"
-                class="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:border-transparent resize-y"
-                placeholder="Enter a detailed description..."></textarea>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-end gap-4 mt-8">
-              <button type="submit" :disabled="!positionValidation.canAdd"
-                :class="positionValidation.canAdd ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'"
-                class="w-full sm:w-auto text-white px-8 py-3 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105 flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                Update
-              </button>
-              <router-link to="/officials"
-                class="w-full sm:w-auto bg-white border-2 border-gray-300 hover:border-gray-400 px-8 py-3 rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-105 flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-                Cancel
-              </router-link>
-            </div>
+          <!-- First Name -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">First Name</label>
+            <input type="text" v-model="officialForm.firstName" placeholder="Juan" required
+              class="border border-gray-200 rounded-md px-4 py-2" />
           </div>
+
+          <!-- Middle Name -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Middle Name</label>
+            <input type="text" v-model="officialForm.middleName" placeholder="Dela" required
+              class="border border-gray-200 rounded-md px-4 py-2" />
+          </div>
+
+          <!-- Last Name -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Last Name</label>
+            <input type="text" v-model="officialForm.lastName" placeholder="Cruz" required
+              class="border border-gray-200 rounded-md px-4 py-2" />
+          </div>
+
+          <!-- Position -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Position</label>
+            <input type="text" v-model="officialForm.position" placeholder="Barangay Captain" required
+              class="border border-gray-200 rounded-md px-4 py-2" />
+          </div>
+
+          <!-- Term From -->
+          <div class="col-span-2 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Term From (Year)</label>
+            <input type="number" v-model="officialForm.termFrom" required min="1900" max="2099" placeholder="22"
+              class="border border-gray-200 rounded-md px-4 py-2" />
+          </div>
+
+          <!-- Term To -->
+          <div class="col-span-2 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Term To (Year)</label>
+            <input type="number" v-model="officialForm.termTo" required min="1900" max="2099" placeholder="25"
+              class="border border-gray-200 rounded-md px-4 py-2" />
+          </div>
+
+          <!-- Number of Term -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Number of Term</label>
+            <input type="number" v-model="officialForm.no_of_per_term"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
+          </div>
+
+          <!-- Elected Date -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Elected Date</label>
+            <input type="date" v-model="officialForm.elected_date"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
+          </div>
+
+          <!-- Start Date -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">Start Date</label>
+            <input type="date" v-model="officialForm.start_date"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
+          </div>
+
+          <!-- End Date -->
+          <div class="col-span-4 flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-600">End Date</label>
+            <input type="date" v-model="officialForm.end_date"
+              class="border border-gray-300 rounded-md px-4 py-2 text-sm" />
+          </div>
+
+          <!-- Description -->
+          <div class="col-span-12 flex flex-col gap-2 mt-4">
+            <label class="text-sm font-semibold text-gray-600">Description</label>
+            <textarea v-model="officialForm.description" placeholder="Enter a detailed description..." rows="4"
+              class="resize-y border border-gray-200 rounded-md px-4 py-2"></textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-center mt-10 gap-4">
+          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">
+            Save
+          </button>
+          <router-link to="/officials" class="bg-white px-6 py-2 rounded-xl shadow-xl font-bold hover:bg-gray-200">
+            Cancel
+          </router-link>
         </div>
       </form>
     </template>

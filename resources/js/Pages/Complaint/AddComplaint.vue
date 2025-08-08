@@ -8,6 +8,7 @@ import { onMounted, ref, watch, computed } from 'vue';
 
 const router = useRouter();
 const { showToast } = useToast();
+
 const complaintStore = useComplaintStore();
 const residentStore = useResidentStore();
 const residents = ref([]);
@@ -168,7 +169,7 @@ const submitForm = async () => {
 
 <template>
   <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
-    <form @submit.prevent="createComplaint" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
+    <form @submit.prevent="submitForm" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
       <h1 class="text-2xl font-bold mb-6">Add New Complaint</h1>
 
       <div class="grid grid-cols-2 gap-4">
@@ -262,7 +263,7 @@ const submitForm = async () => {
         </div>
         <!-- Witness -->
         <div class="flex flex-col">
-          <label class="font-semibold text-sm">Witness</label>
+          <label class="font-semibold text-sm">Witness/es</label>
           <textarea v-model="complaintForm.witness" class="border rounded-md p-2"></textarea>
         </div>
 

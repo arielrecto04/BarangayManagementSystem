@@ -3,7 +3,7 @@ import { AuthLayout } from "@/Layouts";
 import { Table, Paginate } from '@/Components';
 import { useComplaintStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref, nextTick } from "vue";
 import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
 import { watch } from 'vue';
@@ -104,6 +104,11 @@ const { complaints, isLoading, paginate } = storeToRefs(complaintStore);
 const currentPage = ref(route.query.page || 1);
 const resolutionUpdates = ref({});
 const statusUpdates = ref({});
+const menuPosition = ref({ top: 0, left: 0 });
+const teleportMenuRowId = ref(null);
+
+// Burger menu state
+const openMenus = ref({});
 
 const handlePageChange = (page) => {
   currentPage.value = page;
@@ -118,9 +123,64 @@ const selectedComplaint = ref(null);
 const showPrintModal = ref(false);
 const selectedPrintComplaint = ref(null);
 
+// FIXED: Better menu toggle with proper close functionality
+const toggleMenu = async (event, complaintId) => {
+  // If clicking the same menu that's already open, close it
+  if (teleportMenuRowId.value === complaintId) {
+    teleportMenuRowId.value = null;
+    return;
+  }
+
+  // Close any existing menu first
+  if (teleportMenuRowId.value !== null) {
+    teleportMenuRowId.value = null;
+    // Wait for DOM to update before opening new menu
+    await nextTick();
+  }
+
+  const rect = event.currentTarget.getBoundingClientRect();
+  const dropdownWidth = 192; // Tailwind 'w-48' approx width in px
+  const viewportWidth = window.innerWidth;
+  const scrollX = window.scrollX;
+
+  let leftPosition = rect.left + scrollX;
+
+  // Check if dropdown will overflow right edge
+  if (rect.left + dropdownWidth > viewportWidth) {
+    // Open dropdown to the left of the button
+    leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
+  } else {
+    // Open dropdown aligned to button's left edge (right side)
+    leftPosition = rect.left + scrollX;
+  }
+  leftPosition = Math.max(leftPosition, 0);
+
+  menuPosition.value = {
+    top: rect.bottom + window.scrollY,
+    left: leftPosition,
+  };
+
+  // Set after position is calculated
+  await nextTick();
+  teleportMenuRowId.value = complaintId;
+};
+
+const closeMenu = (complaintId) => {
+  openMenus.value[complaintId] = false;
+  teleportMenuRowId.value = null;
+};
+
+const closeAllMenus = () => {
+  Object.keys(openMenus.value).forEach(id => {
+    openMenus.value[id] = false;
+  });
+  teleportMenuRowId.value = null;
+};
+
 const openModal = (complaint) => {
   selectedComplaint.value = complaint;
   showModal.value = true;
+  closeAllMenus();
 };
 
 const closeModal = () => {
@@ -132,6 +192,7 @@ const closeModal = () => {
 const openPrintModal = (complaint) => {
   selectedPrintComplaint.value = complaint;
   showPrintModal.value = true;
+  closeAllMenus();
 };
 
 const closePrintModal = () => {
@@ -145,19 +206,20 @@ const handlePrint = () => {
 
 const emit = defineEmits(['status-updated']);
 
-const updateStatus = async (complaintId) => {
-  const updatedStatus = statusUpdates.value[complaintId];
-  if (!updatedStatus) {
+const updateStatus = async (complaintId, newStatus) => {
+  if (!newStatus) {
     showToast({ icon: 'warning', title: 'Please select a status.' });
     return;
   }
   try {
-    await complaintStore.updateComplaint(complaintId, { status: updatedStatus });
+    await complaintStore.updateComplaint(complaintId, { status: newStatus });
     const index = complaints.value.findIndex(c => c.id === complaintId);
     if (index !== -1) {
-      complaints.value[index].status = updatedStatus;
+      complaints.value[index].status = newStatus;
     }
+    statusUpdates.value[complaintId] = newStatus;
     showToast({ icon: 'success', title: 'Status updated successfully' });
+    closeMenu(complaintId);
   } catch (error) {
     showToast({ icon: 'error', title: error.message });
   }
@@ -169,10 +231,16 @@ const deleteComplaint = async (complaintId) => {
       await complaintStore.deleteComplaint(complaintId);
       showToast({ icon: 'success', title: 'Complaint deleted successfully' });
       complaintStore.getComplaints(currentPage.value);
+      closeMenu(complaintId);
     } catch (error) {
       showToast({ icon: 'error', title: error.message });
     }
   }
+};
+
+const editComplaint = (complaintId) => {
+  router.push(`/complaints/edit-complaint/${complaintId}`);
+  closeMenu(complaintId);
 };
 
 const columns = [
@@ -193,6 +261,23 @@ onMounted(() => {
   } else {
     complaintStore.getComplaints(page);
   }
+
+  // FIXED: Better click outside handler
+  const handleClickOutside = (event) => {
+    const target = event.target;
+    if (!target.closest('.burger-menu-container') &&
+      !target.closest('[data-teleport-menu]') &&
+      teleportMenuRowId.value !== null) {
+      teleportMenuRowId.value = null;
+    }
+  };
+
+  document.addEventListener('click', handleClickOutside);
+
+  // Cleanup listener on unmount
+  onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+  });
 });
 
 watch(complaints, (newComplaints) => {
@@ -217,37 +302,105 @@ watch(complaints, (newComplaints) => {
       formatted_filing_date: formatDateTime(c.filing_date)
     }))">
       <template #actions="{ row }">
-        <router-link :to="`/complaints/edit-complaint/${row.id}`" class="bg-blue-500 text-white px-2 py-1 rounded">
+        <div class="relative burger-menu-container">
+          <!-- Burger Menu Button -->
+          <button @click="(e) => toggleMenu(e, row.id)"
+            class="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            :class="{ 'bg-gray-100': teleportMenuRowId === row.id }">
+            <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+              <path d="M10 4a2 2 0 100-4 2 2 0 000 4z" />
+              <path d="M10 20a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
+          </button>
+        </div>
+      </template>
+    </Table>
+
+    <!-- FIXED: Moved Teleport outside of Table template and added unique container -->
+    <Teleport to="body">
+      <div v-if="teleportMenuRowId !== null" data-teleport-menu :style="{
+        position: 'absolute',
+        top: menuPosition.top + 'px',
+        left: menuPosition.left + 'px',
+        zIndex: 9999
+      }" class="bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-48">
+
+        <!-- Edit Option -->
+        <button @click="editComplaint(teleportMenuRowId)"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
           Edit
-        </router-link>
-
-        <button @click="deleteComplaint(row.id)" class="bg-red-500 text-white px-2 py-1 rounded ml-2">
-          Delete
         </button>
 
-        <select v-model="statusUpdates[row.id]" class="ml-2 border rounded px-2 py-1 text-sm">
-          <option disabled value="">Update</option>
-          <option value="Open">Open</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Resolved">Resolved</option>
-        </select>
-
-        <button @click="updateStatus(row.id)" class="bg-green-500 text-white px-2 py-1 rounded ml-2">
-          Apply
-        </button>
-
-        <!-- View Button -->
-        <button @click="openModal(row)" class="bg-gray-500 text-white px-2 py-1 rounded ml-2">
+        <!-- View Option -->
+        <button @click="openModal(complaints.find(c => c.id === teleportMenuRowId))"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
           View
         </button>
 
-        <!-- Print Button -->
-        <button @click="openPrintModal(row)" class="bg-purple-500 text-white px-2 py-1 rounded ml-2">
+        <!-- Print Option -->
+        <button @click="openPrintModal(complaints.find(c => c.id === teleportMenuRowId))"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
           Print
         </button>
 
-      </template>
-    </Table>
+        <!-- Divider -->
+        <hr class="my-2 border-gray-200">
+
+        <!-- Status Update Options -->
+        <div class="px-4 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          Update Status
+        </div>
+
+        <button @click="updateStatus(teleportMenuRowId, 'Open')"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 flex items-center gap-2"
+          :class="{ 'bg-yellow-50 text-yellow-700': complaints.find(c => c.id === teleportMenuRowId)?.status === 'Open' }">
+          <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+          Open
+        </button>
+
+        <button @click="updateStatus(teleportMenuRowId, 'In Progress')"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+          :class="{ 'bg-blue-50 text-blue-700': complaints.find(c => c.id === teleportMenuRowId)?.status === 'In Progress' }">
+          <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+          In Progress
+        </button>
+
+        <button @click="updateStatus(teleportMenuRowId, 'Resolved')"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2"
+          :class="{ 'bg-green-50 text-green-700': complaints.find(c => c.id === teleportMenuRowId)?.status === 'Resolved' }">
+          <div class="w-2 h-2 rounded-full bg-green-500"></div>
+          Resolved
+        </button>
+
+        <!-- Divider -->
+        <hr class="my-2 border-gray-200">
+
+        <!-- Delete Option -->
+        <button @click="deleteComplaint(teleportMenuRowId)"
+          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Delete
+        </button>
+      </div>
+    </Teleport>
 
     <Paginate v-if="paginate && !isLoading" @page-changed="handlePageChange" :maxVisibleButtons="5"
       :totalPages="paginate.last_page" :totalItems="paginate.total" :currentPage="paginate.current_page"

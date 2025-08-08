@@ -25,6 +25,72 @@ export const useComplaintStore = defineStore("complaint", {
             try {
                 const response = await axios.get(`/complaints?page=${page}`);
                 this._complaints = response.data.data;
+                this._paginate = {
+                    current_page: response.data.current_page,
+                    last_page: response.data.last_page,
+                    per_page: response.data.per_page,
+                    total: response.data.total,
+                };
+            } catch (error) {
+                console.error("Error fetching complaints:", error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        async fetchComplaint(id) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                const response = await axios.get(`/complaints/${id}`);
+                this._complaint = response.data;
+            } catch (error) {
+                console.error(`Error fetching complaint ID ${id}:`, error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        async addComplaint(data) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                const response = await axios.post("/complaints", data);
+                this._complaints.push(response.data.data);
+            } catch (error) {
+                console.error("Error adding complaint:", error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        async updateComplaint(id, data) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                let response;
+
+                // Check if data is FormData (for file uploads)
+                if (data instanceof FormData) {
+                    response = await axios.post(`/complaints/${id}`, data, {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    });
+                } else {
+                    // Regular JSON update
+                    response = await axios.patch(`/complaints/${id}`, data);
+                }
+
+                const index = this._complaints.findIndex((c) => c.id === id);
+                if (index !== -1) {
+                    this._complaints[index] = response.data.data;
+                }
+
+                return response.data;
             } catch (error) {
                 console.error(`Error updating complaint ID ${id}:`, error);
                 this._error = error;

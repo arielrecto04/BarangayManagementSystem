@@ -6,10 +6,7 @@ export const useBlotterStore = defineStore("blotter", {
         _blotters: [],
         _blotter: null,
         _paginate: null,
-        _blotter: null,
-        _paginate: null,
         _isLoading: false,
-        _error: null,
         _error: null,
     }),
 
@@ -181,6 +178,7 @@ export const useBlotterStore = defineStore("blotter", {
 
         prepareFormData(blotterData) {
             const formData = new FormData();
+
             Object.entries(blotterData).forEach(([key, value]) => {
                 if (key === "supporting_documents" && Array.isArray(value)) {
                     value.forEach((file) => {

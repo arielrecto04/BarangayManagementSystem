@@ -7,6 +7,7 @@ import { useComplaintStore, useResidentStore } from '@/Stores';
 import useToast from '@/Utils/useToast';
 import { axios } from '@/utils';
 
+const router = useRouter();
 const route = useRoute();
 const { showToast } = useToast();
 
@@ -366,8 +367,6 @@ const submitForm = async () => {
         }
     }
 };
-
-onMounted(fetchComplaint);
 </script>
 
 <template>
@@ -532,19 +531,11 @@ onMounted(fetchComplaint);
             <!-- Action Buttons -->
             <div class="mt-6 flex justify-end gap-4">
                 <button type="submit" :disabled="isLoading || isDestroyed"
-                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-all transform hover:scale-105 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {{ isLoading ? 'Updating...' : 'Update' }}
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md disabled:opacity-50">
+                    {{ isLoading ? 'Updating...' : 'Update Complaint' }}
                 </button>
-                <button type="button" @click="handleCancel"
-                    class="bg-gray-300 px-4 py-2 rounded-md transition-all transform hover:scale-105 flex items-center gap-2"
+                <button type="button" @click="handleCancel" class="bg-gray-300 px-4 py-2 rounded-md"
                     :disabled="isLoading">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
                     Cancel
                 </button>
             </div>
