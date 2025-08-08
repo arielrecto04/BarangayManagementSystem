@@ -7,7 +7,6 @@ import useToast from '@/Utils/useToast';
 const router = useRouter();
 const { showToast } = useToast();
 const fieldErrors = ref({});
-const fieldErrors = ref({});
 
 const residentStore = useResidentStore();
 
@@ -366,6 +365,9 @@ const createResident = async () => {
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
+                            <p v-if="fieldErrors.gender" class="mt-1 text-red-600 text-xs">
+                                {{ fieldErrors.gender[0] }}
+                            </p>
                             <p v-if="fieldErrors.gender" class="mt-1 text-red-600 text-xs">
                                 {{ fieldErrors.gender[0] }}
                             </p>
