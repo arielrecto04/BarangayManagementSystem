@@ -263,7 +263,7 @@ const submitForm = async () => {
         </div>
         <!-- Witness -->
         <div class="flex flex-col">
-          <label class="font-semibold text-sm">Witness</label>
+          <label class="font-semibold text-sm">Witness/es</label>
           <textarea v-model="complaintForm.witness" class="border rounded-md p-2"></textarea>
         </div>
 

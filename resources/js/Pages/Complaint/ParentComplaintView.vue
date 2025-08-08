@@ -17,7 +17,6 @@ const complaintStore = useComplaintStore();
 const { complaints } = storeToRefs(complaintStore);
 const totalCases = computed(() => complaints.value.length);
 
-
 // Navigate to list view with filter
 const filterByStatus = async (status) => {
   await complaintStore.getComplaints(); // Refresh complaints
@@ -43,7 +42,6 @@ const openCases = computed(() =>
 const resolved = computed(() =>
   complaints.value.filter((c) => c.status === "Resolved").length
 );
-
 </script>
 
 <template>
@@ -71,8 +69,7 @@ const resolved = computed(() =>
         </div>
 
         <!-- In Progress -->
-        <div @click="filterByStatus('In Progress')"
-          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition">
+        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
           <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
             In Progress
             <ArrowPathIcon class="w-5 h-5 text-gray-500 animate-spin" />
@@ -81,8 +78,7 @@ const resolved = computed(() =>
         </div>
 
         <!-- Open Cases -->
-        <div @click="filterByStatus('Open')"
-          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition">
+        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
           <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
             Open Cases
             <ChartPieIcon class="w-5 h-5 text-gray-500" />
@@ -91,8 +87,7 @@ const resolved = computed(() =>
         </div>
 
         <!-- Resolved -->
-        <div @click="filterByStatus('Resolved')"
-          class="cursor-pointer bg-white rounded-xl p-5 shadow hover:bg-gray-50 transition">
+        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
           <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
             Resolved
             <CheckCircleIcon class="w-5 h-5 text-gray-500" />
