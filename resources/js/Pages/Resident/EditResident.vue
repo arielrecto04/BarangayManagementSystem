@@ -1,6 +1,6 @@
 <script setup>
 import { useResidentStore } from '@/Stores'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast';
 import { storeToRefs } from 'pinia';
@@ -11,27 +11,71 @@ const { showToast } = useToast();
 const residentStore = useResidentStore();
 
 const { resident, isLoading } = storeToRefs(residentStore);
-
 const residentId = router.currentRoute.value.params.id;
 
+// Reactive formErrors object to hold any validation messages
+const formErrors = ref({});
 
+// Watch resident to reset formErrors on data load
+watch(resident, () => {
+    formErrors.value = {};
+}, { immediate: true });
+
+const validateForm = () => {
+    formErrors.value = {};
+    let isValid = true;
+
+    // Define required fields and their labels
+    const requiredFields = {
+        first_name: 'First Name',
+        last_name: 'Last Name',
+        birthday: 'Birthday',
+        age: 'Age',
+        gender: 'Gender',
+        address: 'Address'
+    };
+
+    for (const [field, label] of Object.entries(requiredFields)) {
+        const value = resident.value[field];
+        if (!value || (typeof value === 'string' && value.trim() === '')) {
+            formErrors.value[field] = `${label} is required.`;
+            isValid = false;
+        }
+    }
+
+    return isValid;
+};
 
 const updateResidentData = async () => {
+    if (!validateForm()) {
+        showToast({ icon: 'error', title: 'Please fill in all required fields.' });
+        return;
+    }
+
     try {
-        await residentStore.updateResident();
+        // Pass the updated resident data object to update method
+        await residentStore.updateResident(resident.value);
         showToast({ icon: 'success', title: 'Resident updated successfully' });
         router.push('/residents');
     } catch (error) {
-        showToast({ icon: 'error', title: error.message });
+        // Handle validation errors from backend (HTTP 422)
+        if (error.response && error.response.status === 422 && error.response.data.errors) {
+            const errors = error.response.data.errors;
+            formErrors.value = {};
+            for (const [field, messages] of Object.entries(errors)) {
+                formErrors.value[field] = messages.join(' ');
+            }
+            const message = Object.values(errors).flat().join(' ');
+            showToast({ icon: 'error', title: message });
+        } else {
+            showToast({ icon: 'error', title: error.message || 'Failed to update resident.' });
+        }
     }
-}
-
+};
 
 onMounted(() => {
     residentStore.getResidentById(residentId);
 });
-
-
 </script>
 
 <template>
@@ -44,12 +88,13 @@ onMounted(() => {
         <template v-else>
             <form @submit.prevent="updateResidentData" class="w-full max-w-6xl">
                 <div class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
-
                     <!-- Left Column -->
                     <div
                         class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
                         <h1 class="text-2xl font-bold mb-4 text-center">Edit Resident</h1>
-                        <h2 class="text-base font-medium mb-6 text-center text-gray-600">Resident Profile</h2>
+                        <h2 class="text-base font-medium mb-6 text-center text-gray-600">
+                            Resident Profile
+                        </h2>
 
                         <!-- Image Placeholder -->
                         <div
@@ -66,9 +111,13 @@ onMounted(() => {
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <!-- First Name -->
                             <div class="flex flex-col gap-2">
-                                <label for="first_name" class="text-sm font-semibold text-gray-600">First Name</label>
+                                <label for="first_name" class="text-sm font-semibold text-gray-600">First Name *</label>
                                 <input type="text" placeholder="First Name" v-model="resident.first_name"
-                                    class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                    :class="{ 'border-red-500': formErrors.first_name }"
+                                    class="border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                <p v-if="formErrors.first_name" class="text-red-500 text-sm mt-1">
+                                    {{ formErrors.first_name }}
+                                </p>
                             </div>
 
                             <!-- Middle Name -->
@@ -80,42 +129,58 @@ onMounted(() => {
 
                             <!-- Last Name -->
                             <div class="flex flex-col gap-2">
-                                <label for="last_name" class="text-sm font-semibold text-gray-600">Last Name</label>
+                                <label for="last_name" class="text-sm font-semibold text-gray-600">Last Name *</label>
                                 <input type="text" placeholder="Last Name" v-model="resident.last_name"
-                                    class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                    :class="{ 'border-red-500': formErrors.last_name }"
+                                    class="border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                <p v-if="formErrors.last_name" class="text-red-500 text-sm mt-1">
+                                    {{ formErrors.last_name }}
+                                </p>
                             </div>
 
                             <!-- Birthday -->
                             <div class="flex flex-col gap-2">
-                                <label for="birthday" class="text-sm font-semibold text-gray-600">Birthday</label>
+                                <label for="birthday" class="text-sm font-semibold text-gray-600">Birthday *</label>
                                 <input type="date" placeholder="Birthday" v-model="resident.birthday"
-                                    class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                    :class="{ 'border-red-500': formErrors.birthday }"
+                                    class="border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                <p v-if="formErrors.birthday" class="text-red-500 text-sm mt-1">
+                                    {{ formErrors.birthday }}
+                                </p>
                             </div>
 
                             <!-- Age -->
                             <div class="flex flex-col gap-2">
-                                <label for="age" class="text-sm font-semibold text-gray-600">Age</label>
+                                <label for="age" class="text-sm font-semibold text-gray-600">Age *</label>
                                 <input type="number" placeholder="Age" v-model="resident.age"
-                                    class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                    :class="{ 'border-red-500': formErrors.age }"
+                                    class="border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                <p v-if="formErrors.age" class="text-red-500 text-sm mt-1">{{ formErrors.age }}</p>
                             </div>
 
                             <!-- Gender -->
                             <div class="flex flex-col gap-2">
-                                <label for="gender" class="text-sm font-semibold text-gray-600">Gender</label>
-                                <select v-model="resident.gender"
-                                    class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                <label for="gender" class="text-sm font-semibold text-gray-600">Gender *</label>
+                                <select v-model="resident.gender" :class="{ 'border-red-500': formErrors.gender }"
+                                    class="border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                                     <option value="" disabled>Select Gender</option>
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
                                 </select>
+                                <p v-if="formErrors.gender" class="text-red-500 text-sm mt-1">
+                                    {{ formErrors.gender }}
+                                </p>
                             </div>
 
                             <!-- Address -->
                             <div class="flex flex-col gap-2 md:col-span-2">
-                                <label for="address" class="text-sm font-semibold text-gray-600">Address</label>
+                                <label for="address" class="text-sm font-semibold text-gray-600">Address *</label>
                                 <input type="text" placeholder="Lot no. / Street / Subdivision / Barangay"
-                                    v-model="resident.address"
-                                    class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                    v-model="resident.address" :class="{ 'border-red-500': formErrors.address }"
+                                    class="border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+                                <p v-if="formErrors.address" class="text-red-500 text-sm mt-1">
+                                    {{ formErrors.address }}
+                                </p>
                             </div>
 
                             <!-- Contact Number -->

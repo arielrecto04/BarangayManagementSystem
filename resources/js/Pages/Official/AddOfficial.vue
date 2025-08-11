@@ -1,19 +1,24 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useOfficialStore } from '@/Stores'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useOfficialStore, useResidentStore } from '@/Stores'
 import { useRouter } from 'vue-router'
 import useToast from '@/Utils/useToast'
 import { storeToRefs } from 'pinia'
+import Multiselect from 'vue-multiselect'
+import 'vue-multiselect/dist/vue-multiselect.min.css'
 
+// Stores & router
 const router = useRouter()
 const { showToast } = useToast()
 const officialStore = useOfficialStore()
 const { officials } = storeToRefs(officialStore)
+const residentStore = useResidentStore()
+
+// Data
+const residents = ref([])
+const selectedResident = ref(null)
 
 const officialDataForm = ref({
-  firstName: '',
-  middleName: '',
-  lastName: '',
   position: '',
   termFrom: '',
   termTo: '',
@@ -25,7 +30,18 @@ const officialDataForm = ref({
   resident_id: null
 })
 
-// Position options with their limits
+// Load residents
+onMounted(async () => {
+  await residentStore.getResidents()
+  residents.value = residentStore.residents
+})
+
+// Watch resident selection
+watch(selectedResident, (val) => {
+  officialDataForm.value.resident_id = val ? val.id : null
+})
+
+// Position options
 const positionOptions = [
   // Barangay Officials
   { value: 'Barangay Captain', label: 'Barangay Captain', limit: 1, section: 'Barangay Officials' },
@@ -54,19 +70,17 @@ const positionOptions = [
   { value: 'BPLO Section', label: 'BPLO Section (Business Permit and Licensing)', limit: 3, section: 'Barangay Program Based-Committees' }
 ]
 
-// Group positions by section
+// Group positions
 const groupedPositions = computed(() => {
   const groups = {}
   positionOptions.forEach(option => {
-    if (!groups[option.section]) {
-      groups[option.section] = []
-    }
+    if (!groups[option.section]) groups[option.section] = []
     groups[option.section].push(option)
   })
   return groups
 })
 
-// Check if position has reached its limit
+// Check position limit
 const checkPositionLimit = (position) => {
   const positionOption = positionOptions.find(opt => opt.value === position)
   if (!positionOption) return { canAdd: true, message: '' }
@@ -87,43 +101,40 @@ const checkPositionLimit = (position) => {
   return { canAdd, message }
 }
 
-// Computed property for position validation
+// Computed validation
 const positionValidation = computed(() => {
   if (!officialDataForm.value.position) return { canAdd: true, message: '' }
   return checkPositionLimit(officialDataForm.value.position)
 })
 
-// Validate all fields filled
+// Validate form
 const validateForm = () => {
-  const requiredFields = [
-    officialDataForm.value.firstName,
-    officialDataForm.value.lastName,
-    officialDataForm.value.position,
-  ]
-
-  if (!requiredFields.every(field => field !== '' && field !== null)) {
-    showToast({ icon: 'error', title: 'Please fill all required fields before submitting.' })
+  if (!officialDataForm.value.resident_id) {
+    showToast({ icon: 'error', title: 'Please select a resident.' })
     return false
   }
-
+  if (!officialDataForm.value.position) {
+    showToast({ icon: 'error', title: 'Please select a position.' })
+    return false
+  }
   if (!positionValidation.value.canAdd) {
     showToast({ icon: 'error', title: 'Position limit reached', text: positionValidation.value.message })
     return false
   }
-
   return true
 }
 
+// Create official
 const createOfficial = async () => {
   if (!validateForm()) return
 
-  // Compose term as YY-YY string
   const term = officialDataForm.value.termFrom && officialDataForm.value.termTo
     ? `${officialDataForm.value.termFrom}-${officialDataForm.value.termTo}`
     : ''
 
-  // Compose full name
-  const name = `${officialDataForm.value.firstName} ${officialDataForm.value.middleName} ${officialDataForm.value.lastName}`.trim()
+  const name = selectedResident.value
+    ? `${selectedResident.value.first_name} ${selectedResident.value.middle_name} ${selectedResident.value.last_name}`.trim()
+    : ''
 
   try {
     await officialStore.addOfficial({
@@ -148,6 +159,7 @@ const createOfficial = async () => {
   }
 }
 </script>
+
 
 <template>
   <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
