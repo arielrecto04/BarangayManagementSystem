@@ -20,6 +20,7 @@ const residentDataForm = ref({
     contact_person: '',
     family_member: '',
     emergency_contact: '',
+    email: '',
 })
 
 // Reactive object to hold errors for each field
@@ -35,7 +36,8 @@ const validateForm = () => {
         birthday: 'Birthday',
         age: 'Age',
         gender: 'Gender',
-        address: 'Address'
+        address: 'Address',
+        contact_number: 'Contact Number',
     }
 
     for (const [field, label] of Object.entries(requiredFields)) {
@@ -102,7 +104,7 @@ const createResident = async () => {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- First Name -->
                         <div>
-                            <label class="text-sm font-semibold text-gray-700">First Name *</label>
+                            <label class="text-sm font-semibold text-gray-700">First Name</label>
                             <input type="text" placeholder="First Name" v-model="residentDataForm.first_name"
                                 :class="{ 'border-red-500': formErrors.first_name }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -115,12 +117,12 @@ const createResident = async () => {
                         <div>
                             <label class="text-sm font-semibold text-gray-700">Middle Name</label>
                             <input type="text" placeholder="Middle Name" v-model="residentDataForm.middle_name"
-                                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
 
                         <!-- Last Name -->
                         <div>
-                            <label class="text-sm font-semibold text-gray-700">Last Name *</label>
+                            <label class="text-sm font-semibold text-gray-700">Last Name</label>
                             <input type="text" placeholder="Last Name" v-model="residentDataForm.last_name"
                                 :class="{ 'border-red-500': formErrors.last_name }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -131,7 +133,7 @@ const createResident = async () => {
 
                         <!-- Birthday -->
                         <div>
-                            <label class="text-sm font-semibold text-gray-700">Birthday *</label>
+                            <label class="text-sm font-semibold text-gray-700">Birthday</label>
                             <input type="date" v-model="residentDataForm.birthday"
                                 :class="{ 'border-red-500': formErrors.birthday }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -142,7 +144,7 @@ const createResident = async () => {
 
                         <!-- Age -->
                         <div>
-                            <label class="text-sm font-semibold text-gray-700">Age *</label>
+                            <label class="text-sm font-semibold text-gray-700">Age</label>
                             <input type="number" placeholder="Age" v-model="residentDataForm.age"
                                 :class="{ 'border-red-500': formErrors.age }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -153,7 +155,7 @@ const createResident = async () => {
 
                         <!-- Gender -->
                         <div>
-                            <label class="text-sm font-semibold text-gray-700">Gender *</label>
+                            <label class="text-sm font-semibold text-gray-700">Gender</label>
                             <select v-model="residentDataForm.gender" :class="{ 'border-red-500': formErrors.gender }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="" disabled>Select Gender</option>
@@ -167,7 +169,7 @@ const createResident = async () => {
 
                         <!-- Address -->
                         <div class="md:col-span-2">
-                            <label class="text-sm font-semibold text-gray-700">Address *</label>
+                            <label class="text-sm font-semibold text-gray-700">Address</label>
                             <input type="text"
                                 placeholder="Block & Lot no. / Street / Subdivision / Barangay / City / Province"
                                 v-model="residentDataForm.address" :class="{ 'border-red-500': formErrors.address }"
@@ -177,11 +179,22 @@ const createResident = async () => {
                             </p>
                         </div>
 
+                        <!-- Email -->
+                        <div>
+                            <label class="text-sm font-semibold text-gray-700">Email</label>
+                            <input type="text" placeholder="Email" v-model="residentDataForm.email"
+                                :class="{ 'border-red-500': formErrors.email }"
+                                class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            <p v-if="formErrors.email" class="text-red-500 text-sm mt-1">
+                                {{ formErrors.email }}
+                            </p>
+                        </div>
+
                         <!-- Contact Number -->
                         <div>
-                            <label class="text-sm font-semibold text-gray-700">Contact No.</label>
+                            <label class="text-sm font-semibold text-gray-700">Contact Number</label>
                             <input type="text" placeholder="Contact No." v-model="residentDataForm.contact_number"
-                                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
 
                         <!-- Family Member -->
