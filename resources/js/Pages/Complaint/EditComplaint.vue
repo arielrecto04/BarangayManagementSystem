@@ -50,7 +50,6 @@ const watchers = [];
 const formatDateTimeForInput = (isoString) => {
     if (!isoString) return '';
     const date = new Date(isoString);
-    // Format to YYYY-MM-DDTHH:MM format required by datetime-local input
     return date.toISOString().slice(0, 16);
 };
 
@@ -71,14 +70,9 @@ const getFileName = (doc) => {
 };
 
 const handleFileUpload = (event) => {
-    if (isDestroyed.value) return; // Prevent operations after destruction
-
+    if (isDestroyed.value) return;
     const newFiles = Array.from(event.target.files);
-
-    const existingNames = new Set(
-        newSupportingDocuments.value.map(file => file.name)
-    );
-
+    const existingNames = new Set(newSupportingDocuments.value.map(file => file.name));
     const uniqueNewFiles = newFiles.filter(file => !existingNames.has(file.name));
 
     newSupportingDocuments.value = [
@@ -126,14 +120,11 @@ const respondentWatcher = watch(selectedRespondent, (val) => {
     complaintForm.value.respondent_id = val?.id ?? '';
 });
 
-// Store watchers for cleanup
 watchers.push(complainantWatcher, respondentWatcher);
 
 // Cleanup function
 const cleanup = () => {
     isDestroyed.value = true;
-
-    // Stop all watchers
     watchers.forEach(stopWatcher => {
         if (typeof stopWatcher === 'function') {
             try {
@@ -144,7 +135,6 @@ const cleanup = () => {
         }
     });
 
-    // Clear reactive references
     selectedComplainant.value = null;
     selectedRespondent.value = null;
     residents.value = [];
@@ -154,7 +144,7 @@ const cleanup = () => {
     isLoading.value = false;
 };
 
-// Navigation guard with proper cleanup
+// Navigation guard
 onBeforeRouteLeave((to, from, next) => {
     if (isLoading.value) {
         if (confirm('Form is still processing. Are you sure you want to leave?')) {
@@ -169,7 +159,6 @@ onBeforeRouteLeave((to, from, next) => {
     }
 });
 
-// Component cleanup
 onBeforeUnmount(() => {
     cleanup();
 });
@@ -184,21 +173,15 @@ onMounted(async () => {
         isDestroyed.value = false;
 
         await residentStore.getResidents();
-
         if (isDestroyed.value) return;
-
         residents.value = residentStore.residents;
 
         const response = await axios.get(`/complaints/${complaintId}`);
-
         if (isDestroyed.value) return;
 
         const complaintData = response.data;
-
-        // Assign all the data to the form
         Object.assign(complaintForm.value, complaintData);
 
-        // Format datetime fields for input
         if (complaintData.filing_date) {
             complaintForm.value.filing_date = formatDateTimeForInput(complaintData.filing_date);
         }
@@ -206,7 +189,6 @@ onMounted(async () => {
             complaintForm.value.incident_datetime = formatDateTimeForInput(complaintData.incident_datetime);
         }
 
-        // Set up existing supporting documents
         if (complaintData.supporting_documents) {
             existingSupportingDocuments.value = Array.isArray(complaintData.supporting_documents)
                 ? [...complaintData.supporting_documents]
@@ -216,7 +198,6 @@ onMounted(async () => {
         await nextTick();
 
         if (!isDestroyed.value) {
-            // Use string comparison for consistent matching
             if (complaintData.complainant_id) {
                 selectedComplainant.value = residents.value.find(
                     r => String(r.id) === String(complaintData.complainant_id)
@@ -228,7 +209,6 @@ onMounted(async () => {
                 );
             }
         }
-
     } catch (error) {
         console.error('Error in onMounted:', error);
         if (!isDestroyed.value) {
@@ -242,64 +222,69 @@ onMounted(async () => {
     }
 });
 
-// Enhanced cancel handler with proper cleanup
 const handleCancel = async () => {
     cleanup();
-
-    // Use nextTick to ensure cleanup completes before navigation
     await nextTick();
-
     try {
         router.push('/complaints/list-complaints');
     } catch (error) {
-        // Handle navigation errors gracefully
         console.warn('Navigation error:', error);
     }
 };
 
-const submitForm = async () => {
-    if (isLoading.value || isDestroyed.value) return; // Prevent multiple submissions and operations on destroyed component
+// ✅ New validation function
+const validateForm = () => {
+    formErrors.value = {};
+    let isValid = true;
 
-    formErrors.value = {}; // reset
+    const fields = {
+        complainant_id: 'Complainant',
+        respondent_id: 'Respondent',
+        case_no: 'Case Number',
+        title: 'Title',
+        description: 'Description',
+        resolution: 'Resolution',
+        filing_date: 'Filing Date',
+        nature_of_complaint: 'Nature of Complaint',
+        incident_datetime: 'Date/Time of Incident',
+        incident_location: 'Location of Incident',
+        witness: 'Witness',
+        status: 'Status',
+    };
 
-    // Frontend validation
-    const requiredFields = [
-        'complainant_id',
-        'respondent_id',
-        'case_no',
-        'title',
-        'description',
-        'resolution',
-        'filing_date',
-        'nature_of_complaint',
-        'incident_datetime',
-        'incident_location',
-        'witness'
-    ];
-
-    requiredFields.forEach(field => {
+    for (const [field, label] of Object.entries(fields)) {
         if (!complaintForm.value[field]) {
-            formErrors.value[field] = 'Please fill out this field';
+            formErrors.value[field] = `${label} is required.`;
+            isValid = false;
         }
-    });
+    }
 
-    // Prevent same person as both complainant and respondent
     if (
         complaintForm.value.complainant_id &&
         complaintForm.value.respondent_id &&
         complaintForm.value.complainant_id === complaintForm.value.respondent_id
     ) {
-        showToast({ icon: 'error', title: 'Complainant and Respondent cannot be the same person.' });
-        return;
+        formErrors.value.complainant_id = 'Complainant and Respondent cannot be the same.';
+        formErrors.value.respondent_id = 'Complainant and Respondent cannot be the same.';
+        isValid = false;
     }
 
-    if (Object.keys(formErrors.value).length > 0) {
+    return isValid;
+};
+
+// ✅ Updated submitForm using validateForm
+const submitForm = async () => {
+    if (isLoading.value || isDestroyed.value) return;
+
+    formErrors.value = {};
+
+    if (!validateForm()) {
         showToast({ icon: 'error', title: 'Please fill in all required fields.' });
         return;
     }
 
     try {
-        isLoading.value = true; // Set loading state
+        isLoading.value = true;
 
         const complainant = residents.value.find(r => r.id === complaintForm.value.complainant_id);
         const respondent = residents.value.find(r => r.id === complaintForm.value.respondent_id);
@@ -311,53 +296,47 @@ const submitForm = async () => {
             ? `${respondent.first_name} ${respondent.last_name}`
             : '';
 
-        // Prepare form data
         const formData = new FormData();
 
-        // Add all form fields
         Object.entries(complaintForm.value).forEach(([key, value]) => {
             if (key !== 'supporting_documents') {
                 formData.append(key, value || '');
             }
         });
 
-        // Add existing documents (keep them)
         if (existingSupportingDocuments.value.length > 0) {
             formData.append('existing_documents', JSON.stringify(existingSupportingDocuments.value));
         }
-
-        // Add new documents
         if (newSupportingDocuments.value.length > 0) {
             newSupportingDocuments.value.forEach(file => {
                 formData.append('supporting_documents[]', file);
             });
         }
 
-        // Use PATCH method for updates with _method override
         formData.append('_method', 'PATCH');
 
         await complaintStore.updateComplaint(complaintId, formData);
 
-        if (isDestroyed.value) return; // Check if component was destroyed during operation
+        if (isDestroyed.value) return;
 
         showToast({ icon: 'success', title: 'Complaint updated successfully.' });
-
         await complaintStore.getComplaints(1);
-
-        // Cleanup before navigation
         cleanup();
-
-        // Add a small delay and use nextTick to ensure DOM updates complete
         await nextTick();
         await new Promise(resolve => setTimeout(resolve, 100));
-
         router.push('/complaints/list-complaints');
-    } catch (error) {
-        if (isDestroyed.value) return; // Don't show errors if component is destroyed
 
-        if (error.response && error.response.status === 422) {
-            const messages = Object.values(error.response.data.errors).flat().join(' ');
-            showToast({ icon: 'error', title: messages });
+    } catch (error) {
+        if (isDestroyed.value) return;
+
+        if (error.response && error.response.status === 422 && error.response.data.errors) {
+            const errors = error.response.data.errors;
+            formErrors.value = {};
+            for (const [field, messages] of Object.entries(errors)) {
+                formErrors.value[field] = messages.join(' ');
+            }
+            const message = Object.values(errors).flat().join(' ');
+            showToast({ icon: 'error', title: message });
         } else {
             showToast({ icon: 'error', title: error.message });
         }
@@ -368,6 +347,7 @@ const submitForm = async () => {
     }
 };
 </script>
+
 
 <template>
     <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
@@ -393,6 +373,8 @@ const submitForm = async () => {
                         :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
                         placeholder="Search or select complainant" :searchable="true" :show-labels="false"
                         :key="`complainant-${residents.length}`" />
+                    <p v-if="formErrors.complainant_id" class="text-red-500 text-sm mt-1">{{ formErrors.complainant_id
+                    }}</p>
                 </div>
 
                 <!-- Respondent Searchable Dropdown -->
@@ -403,6 +385,8 @@ const submitForm = async () => {
                         :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
                         placeholder="Search or select respondent" :searchable="true" :show-labels="false"
                         :key="`respondent-${residents.length}`" />
+                    <p v-if="formErrors.respondent_id" class="text-red-500 text-sm mt-1">{{ formErrors.respondent_id }}
+                    </p>
                 </div>
 
                 <!-- Nature of Complaint -->
@@ -417,36 +401,44 @@ const submitForm = async () => {
                         <option value="VAWC">VAWC</option>
                         <option value="Business | Economic">Business | Economic</option>
                     </select>
+                    <p v-if="formErrors.nature_of_complaint" class="text-red-500 text-sm mt-1">{{
+                        formErrors.nature_of_complaint }}</p>
                 </div>
 
                 <!-- Case Number -->
                 <div class="flex flex-col">
                     <label class="font-semibold text-sm">Case Number</label>
                     <input v-model="complaintForm.case_no" type="text" class="border rounded-md p-2" />
+                    <p v-if="formErrors.case_no" class="text-red-500 text-sm mt-1">{{ formErrors.case_no }}</p>
                 </div>
 
                 <!-- Title -->
                 <div class="flex flex-col">
                     <label class="font-semibold text-sm">Title</label>
                     <input v-model="complaintForm.title" type="text" class="border rounded-md p-2" />
+                    <p v-if="formErrors.title" class="text-red-500 text-sm mt-1">{{ formErrors.title }}</p>
                 </div>
 
                 <!-- Location of Incident -->
                 <div class="flex flex-col">
                     <label class="font-semibold text-sm">Location of Incident</label>
                     <input v-model="complaintForm.incident_location" type="text" class="border rounded-md p-2" />
+                    <p v-if="formErrors.incident_location" class="text-red-500 text-sm mt-1">{{
+                        formErrors.incident_location }}</p>
                 </div>
 
                 <!-- Description -->
                 <div class="flex flex-col col-span-2">
                     <label class="font-semibold text-sm">Description</label>
                     <textarea v-model="complaintForm.description" class="border rounded-md p-2"></textarea>
+                    <p v-if="formErrors.description" class="text-red-500 text-sm mt-1">{{ formErrors.description }}</p>
                 </div>
 
                 <!-- Resolution -->
                 <div class="flex flex-col col-span-2">
                     <label class="font-semibold text-sm">Resolution</label>
                     <textarea v-model="complaintForm.resolution" class="border rounded-md p-2"></textarea>
+                    <p v-if="formErrors.resolution" class="text-red-500 text-sm mt-1">{{ formErrors.resolution }}</p>
                 </div>
 
                 <!-- Date & Time of Incident -->
@@ -454,12 +446,15 @@ const submitForm = async () => {
                     <label class="font-semibold text-sm">Date & Time of Incident</label>
                     <input type="datetime-local" v-model="complaintForm.incident_datetime"
                         class="border rounded-md p-2" />
+                    <p v-if="formErrors.incident_datetime" class="text-red-500 text-sm mt-1">{{
+                        formErrors.incident_datetime }}</p>
                 </div>
 
                 <!-- Filing Date & Time -->
                 <div class="flex flex-col">
                     <label class="font-semibold text-sm">Filing Date & Time</label>
                     <input type="datetime-local" v-model="complaintForm.filing_date" class="border rounded-md p-2" />
+                    <p v-if="formErrors.filing_date" class="text-red-500 text-sm mt-1">{{ formErrors.filing_date }}</p>
                 </div>
 
                 <!-- Status -->
@@ -470,6 +465,7 @@ const submitForm = async () => {
                         <option value="In Progress">In Progress</option>
                         <option value="Resolved">Resolved</option>
                     </select>
+                    <p v-if="formErrors.status" class="text-red-500 text-sm mt-1">{{ formErrors.status }}</p>
                 </div>
 
                 <!-- Witness -->
