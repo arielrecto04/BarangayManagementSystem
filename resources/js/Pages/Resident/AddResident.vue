@@ -26,6 +26,26 @@ const residentDataForm = ref({
 // Reactive object to hold errors for each field
 const formErrors = ref({})
 
+// Restrict number inputs for contact fields
+const restrictPhoneInput = (field) => {
+    let value = residentDataForm.value[field]
+
+    // Remove any non-digit characters
+    value = value.replace(/\D/g, '')
+
+    // Ensure it starts with 09
+    if (value.length > 0 && !value.startsWith('09')) {
+        value = '09' + value.replace(/^0+/, '').replace(/^9?/, '')
+    }
+
+    // Limit to 11 digits only
+    if (value.length > 11) {
+        value = value.slice(0, 11)
+    }
+
+    residentDataForm.value[field] = value
+}
+
 const validateForm = () => {
     formErrors.value = {}
     let isValid = true
@@ -45,6 +65,20 @@ const validateForm = () => {
             formErrors.value[field] = `${label} is required.`
             isValid = false
         }
+    }
+
+    // ✅ Extra validation for Contact Number
+    const contact = residentDataForm.value.contact_number
+    if (contact && !/^09\d{9}$/.test(contact)) {
+        formErrors.value.contact_number = 'Contact Number must start with 09 and be exactly 11 digits.'
+        isValid = false
+    }
+
+    // ✅ Extra validation for Emergency Contact (if provided)
+    const emergencyContact = residentDataForm.value.emergency_contact
+    if (emergencyContact && emergencyContact.trim() !== '' && !/^09\d{9}$/.test(emergencyContact)) {
+        formErrors.value.emergency_contact = 'Emergency Contact must start with 09 and be exactly 11 digits.'
+        isValid = false
     }
 
     return isValid
@@ -194,7 +228,12 @@ const createResident = async () => {
                         <div>
                             <label class="text-sm font-semibold text-gray-700">Contact Number</label>
                             <input type="text" placeholder="Contact No." v-model="residentDataForm.contact_number"
+                                @input="restrictPhoneInput('contact_number')"
+                                :class="{ 'border-red-500': formErrors.contact_number }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            <p v-if="formErrors.contact_number" class="text-red-500 text-sm mt-1">
+                                {{ formErrors.contact_number }}
+                            </p>
                         </div>
 
                         <!-- Family Member -->
@@ -209,7 +248,12 @@ const createResident = async () => {
                             <label class="text-sm font-semibold text-gray-700">Emergency Contact</label>
                             <input type="text" placeholder="Emergency Contact"
                                 v-model="residentDataForm.emergency_contact"
+                                @input="restrictPhoneInput('emergency_contact')"
+                                :class="{ 'border-red-500': formErrors.emergency_contact }"
                                 class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            <p v-if="formErrors.emergency_contact" class="text-red-500 text-sm mt-1">
+                                {{ formErrors.emergency_contact }}
+                            </p>
                         </div>
 
                         <!-- Contact Person -->

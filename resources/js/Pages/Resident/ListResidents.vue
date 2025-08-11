@@ -160,13 +160,6 @@ const columns = [
     { key: "last_name", label: "Last Name" },
     { key: "first_name", label: "First Name" },
     { key: "middle_name", label: "Middle Name" },
-    { key: "birthday", label: "Birthday" },
-    { key: "age", label: "Age" },
-    { key: "gender", label: "Gender" },
-    { key: "address", label: "Address" },
-    { key: "family_member", label: "Family Member" },
-    { key: "emergency_contact", label: "Emergency Contact" },
-    { key: "email", label: "Email" }
 ];
 </script>
 
@@ -253,7 +246,7 @@ const columns = [
     <transition name="fade">
         <div v-if="showModal" class="fixed inset-0 z-50 flex justify-center items-center bg-black/50 backdrop-blur-sm">
             <div
-                class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row max-w-6xl w-full max-h-[90vh] overflow-auto relative">
+                class="bg-white rounded-2xl shadow-xl flex flex-col md:flex-row max-w-6xl w-full max-h-[90vh] overflow-auto relative">
                 <!-- Left Column -->
                 <div
                     class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
