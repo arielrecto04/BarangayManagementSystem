@@ -1,15 +1,35 @@
 <script setup>
 import { AuthLayout } from "@/Layouts";
 import { Table } from '@/Components'
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useBlotterStore, useResidentStore } from '@/Stores'
 import { storeToRefs } from 'pinia';
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref, nextTick, watch } from "vue";
 import useToast from '@/Utils/useToast';
+import BlotterPrintTemplate from './BlotterPrintTemplate.vue';
+
+const showPrintModal = ref(false);
+const selectedPrintBlotter = ref(null);
+
+const openPrintModal = (blotter) => {
+    selectedPrintBlotter.value = blotter;
+    showPrintModal.value = true;
+    closeMenu(blotter.id);
+};
+
+const closePrintModal = () => {
+    showPrintModal.value = false;
+    selectedPrintBlotter.value = null;
+};
+
+const handlePrint = () => {
+    showToast({ icon: 'success', title: 'Print dialog opened successfully' });
+};
 
 const { showToast } = useToast();
-
 const route = useRoute();
+const router = useRouter();
+
 const blotterStore = useBlotterStore();
 const residentStore = useResidentStore();
 const { residents } = storeToRefs(residentStore);
@@ -20,7 +40,7 @@ const selectedBlotter = ref(null);
 
 const openModal = async (blotter) => {
     try {
-        // Fetch detailed blotter data to get supporting documents
+        // Fetch detailed blotter data; ensure latest supporting documents
         await blotterStore.getBlotterById(blotter.id);
         selectedBlotter.value = blotterStore.blotter;
         showModal.value = true;
@@ -28,12 +48,6 @@ const openModal = async (blotter) => {
         console.error('Error fetching blotter details:', error);
         showToast({ icon: 'error', title: 'Failed to load blotter details' });
     }
-};
-
-const getResidentNumber = (id) => {
-    if (!id) return 'N/A';
-    const resident = residents.value.find(r => r.id == id);
-    return resident ? resident.resident_number : 'N/A';
 };
 
 const closeModal = () => {
@@ -51,44 +65,35 @@ const formatDate = (dateString) => {
     });
 };
 
-// Updated getResidentName function to handle both ID and name
+const getResidentNumber = (id) => {
+    if (!id) return 'N/A';
+    const resident = residents.value.find(r => r.id == id);
+    return resident ? resident.resident_number : 'N/A';
+};
+
 const getResidentName = (id) => {
     if (!id) return 'N/A';
     const resident = residents.value.find(r => r.id == id);
     return resident ? `${resident.first_name} ${resident.last_name}` : 'N/A';
 };
 
-// Helper function to check if supporting documents exist and are valid
 const getSupportingDocuments = (blotter) => {
     if (!blotter?.supporting_documents) return [];
 
-    // Handle both array and string cases
     if (Array.isArray(blotter.supporting_documents)) {
-        // New format: array of objects with 'path' and 'name'
         return blotter.supporting_documents.filter(doc => {
-            // Handle new format (objects with path and name)
-            if (typeof doc === 'object' && doc.path && doc.name) {
-                return true;
-            }
-            // Handle old format (just strings)
-            if (typeof doc === 'string') {
-                return true;
-            }
+            if (typeof doc === 'object' && doc.path && doc.name) return true;
+            if (typeof doc === 'string') return true;
             return false;
         });
     }
 
-    // If it's a string (JSON), try to parse it
     if (typeof blotter.supporting_documents === 'string') {
         try {
             const parsed = JSON.parse(blotter.supporting_documents);
             return Array.isArray(parsed) ? parsed.filter(doc => {
-                if (typeof doc === 'object' && doc.path && doc.name) {
-                    return true;
-                }
-                if (typeof doc === 'string') {
-                    return true;
-                }
+                if (typeof doc === 'object' && doc.path && doc.name) return true;
+                if (typeof doc === 'string') return true;
                 return false;
             }) : [];
         } catch (e) {
@@ -96,33 +101,18 @@ const getSupportingDocuments = (blotter) => {
             return [];
         }
     }
-
     return [];
 };
 
-// Helper function to get filename - handles both old and new formats
 const getFileName = (doc) => {
-    // New format: object with name property
-    if (typeof doc === 'object' && doc.name) {
-        return doc.name;
-    }
-    // Old format: just file path string
-    if (typeof doc === 'string') {
-        return doc.split('/').pop() || 'Unknown file';
-    }
+    if (typeof doc === 'object' && doc.name) return doc.name;
+    if (typeof doc === 'string') return doc.split('/').pop() || 'Unknown file';
     return 'Unknown file';
 };
 
-// Helper function to get file path - handles both old and new formats
 const getFilePath = (doc) => {
-    // New format: object with path property
-    if (typeof doc === 'object' && doc.path) {
-        return doc.path;
-    }
-    // Old format: just file path string
-    if (typeof doc === 'string') {
-        return doc;
-    }
+    if (typeof doc === 'object' && doc.path) return doc.path;
+    if (typeof doc === 'string') return doc;
     return '';
 };
 
@@ -147,41 +137,180 @@ const columns = [
     }
 ];
 
-const deleteBlotter = async (blotterId) => {
-    try {
-        await blotterStore.deleteBlotter(blotterId);
-        showToast({ icon: 'success', title: 'Blotter deleted successfully' });
-    } catch (error) {
-        showToast({ icon: 'error', title: error.message });
+// --- Burger menu state and logic ---
+
+const menuPosition = ref({ top: 0, left: 0 });
+const teleportMenuRowId = ref(null);
+
+const toggleMenu = async (event, blotterId) => {
+    if (teleportMenuRowId.value === blotterId) {
+        teleportMenuRowId.value = null;
+        return;
     }
-}
+    if (teleportMenuRowId.value !== null) {
+        teleportMenuRowId.value = null;
+        await nextTick();
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const dropdownWidth = 192; // approximate width of dropdown (w-48)
+    const viewportWidth = window.innerWidth;
+    const scrollX = window.scrollX;
+
+    let leftPosition = rect.left + scrollX;
+    if (rect.left + dropdownWidth > viewportWidth) {
+        leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
+    } else {
+        leftPosition = rect.left + scrollX;
+    }
+    leftPosition = Math.max(leftPosition, 0);
+
+    menuPosition.value = {
+        top: rect.bottom + window.scrollY,
+        left: leftPosition,
+    };
+
+    await nextTick();
+    teleportMenuRowId.value = blotterId;
+};
+
+const closeMenu = (blotterId) => {
+    teleportMenuRowId.value = null;
+};
+
+// Close menu on clicking outside
+const handleClickOutside = (event) => {
+    const target = event.target;
+    if (!target.closest('.burger-menu-container') &&
+        !target.closest('[data-teleport-menu]') &&
+        teleportMenuRowId.value !== null) {
+        teleportMenuRowId.value = null;
+    }
+};
 
 onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
+
+const editBlotter = (blotterId) => {
+    router.push(`/blotter/edit-blotter/${blotterId}`);
+    closeMenu(blotterId);
+};
+
+const deleteBlotterWithMenu = async (blotterId) => {
+    if (confirm('Are you sure you want to delete this blotter?')) {
+        try {
+            await blotterStore.deleteBlotter(blotterId);
+            showToast({ icon: 'success', title: 'Blotter deleted successfully' });
+            blotterStore.getBlotters();
+            closeMenu(blotterId);
+        } catch (error) {
+            showToast({ icon: 'error', title: error.message });
+        }
+    }
+};
+
+const viewBlotter = (blotter) => {
+    openModal(blotter);
+    closeMenu(blotter.id);
+};
+
+// Initial data fetch
+onMounted(() => {
     blotterStore.getBlotters();
-    residentStore.getResidents(); // Make sure residents are loaded
-})
+    residentStore.getResidents(); // ensure residents loaded
+});
 </script>
 
 <template>
     <div class="flex flex-col gap-2">
         <h1 class="text-xl font-bold text-gray-600">List of Blotters</h1>
+
         <div v-if="isLoading" class="flex justify-center items-center">
             <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
         </div>
-        <Table v-else :columns="columns" :rows="blotters">
+
+        <Table :columns="columns" :rows="blotters" v-else>
             <template #actions="{ row }">
-                <div class="flex justify-center gap-2">
-                    <router-link :to="`/blotter/edit-blotter/${row.id}`"
-                        class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Edit</router-link>
-                    <button @click="deleteBlotter(row.id)"
-                        class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
-                    <button @click="openModal(row)"
-                        class="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600">View</button>
+                <div class="relative burger-menu-container">
+                    <!-- Burger Menu Button -->
+                    <button @click="(e) => toggleMenu(e, row.id)"
+                        class="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        :class="{ 'bg-gray-100': teleportMenuRowId === row.id }">
+                        <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path d="M10 4a2 2 0 100-4 2 2 0 000 4z" />
+                            <path d="M10 20a2 2 0 100-4 2 2 0 000 4z" />
+                        </svg>
+                    </button>
                 </div>
             </template>
         </Table>
 
-        <!-- Modal -->
+        <!-- Teleport dropdown menu -->
+        <Teleport to="body">
+            <div v-if="teleportMenuRowId !== null" data-teleport-menu :style="{
+                position: 'absolute',
+                top: menuPosition.top + 'px',
+                left: menuPosition.left + 'px',
+                zIndex: 9999
+            }" class="bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-48">
+
+                <!-- Edit -->
+                <button @click="editBlotter(teleportMenuRowId)"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                </button>
+
+                <!-- View -->
+                <button @click="viewBlotter(blotters.find(b => b.id === teleportMenuRowId))"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View
+                </button>
+
+                <!-- Print -->
+                <button @click="openPrintModal(blotters.find(b => b.id === teleportMenuRowId))"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Print
+                </button>
+
+                <hr class="my-2 border-gray-200">
+
+                <!-- Delete -->
+                <button @click="deleteBlotterWithMenu(teleportMenuRowId)"
+                    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
+            </div>
+        </Teleport>
+
+        <!-- Print Modal -->
+        <BlotterPrintTemplate v-if="showPrintModal" :blotter="selectedPrintBlotter" @close="closePrintModal"
+            @print="handlePrint" />
+
+        <!-- Modal for Blotter Details -->
         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-4xl shadow-xl max-h-[90vh] overflow-y-auto">
                 <!-- Close Button -->
@@ -217,7 +346,7 @@ onMounted(() => {
                         {{ selectedBlotter?.nature_of_case }}
                     </div>
 
-                    <!-- Comlainant ID -->
+                    <!-- Complainant ID -->
                     <div>
                         <strong>Complainant ID:</strong><br />
                         {{ getResidentName(selectedBlotter?.complainants_id) }}
@@ -276,7 +405,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Witness/es -->
-                    <div class="">
+                    <div>
                         <strong class="block mb-2">Witness/es:</strong>
                         <div v-if="selectedBlotter?.witness" class="pl-2">
                             <ul class="list-disc pl-5 space-y-1">
@@ -286,9 +415,7 @@ onMounted(() => {
                                 </li>
                             </ul>
                         </div>
-                        <div v-else class="text-gray-400 italic">
-                            No witnesses listed
-                        </div>
+                        <div v-else class="text-gray-400 italic">No witnesses listed</div>
                     </div>
 
                     <!-- Blotter Type -->
