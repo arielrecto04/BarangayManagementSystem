@@ -16,28 +16,22 @@ const residents = ref([]);
 const errors = ref({});
 const selectedComplainant = ref(null);
 const selectedRespondent = ref(null);
-const fileInput = ref(null); // Add ref for file input
+const fileInput = ref(null);
 
-// Form data
+// Form data - REMOVED ADDRESS FIELDS
 const blotterDataForm = ref({
+    complainants_name: '',
+    respondents_name: '',
     blotter_no: '',
     filing_date: '',
     title_case: '',
     nature_of_case: '',
     complainants_id: '',
     respondents_id: '',
-    complainant_address: '',
-    respondent_address: '',
-    complainants_name: ['App\\Models\\Resident'],
-    respondents_name: ['App\\Models\\Resident'],
-    place: '',
+    incident_location: '',
     datetime_of_incident: '',
     blotter_type: '',
     barangay_case_no: '',
-    total_cases: '0',
-    open_cases: '0',
-    in_progress: '0',
-    resolved: '0',
     status: '',
     description: '',
     witness: '',
@@ -46,22 +40,31 @@ const blotterDataForm = ref({
 
 // Computed properties for filtered lists
 const filteredComplainants = computed(() => {
-    return residents.value.filter(resident =>
+    const allResidents = residentStore.residents || [];
+    return allResidents.filter(resident =>
         !selectedRespondent.value || resident.id !== selectedRespondent.value.id
     );
 });
 
 const filteredRespondents = computed(() => {
-    return residents.value.filter(resident =>
+    const allResidents = residentStore.residents || [];
+    return allResidents.filter(resident =>
         !selectedComplainant.value || resident.id !== selectedComplainant.value.id
     );
 });
-
-// Lifecycle hook
+// Replace your onMounted hook with this version that includes debugging
 onMounted(async () => {
-    await residentStore.getResidents();
-    residents.value = residentStore.residents;
+    try {
+        console.log('Fetching residents...');
+        await residentStore.getResidents();
+        console.log('Store residents:', residentStore.residents);
+        residents.value = residentStore.residents;
+        console.log('Local residents:', residents.value);
+    } catch (error) {
+        console.error('Error fetching residents:', error);
+    }
 });
+
 // Watchers for form fields to clear errors when changed
 watch(() => blotterDataForm.value.blotter_no, () => clearError('blotter_no'));
 watch(() => blotterDataForm.value.filing_date, () => clearError('filing_date'));
@@ -69,44 +72,45 @@ watch(() => blotterDataForm.value.title_case, () => clearError('title_case'));
 watch(() => blotterDataForm.value.nature_of_case, () => clearError('nature_of_case'));
 watch(() => blotterDataForm.value.complainants_id, () => clearError('complainants_id'));
 watch(() => blotterDataForm.value.respondents_id, () => clearError('respondents_id'));
-watch(() => blotterDataForm.value.complainant_address, () => clearError('complainant_address'));
-watch(() => blotterDataForm.value.respondent_address, () => clearError('respondent_address'));
-watch(() => blotterDataForm.value.place, () => clearError('place'));
+watch(() => blotterDataForm.value.incident_location, () => clearError('incident_location'));
 watch(() => blotterDataForm.value.datetime_of_incident, () => clearError('datetime_of_incident'));
 watch(() => blotterDataForm.value.blotter_type, () => clearError('blotter_type'));
 watch(() => blotterDataForm.value.barangay_case_no, () => clearError('barangay_case_no'));
 watch(() => blotterDataForm.value.status, () => clearError('status'));
 watch(() => blotterDataForm.value.description, () => clearError('description'));
 watch(() => blotterDataForm.value.witness, () => clearError('witness'));
+
 const clearError = (fieldName) => {
     if (errors.value[fieldName]) {
         errors.value[fieldName] = '';
     }
 };
-// Watchers
+
+// Watchers - REMOVED ADDRESS SETTING
 watch(selectedComplainant, (val) => {
     blotterDataForm.value.complainants_id = val?.id ?? '';
-    blotterDataForm.value.complainant_address = val?.address ?? '';
+    blotterDataForm.value.complainants_name = val ? `${val.first_name} ${val.last_name}` : '';
 
     // Clear respondent if same as complainant
     if (val && selectedRespondent.value && val.id === selectedRespondent.value.id) {
         selectedRespondent.value = null;
         blotterDataForm.value.respondents_id = '';
-        blotterDataForm.value.respondent_address = '';
+        blotterDataForm.value.respondents_name = '';
     }
 });
 
 watch(selectedRespondent, (val) => {
     blotterDataForm.value.respondents_id = val?.id ?? '';
-    blotterDataForm.value.respondent_address = val?.address ?? '';
+    blotterDataForm.value.respondents_name = val ? `${val.first_name} ${val.last_name}` : '';
 
     // Clear complainant if same as respondent
     if (val && selectedComplainant.value && val.id === selectedComplainant.value.id) {
         selectedComplainant.value = null;
         blotterDataForm.value.complainants_id = '';
-        blotterDataForm.value.complainant_address = '';
+        blotterDataForm.value.complainants_name = '';
     }
 });
+
 
 // Methods
 const handleFileUpload = (event) => {
@@ -120,13 +124,17 @@ const handleFileUpload = (event) => {
         ...blotterDataForm.value.supporting_documents,
         ...uniqueNewFiles
     ];
-    event.target.value = ''; // Reset input to allow same file re-upload
+    event.target.value = '';
 };
 
 const validateForm = () => {
     errors.value = {};
     let isValid = true;
 
+    console.log('=== FORM VALIDATION DEBUG ===');
+    console.log('Current form data:', JSON.stringify(blotterDataForm.value, null, 2));
+
+    // REMOVED ADDRESS FIELDS FROM VALIDATION
     const requiredFields = {
         blotter_no: 'Blotter No',
         filing_date: 'Filing Date',
@@ -134,9 +142,7 @@ const validateForm = () => {
         nature_of_case: 'Nature of Case',
         complainants_id: 'Complainant',
         respondents_id: 'Respondent',
-        complainant_address: 'Complainant Address',
-        respondent_address: 'Respondent Address',
-        place: 'Location of Incident',
+        incident_location: 'Location of Incident',
         datetime_of_incident: 'Date/Time of Incident',
         blotter_type: 'Blotter Type',
         barangay_case_no: 'Barangay Case No',
@@ -144,42 +150,84 @@ const validateForm = () => {
         description: 'Description',
     };
 
+    console.log('Required fields to validate:', requiredFields);
+
     for (const [field, label] of Object.entries(requiredFields)) {
-        if (!blotterDataForm.value[field]) {
+        const fieldValue = blotterDataForm.value[field];
+        console.log(`Checking field "${field}":`, {
+            value: fieldValue,
+            type: typeof fieldValue,
+            isEmpty: !fieldValue,
+            isEmptyString: fieldValue === '',
+            isNull: fieldValue === null,
+            isUndefined: fieldValue === undefined
+        });
+
+        if (!fieldValue) {
+            console.error(`❌ Field "${field}" is invalid:`, fieldValue);
             errors.value[field] = `${label} is required`;
             isValid = false;
+        } else {
+            console.log(`✅ Field "${field}" is valid:`, fieldValue);
         }
     }
+
+    console.log('Final validation result:', isValid);
+    console.log('Errors object:', errors.value);
+    console.log('=== END VALIDATION DEBUG ===');
 
     return isValid;
 };
 
 const createBlotter = async () => {
     try {
+        console.log('=== CREATE BLOTTER DEBUG ===');
+        console.log('Form data before validation:', blotterDataForm.value);
+
         if (!validateForm()) {
+            console.error('❌ Validation failed!');
             showToast({ icon: 'error', title: 'Please fill in all required fields' });
             return;
         }
+
+        console.log('✅ Validation passed, creating FormData...');
 
         const formData = new FormData();
 
         // Append all form fields
         Object.entries(blotterDataForm.value).forEach(([key, value]) => {
             if (key === 'supporting_documents' && Array.isArray(value)) {
-                // Append each file individually
+                console.log(`Adding ${value.length} files for supporting_documents`);
                 value.forEach(file => {
                     formData.append('supporting_documents[]', file);
                 });
             } else {
-                // Append other fields
+                console.log(`Adding form field: ${key} = ${value}`);
                 formData.append(key, value);
             }
         });
 
+        // Debug FormData contents
+        console.log('FormData contents:');
+        for (let pair of formData.entries()) {
+            console.log(pair[0], pair[1]);
+        }
+
+        console.log('Calling blotterStore.addBlotter...');
         await blotterStore.addBlotter(formData);
+
+        console.log('✅ Blotter created successfully!');
         showToast({ icon: 'success', title: 'Blotter created successfully' });
         router.push('/blotter/list-blotter');
+
     } catch (error) {
+        console.error('❌ Error creating blotter:', error);
+        console.error('Error details:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            statusText: error.response?.statusText
+        });
         showToast({ icon: 'error', title: error.message || 'Failed to create blotter' });
     }
 };
@@ -187,177 +235,197 @@ const createBlotter = async () => {
 
 <template>
     <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
-        <form @submit.prevent="createBlotter">
-            <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-5xl">
-                <h1 class="text-2xl font-bold mb-6">Add New Blotter</h1>
-                <h2 class="text-lg font-semibold mb-4">Blotter Profile</h2>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-2">
-                        <label for="blotter_no" class="text-sm font-semibold text-gray-600">Blotter No</label>
-                        <input id="blotter_no" type="text" placeholder="Enter Blotter No"
-                            v-model="blotterDataForm.blotter_no"
-                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.blotter_no ? 'border-red-500' : 'border-gray-200']" />
-                        <span v-if="errors.blotter_no" class="text-red-500 text-xs mt-1">{{ errors.blotter_no }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="filing_date" class="text-sm font-semibold text-gray-600">Filing Date</label>
-                        <input id="filing_date" type="date" v-model="blotterDataForm.filing_date"
-                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.filing_date ? 'border-red-500' : 'border-gray-200']" />
-                        <span v-if="errors.filing_date" class="text-red-500 text-xs mt-1">{{ errors.filing_date
-                            }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="title_case" class="text-sm font-semibold text-gray-600">Title Case</label>
-                        <input id="title_case" type="text" placeholder="Enter Title Case"
-                            v-model="blotterDataForm.title_case"
-                            :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.title_case ? 'border-red-500' : 'border-gray-200']" />
-                        <span v-if="errors.title_case" class="text-red-500 text-xs mt-1">{{ errors.title_case }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of Case</label>
-                        <select id="nature_of_case" v-model="blotterDataForm.nature_of_case"
-                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.nature_of_case ? 'border-red-500' : 'border-gray-200']">
-                            <span v-if="errors.nature_of_case" class="text-red-500 text-xs mt-1">{{
-                                errors.nature_of_case }}</span>
-                            <option value="" disabled selected>Select Nature of Case</option>
-                            <option value="civil case">Civil Case</option>
-                            <option value="criminal case">Criminal Case</option>
-                        </select>
-                        <span v-if="errors.nature_of_case" class="text-red-500 text-xs mt-1">{{ errors.nature_of_case
-                            }}</span>
-                    </div>
+        <form @submit.prevent="createBlotter" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
+            <h1 class="text-2xl font-bold mb-6">Add New Blotter</h1>
 
-                    <div class="flex flex-col gap-2">
-                        <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant</label>
-                        <Multiselect v-model="selectedComplainant" :options="residents"
-                            :custom-label="resident => `${resident.first_name} ${resident.last_name} `" track-by="id"
-                            placeholder="Search or select complainant" :searchable="true" :show-labels="false"
-                            @select="val => blotterDataForm.complainants_id = val?.id" />
-                        <span v-if="errors.complainants_id" class="text-red-500 text-xs mt-1">{{ errors.complainants_id
-                            }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="complainant_address" class="text-sm font-semibold text-gray-600">Complainant
-                            Address</label>
-                        <input id="complainant_address" type="text" placeholder="Complainant address will auto-fill"
-                            v-model="blotterDataForm.complainant_address"
-                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.complainant_address ? 'border-red-500' : 'border-gray-200']"
-                            readonly />
-                        <span v-if="errors.complainant_address" class="text-red-500 text-xs mt-1">{{
-                            errors.complainant_address }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent</label>
-                        <Multiselect v-model="selectedRespondent" :options="residents"
-                            :custom-label="resident => `${resident.first_name} ${resident.last_name} `" track-by="id"
-                            placeholder="Search or select respondent" :searchable="true" :show-labels="false"
-                            @select="val => blotterDataForm.respondents_id = val?.id" />
-                        <span v-if="errors.respondents_id" class="text-red-500 text-xs mt-1">{{ errors.respondents_id
-                            }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="respondent_address" class="text-sm font-semibold text-gray-600">Respondent
-                            Address</label>
-                        <input id="respondent_address" type="text" placeholder="Respondent address will auto-fill"
-                            v-model="blotterDataForm.respondent_address"
-                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.respondent_address ? 'border-red-500' : 'border-gray-200']"
-                            readonly />
-                        <span v-if="errors.respondent_address" class="text-red-500 text-xs mt-1">{{
-                            errors.respondent_address }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="place" class="text-sm font-semibold text-gray-600">Location of Incident</label>
-                        <input id="place" type="text" placeholder="Enter Location of Incident"
-                            v-model="blotterDataForm.place"
-                            :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.place ? 'border-red-500' : 'border-gray-200']" />
-                        <span v-if="errors.place" class="text-red-500 text-xs mt-1">{{ errors.place }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="datetime_of_incident" class="text-sm font-semibold text-gray-600">Date/Time of
-                            Incident</label>
-                        <input id="datetime_of_incident" type="datetime-local"
-                            v-model="blotterDataForm.datetime_of_incident"
-                            :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.datetime_of_incident ? 'border-red-500' : 'border-gray-200']" />
-                        <span v-if="errors.datetime_of_incident" class="text-red-500 text-xs mt-1">{{
-                            errors.datetime_of_incident }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2 rel">
-                        <label for="blotter_type" class="text-sm font-semibold text-gray-600">Blotter Type</label>
-                        <select id="blotter_type" v-model="blotterDataForm.blotter_type"
-                            :class="['input-style col-span-1 border rounded-md px-5 py-2', errors.blotter_type ? 'border-red-500' : 'border-gray-200']">
-                            <option value="" disabled selected>Select Blotter Type</option>
-                            <option value="Incident">Incident</option>
-                            <option value="Complaint">Complaint</option>
-                            <option value="Request">Request</option>
-                        </select>
-                        <span v-if="errors.status" class="text-red-500 text-xs mt-1">{{ errors.status }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="barangay_case_no" class="text-sm font-semibold text-gray-600">Barangay Case
-                            No</label>
-                        <input id="barangay_case_no" type="text" placeholder="Enter Case No"
-                            v-model="blotterDataForm.barangay_case_no"
-                            :class="['input-style col-span-1 border border-gray-200 rounded-md px-4 py-2', errors.barangay_case_no ? 'border-red-500' : 'border-gray-200']" />
-                        <span v-if="errors.barangay_case_no" class="text-red-500 text-xs mt-1">{{
-                            errors.barangay_case_no }}</span>
-                    </div>
-                    <div class="col-span-2 flex flex-col gap-2">
-                        <label for="description" class="text-sm font-semibold text-gray-600">Description</label>
-                        <textarea id="description" v-model="blotterDataForm.description" placeholder="Enter Description"
-                            rows="4"
-                            :class="['input-style w-full border border-gray-200 rounded-md px-4 py-2', errors.description ? 'border-red-500' : 'border-gray-200']"></textarea>
-                        <span v-if="errors.description" class="text-red-500 text-xs mt-1">{{ errors.description
-                            }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
-                        <textarea id="witness" type="text" placeholder="Enter Witness Name"
-                            v-model="blotterDataForm.witness"
-                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.witness ? 'border-red-500' : 'border-gray-200']" />
-                        <span v-if="errors.witness" class="text-red-500 text-xs mt-1">{{ errors.witness }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2 rel">
-                        <label for="status" class="text-sm font-semibold text-gray-600">Status</label>
-                        <select id="status" v-model="blotterDataForm.status"
-                            :class="['input-style col-span-1 border rounded-md px-4 py-2', errors.status ? 'border-red-500' : 'border-gray-200']">
-                            <option value="" disabled selected>Select Status</option>
-                            <option value="Open">Open</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Resolved">Resolved</option>
-                        </select>
-                        <span v-if="errors.status" class="text-red-500 text-xs mt-1">{{ errors.status }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-sm font-semibold text-gray-600">Supporting Documents</label>
-                        <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                        <button type="button"
-                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md w-fit"
-                            @click="$refs.fileInput.click()">
-                            Upload Files
-                        </button>
-                        <div v-if="blotterDataForm.supporting_documents.length"
-                            class="mt-2 space-y-1 text-sm text-gray-700">
-                            <div v-for="(file, index) in blotterDataForm.supporting_documents" :key="index"
-                                class="flex items-center gap-2">
-                                <span>{{ file.name }}</span>
-                                <button type="button" class="text-red-500 hover:underline"
-                                    @click="blotterDataForm.supporting_documents.splice(index, 1)">
-                                    ✖
-                                </button>
-                            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Complainant Searchable Dropdown -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm mb-1">Complainant</label>
+                    <Multiselect v-model="selectedComplainant" :options="filteredComplainants"
+                        :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
+                        placeholder="Search or select complainant" :searchable="true" :show-labels="false"
+                        :allow-empty="true" @select="val => blotterDataForm.complainants_id = val?.id" />
+                    <p v-if="errors.complainants_id" class="text-red-500 text-sm mt-1">{{ errors.complainants_id }}</p>
+                    <!-- Debug info (remove after fixing) -->
+                    <p class="text-xs text-gray-500 mt-1">Available complainants: {{ filteredComplainants.length }}</p>
+                </div>
+
+                <!-- Respondent Searchable Dropdown -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm mb-1">Respondent</label>
+                    <Multiselect v-model="selectedRespondent" :options="filteredRespondents"
+                        :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
+                        placeholder="Search or select respondent" :searchable="true" :show-labels="false"
+                        :allow-empty="true" @select="val => blotterDataForm.respondents_id = val?.id" />
+                    <p v-if="errors.respondents_id" class="text-red-500 text-sm mt-1">{{ errors.respondents_id }}</p>
+                    <!-- Debug info (remove after fixing) -->
+                    <p class="text-xs text-gray-500 mt-1">Available respondents: {{ filteredRespondents.length }}</p>
+                </div>
+
+                <!-- Nature of Case -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Nature of Case</label>
+                    <select v-model="blotterDataForm.nature_of_case" class="border rounded-md p-2">
+                        <option value="" disabled selected>Select Nature of Case</option>
+                        <option value="civil case">Civil Case</option>
+                        <option value="criminal case">Criminal Case</option>
+                    </select>
+                    <p v-if="errors.nature_of_case" class="text-red-500 text-sm mt-1">{{ errors.nature_of_case }}</p>
+                </div>
+
+                <!-- Blotter Type -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Blotter Type</label>
+                    <select v-model="blotterDataForm.blotter_type" class="border rounded-md p-2">
+                        <option value="" disabled selected>Select Blotter Type</option>
+                        <option value="Incident">Incident</option>
+                        <option value="Complaint">Complaint</option>
+                        <option value="Request">Request</option>
+                    </select>
+                    <p v-if="errors.blotter_type" class="text-red-500 text-sm mt-1">{{ errors.blotter_type }}</p>
+                </div>
+
+                <!-- Blotter No -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Blotter No</label>
+                    <input v-model="blotterDataForm.blotter_no" type="text" class="border rounded-md p-2"
+                        placeholder="Enter Blotter No" />
+                    <p v-if="errors.blotter_no" class="text-red-500 text-sm mt-1">{{ errors.blotter_no }}</p>
+                </div>
+
+                <!-- Barangay Case No -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Barangay Case No</label>
+                    <input v-model="blotterDataForm.barangay_case_no" type="text" class="border rounded-md p-2"
+                        placeholder="Enter Case No" />
+                    <p v-if="errors.barangay_case_no" class="text-red-500 text-sm mt-1">{{ errors.barangay_case_no }}
+                    </p>
+                </div>
+
+                <!-- Title Case -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Title Case</label>
+                    <input v-model="blotterDataForm.title_case" type="text" class="border rounded-md p-2"
+                        placeholder="Enter Title Case" />
+                    <p v-if="errors.title_case" class="text-red-500 text-sm mt-1">{{ errors.title_case }}</p>
+                </div>
+
+                <!-- Location of Incident -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Location of Incident</label>
+                    <input v-model="blotterDataForm.incident_location" type="text" class="border rounded-md p-2"
+                        placeholder="Enter Location of Incident" />
+                    <p v-if="errors.place" class="text-red-500 text-sm mt-1">{{ errors.incident_location }}</p>
+                </div>
+
+                <!-- Description -->
+                <div class="flex flex-col col-span-2">
+                    <label class="font-semibold text-sm">Description</label>
+                    <textarea v-model="blotterDataForm.description" class="border rounded-md p-2"
+                        placeholder="Enter Description" rows="4"></textarea>
+                    <p v-if="errors.description" class="text-red-500 text-sm mt-1">{{ errors.description }}</p>
+                </div>
+
+                <!-- Date & Time of Incident -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Date & Time of Incident</label>
+                    <input type="datetime-local" v-model="blotterDataForm.datetime_of_incident"
+                        class="border rounded-md p-2" />
+                    <p v-if="errors.datetime_of_incident" class="text-red-500 text-sm mt-1">{{
+                        errors.datetime_of_incident }}</p>
+                </div>
+
+                <!-- Filing Date -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Filing Date & Time</label>
+                    <input type="datetime-local" v-model="blotterDataForm.filing_date" class="border rounded-md p-2" />
+                    <p v-if="errors.filing_date" class="text-red-500 text-sm mt-1">{{ errors.filing_date }}</p>
+                </div>
+
+                <!-- Status -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Status</label>
+                    <select v-model="blotterDataForm.status" class="border rounded-md p-2">
+                        <option value="" disabled selected>Select Status</option>
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                    <p v-if="errors.status" class="text-red-500 text-sm mt-1">{{ errors.status }}</p>
+                </div>
+
+                <!-- Witness -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm">Witness/es</label>
+                    <textarea v-model="blotterDataForm.witness" class="border rounded-md p-2"
+                        placeholder="Enter Witness Name"></textarea>
+                    <p v-if="errors.witness" class="text-red-500 text-sm mt-1">{{ errors.witness }}</p>
+                </div>
+
+                <!-- Supporting Document -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-sm mb-1">Supporting Documents</label>
+                    <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                    <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit"
+                        @click="$refs.fileInput.click()">
+                        Upload Files
+                    </button>
+                    <div v-if="blotterDataForm.supporting_documents.length"
+                        class="mt-2 space-y-1 text-sm text-gray-700">
+                        <div v-for="(file, index) in blotterDataForm.supporting_documents" :key="index"
+                            class="flex items-center gap-2">
+                            <span>{{ file.name }}</span>
+                            <button type="button" class="text-red-500 hover:underline"
+                                @click="blotterDataForm.supporting_documents.splice(index, 1)">
+                                ✖
+                            </button>
                         </div>
                     </div>
-
-
                 </div>
-                <div class="flex justify-center mt-10 gap-4">
-                    <button type="submit"
-                        class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">Save</button>
-                    <router-link to="/blotter"
-                        class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200">Cancel</router-link>
-                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="mt-6 flex justify-end gap-4">
+                <button type="submit"
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">Save</button>
+                <router-link to="/blotter" class="bg-gray-300 px-4 py-2 rounded-md">Cancel</router-link>
             </div>
         </form>
     </div>
 </template>
+
+<style>
+.multiselect {
+    min-height: auto;
+}
+
+.multiselect__tags {
+    min-height: 44px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+}
+
+.multiselect__input,
+.multiselect__single {
+    font-size: 1rem;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+.multiselect__placeholder {
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-left: 0;
+}
+
+.multiselect__option--highlight {
+    background: #16A34A;
+}
+
+.multiselect__option--highlight::after {
+    background: #16A34A;
+}
+</style>

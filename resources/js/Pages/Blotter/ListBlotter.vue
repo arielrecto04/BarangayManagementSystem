@@ -30,6 +30,12 @@ const openModal = async (blotter) => {
     }
 };
 
+const getResidentNumber = (id) => {
+    if (!id) return 'N/A';
+    const resident = residents.value.find(r => r.id == id);
+    return resident ? resident.resident_number : 'N/A';
+};
+
 const closeModal = () => {
     showModal.value = false;
     selectedBlotter.value = null;
@@ -187,52 +193,71 @@ onMounted(() => {
 
                 <!-- Grid Layout for Fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
+                    <!-- Blotter Number -->
                     <div>
-                        <strong>Blotter No:</strong><br />
+                        <strong>Blotter Number:</strong><br />
                         {{ selectedBlotter?.blotter_no }}
                     </div>
+
+                    <!-- Filing Date and Time -->
                     <div>
                         <strong>Filing Date:</strong><br />
                         {{ formatDate(selectedBlotter?.filing_date) }}
                     </div>
+
+                    <!-- Title Case -->
                     <div class="capitalize">
                         <strong>Title Case:</strong><br />
                         {{ selectedBlotter?.title_case }}
                     </div>
+
+                    <!-- Nature of Case -->
                     <div class="capitalize">
                         <strong>Nature of Case:</strong><br />
                         {{ selectedBlotter?.nature_of_case }}
                     </div>
+
+                    <!-- Comlainant ID -->
                     <div>
-                        <strong>Complainant:</strong><br />
+                        <strong>Complainant ID:</strong><br />
                         {{ getResidentName(selectedBlotter?.complainants_id) }}
                         <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.complainants_id).padStart(4,
                             '0')
                         }})</span>
                     </div>
-                    <div>
-                        <strong>Complainant Address:</strong><br />
-                        {{ selectedBlotter?.complainant_address }}
+
+                    <!-- Resident Number - Complainant -->
+                    <div class="text-gray-500 text-xs">
+                        Resident No: {{ getResidentNumber(selectedBlotter?.complainants_id) }}
                     </div>
+
+                    <!-- Respondent ID -->
                     <div>
-                        <strong>Respondent:</strong><br />
+                        <strong>Respondent ID:</strong><br />
                         {{ getResidentName(selectedBlotter?.respondents_id) }}
                         <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.respondents_id).padStart(4,
                             '0')
                         }})</span>
                     </div>
-                    <div>
-                        <strong>Respondent Address:</strong><br />
-                        {{ selectedBlotter?.respondent_address }}
+
+                    <!-- Resident Number - Respondent -->
+                    <div class="text-gray-500 text-xs">
+                        Resident No: {{ getResidentNumber(selectedBlotter?.respondents_id) }}
                     </div>
+
+                    <!-- Location of Incident -->
                     <div>
                         <strong>Location of Incident:</strong><br />
                         {{ selectedBlotter?.place }}
                     </div>
+
+                    <!-- Date & Time of Incident -->
                     <div>
-                        <strong>Date/Time of Incident:</strong><br />
+                        <strong>Date & Time of Incident:</strong><br />
                         {{ formatDate(selectedBlotter?.datetime_of_incident) }}
                     </div>
+
+                    <!-- Status -->
                     <div>
                         <strong>Status:</strong><br />
                         <span :class="{
@@ -243,13 +268,16 @@ onMounted(() => {
                             {{ selectedBlotter?.status }}
                         </span>
                     </div>
+
+                    <!-- Barangay Case Number -->
                     <div>
-                        <strong>Barangay Case No:</strong><br />
+                        <strong>Barangay Case Number:</strong><br />
                         {{ selectedBlotter?.barangay_case_no }}
                     </div>
 
+                    <!-- Witness/es -->
                     <div class="">
-                        <strong class="block mb-2">Witness:</strong>
+                        <strong class="block mb-2">Witness/es:</strong>
                         <div v-if="selectedBlotter?.witness" class="pl-2">
                             <ul class="list-disc pl-5 space-y-1">
                                 <li v-for="(witness, index) in selectedBlotter.witness.split('\n').filter(name => name.trim())"
@@ -262,11 +290,14 @@ onMounted(() => {
                             No witnesses listed
                         </div>
                     </div>
+
+                    <!-- Blotter Type -->
                     <div>
                         <strong>Blotter Type:</strong><br />
                         <span class="capitalize">{{ selectedBlotter?.blotter_type }}</span>
                     </div>
 
+                    <!-- Description -->
                     <div class="col-span-2">
                         <strong>Description:</strong><br />
                         <textarea readonly
