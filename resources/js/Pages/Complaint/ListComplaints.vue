@@ -361,35 +361,6 @@ watch(complaints, (newComplaints) => {
         <!-- Divider -->
         <hr class="my-2 border-gray-200">
 
-        <!-- Status Update Options -->
-        <div class="px-4 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          Update Status
-        </div>
-
-        <button @click="updateStatus(teleportMenuRowId, 'Open')"
-          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 flex items-center gap-2"
-          :class="{ 'bg-yellow-50 text-yellow-700': complaints.find(c => c.id === teleportMenuRowId)?.status === 'Open' }">
-          <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
-          Open
-        </button>
-
-        <button @click="updateStatus(teleportMenuRowId, 'In Progress')"
-          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
-          :class="{ 'bg-blue-50 text-blue-700': complaints.find(c => c.id === teleportMenuRowId)?.status === 'In Progress' }">
-          <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-          In Progress
-        </button>
-
-        <button @click="updateStatus(teleportMenuRowId, 'Resolved')"
-          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2"
-          :class="{ 'bg-green-50 text-green-700': complaints.find(c => c.id === teleportMenuRowId)?.status === 'Resolved' }">
-          <div class="w-2 h-2 rounded-full bg-green-500"></div>
-          Resolved
-        </button>
-
-        <!-- Divider -->
-        <hr class="my-2 border-gray-200">
-
         <!-- Delete Option -->
         <button @click="deleteComplaint(teleportMenuRowId)"
           class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2">
@@ -450,21 +421,6 @@ watch(complaints, (newComplaints) => {
             {{ selectedComplaint?.title || 'N/A' }}
           </div>
 
-          <!-- Description with scroll -->
-          <div class="md:col-span-2">
-            <strong>Description:</strong>
-            <textarea readonly
-              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
-                selectedComplaint?.description || 'N/A' }}</textarea>
-          </div>
-
-          <!-- Resolution -->
-          <div class="md:col-span-2">
-            <strong>Resolution:</strong>
-            <textarea readonly
-              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
-                selectedComplaint?.resolution || 'N/A' }}</textarea>
-          </div>
           <!-- Date and Time of Incident -->
           <div>
             <strong>Date & Time of Incident:</strong><br />
@@ -495,6 +451,23 @@ watch(complaints, (newComplaints) => {
             <strong>Status:</strong><br />
             {{ selectedComplaint?.status || 'N/A' }}
           </div>
+
+          <!-- Description -->
+          <div class="md:col-span-2">
+            <strong>Description:</strong>
+            <textarea readonly
+              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
+                selectedComplaint?.description || 'N/A' }}</textarea>
+          </div>
+
+          <!-- Resolution -->
+          <div class="md:col-span-2">
+            <strong>Resolution:</strong>
+            <textarea readonly
+              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
+                selectedComplaint?.resolution || 'N/A' }}</textarea>
+          </div>
+
           <!-- Supporting Documents - FIXED -->
           <div class="md:col-span-2">
             <strong>Supporting Documents:</strong><br />

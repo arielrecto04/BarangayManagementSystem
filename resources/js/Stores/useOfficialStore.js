@@ -14,6 +14,10 @@ export const useOfficialStore = defineStore("official", {
     },
 
     actions: {
+        clearOfficial() {
+            this._official = null;
+        },
+
         selectOfficialById(OfficialId) {
             this._official = this._officials.find(
                 (official) => official.id == OfficialId
@@ -44,22 +48,22 @@ export const useOfficialStore = defineStore("official", {
                 this._isLoading = true;
                 const response = await axios.post("/officials", official);
                 this._officials.push(response.data);
+                return response;
             } catch (error) {
-                console.log(error);
+                throw error;
             } finally {
                 this._isLoading = false;
             }
         },
 
-        async updateOfficial(updatedData) {
+        async updateOfficial(id, updatedData) {
             try {
                 this._isLoading = true;
                 const response = await axios.put(
-                    `/officials/${this._official.id}`,
+                    `/officials/${id}`,
                     updatedData
                 );
 
-                // Update store state
                 this._official = response.data;
                 this._officials = this._officials.map((o) =>
                     o.id === response.data.id ? response.data : o
@@ -67,7 +71,7 @@ export const useOfficialStore = defineStore("official", {
 
                 return response;
             } catch (error) {
-                throw error; // Propagate error to component
+                throw error;
             } finally {
                 this._isLoading = false;
             }
