@@ -311,147 +311,184 @@ onMounted(() => {
             @print="handlePrint" />
 
         <!-- Modal for Blotter Details -->
-        <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-4xl shadow-xl max-h-[90vh] overflow-y-auto">
+        <div v-if="showModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div
+                class="relative z-60 bg-white rounded-xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto scroll-m-4">
                 <!-- Close Button -->
                 <button @click="closeModal"
-                    class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">&times;</button>
+                    class="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-3xl font-bold leading-none focus:outline-none"
+                    aria-label="Close modal">
+                    &times;
+                </button>
 
                 <!-- Modal Title -->
-                <h2 class="text-lg font-bold mb-6 text-gray-700">Blotter Details</h2>
+                <h2 class="text-2xl font-semibold mb-8 text-gray-800 border-b pb-4">
+                    Blotter Details
+                </h2>
 
                 <!-- Grid Layout for Fields -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-gray-800 text-sm">
+
+                    <!-- Complainant Section -->
+                    <div>
+                        <h3 class="font-semibold mb-3 text-blue-800">Complainant Information</h3>
+
+                        <!-- Complainant Name -->
+                        <div class="mb-3">
+                            <h4 class="font-medium mb-1 text-gray-600">Name:</h4>
+                            <p class="text-gray-900">{{ getResidentName(selectedBlotter?.complainants_id) || 'N/A' }}
+                            </p>
+                        </div>
+
+                        <!-- Complainant Resident Number -->
+                        <div class="mb-3">
+                            <h4 class="font-medium mb-1 text-gray-600">Resident Number:</h4>
+                            <div
+                                class="bg-blue-50 inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono select-all">
+                                {{ getResidentNumber(selectedBlotter?.complainants_id) || 'N/A' }}
+                            </div>
+                        </div>
+
+                        <!-- Complainant Resident ID -->
+                        <div class="mb-3">
+                            <h4 class="font-medium mb-1 text-gray-600">Resident ID:</h4>
+                            <p class="text-gray-500 text-sm">
+                                {{ selectedBlotter?.complainants_id || 'N/A' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Respondent Section -->
+                    <div>
+                        <h3 class="font-semibold mb-3 text-red-800">Respondent Information</h3>
+
+                        <!-- Respondent Name -->
+                        <div class="mb-3">
+                            <h4 class="font-medium mb-1 text-gray-600">Name:</h4>
+                            <p class="text-gray-900">{{ getResidentName(selectedBlotter?.respondents_id) || 'N/A' }}</p>
+                        </div>
+
+                        <!-- Respondent Resident Number -->
+                        <div class="mb-3">
+                            <h4 class="font-medium mb-1 text-gray-600">Resident Number:</h4>
+                            <div
+                                class="bg-blue-50 inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono select-all">
+                                {{ getResidentNumber(selectedBlotter?.respondents_id) || 'N/A' }}
+                            </div>
+                        </div>
+
+                        <!-- Respondent Resident ID -->
+                        <div class="mb-3">
+                            <h4 class="font-medium mb-1 text-gray-600">Resident ID:</h4>
+                            <p class="text-gray-500 text-sm">
+                                {{ selectedBlotter?.respondents_id || 'N/A' }}
+                            </p>
+                        </div>
+                    </div>
+
                     <!-- Blotter Number -->
                     <div>
-                        <strong>Blotter Number:</strong><br />
-                        {{ selectedBlotter?.blotter_no }}
-                    </div>
-
-                    <!-- Filing Date and Time -->
-                    <div>
-                        <strong>Filing Date:</strong><br />
-                        {{ formatDate(selectedBlotter?.filing_date) }}
-                    </div>
-
-                    <!-- Title Case -->
-                    <div class="capitalize">
-                        <strong>Title Case:</strong><br />
-                        {{ selectedBlotter?.title_case }}
-                    </div>
-
-                    <!-- Nature of Case -->
-                    <div class="capitalize">
-                        <strong>Nature of Case:</strong><br />
-                        {{ selectedBlotter?.nature_of_case }}
-                    </div>
-
-                    <!-- Complainant ID -->
-                    <div>
-                        <strong>Complainant ID:</strong><br />
-                        {{ getResidentName(selectedBlotter?.complainants_id) }}
-                        <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.complainants_id).padStart(4,
-                            '0')
-                        }})</span>
-                    </div>
-
-                    <!-- Resident Number - Complainant -->
-                    <div class="text-gray-500 text-xs">
-                        Resident No: {{ getResidentNumber(selectedBlotter?.complainants_id) }}
-                    </div>
-
-                    <!-- Respondent ID -->
-                    <div>
-                        <strong>Respondent ID:</strong><br />
-                        {{ getResidentName(selectedBlotter?.respondents_id) }}
-                        <span class="text-gray-500 text-xs">(ID: {{ String(selectedBlotter?.respondents_id).padStart(4,
-                            '0')
-                        }})</span>
-                    </div>
-
-                    <!-- Resident Number - Respondent -->
-                    <div class="text-gray-500 text-xs">
-                        Resident No: {{ getResidentNumber(selectedBlotter?.respondents_id) }}
-                    </div>
-
-                    <!-- Location of Incident -->
-                    <div>
-                        <strong>Location of Incident:</strong><br />
-                        {{ selectedBlotter?.place }}
-                    </div>
-
-                    <!-- Date & Time of Incident -->
-                    <div>
-                        <strong>Date & Time of Incident:</strong><br />
-                        {{ formatDate(selectedBlotter?.datetime_of_incident) }}
-                    </div>
-
-                    <!-- Status -->
-                    <div>
-                        <strong>Status:</strong><br />
-                        <span :class="{
-                            'text-green-600 font-semibold': selectedBlotter?.status === 'Resolved',
-                            'text-yellow-600 font-semibold': selectedBlotter?.status === 'In Progress',
-                            'text-red-600 font-semibold': selectedBlotter?.status === 'Open'
-                        }">
-                            {{ selectedBlotter?.status }}
-                        </span>
-                    </div>
-
-                    <!-- Barangay Case Number -->
-                    <div>
-                        <strong>Barangay Case Number:</strong><br />
-                        {{ selectedBlotter?.barangay_case_no }}
-                    </div>
-
-                    <!-- Witness/es -->
-                    <div>
-                        <strong class="block mb-2">Witness/es:</strong>
-                        <div v-if="selectedBlotter?.witness" class="pl-2">
-                            <ul class="list-disc pl-5 space-y-1">
-                                <li v-for="(witness, index) in selectedBlotter.witness.split('\n').filter(name => name.trim())"
-                                    :key="index" class="text-gray-800">
-                                    {{ witness.trim() }}
-                                </li>
-                            </ul>
-                        </div>
-                        <div v-else class="text-gray-400 italic">No witnesses listed</div>
+                        <h3 class="font-semibold mb-1">Blotter Number:</h3>
+                        <p>{{ selectedBlotter?.blotter_no || 'N/A' }}</p>
                     </div>
 
                     <!-- Blotter Type -->
                     <div>
-                        <strong>Blotter Type:</strong><br />
-                        <span class="capitalize">{{ selectedBlotter?.blotter_type }}</span>
+                        <h3 class="font-semibold mb-1">Blotter Type:</h3>
+                        <p class="capitalize">{{ selectedBlotter?.blotter_type || 'N/A' }}</p>
+                    </div>
+
+                    <!-- Title Case -->
+                    <div>
+                        <h3 class="font-semibold mb-1 capitalize">Title Case:</h3>
+                        <p>{{ selectedBlotter?.title_case || 'N/A' }}</p>
+                    </div>
+
+                    <!-- Barangay Case Number -->
+                    <div>
+                        <h3 class="font-semibold mb-1">Barangay Case Number:</h3>
+                        <p>{{ selectedBlotter?.barangay_case_no || 'N/A' }}</p>
+                    </div>
+
+                    <!-- Nature of Case -->
+                    <div>
+                        <h3 class="font-semibold mb-1 capitalize">Nature of Case:</h3>
+                        <p>{{ selectedBlotter?.nature_of_case || 'N/A' }}</p>
+                    </div>
+
+                    <!-- Filing Date -->
+                    <div>
+                        <h3 class="font-semibold mb-1">Filing Date:</h3>
+                        <p>{{ formatDate(selectedBlotter?.filing_date) || 'N/A' }}</p>
+                    </div>
+
+                    <!-- Location of Incident -->
+                    <div>
+                        <h3 class="font-semibold mb-1">Location of Incident:</h3>
+                        <p>{{ selectedBlotter?.place || 'N/A' }}</p>
+                    </div>
+
+                    <!-- Date & Time of Incident -->
+                    <div>
+                        <h3 class="font-semibold mb-1">Date & Time of Incident:</h3>
+                        <p>{{ formatDate(selectedBlotter?.datetime_of_incident) || 'N/A' }}</p>
+                    </div>
+
+                    <!-- Witness/es -->
+                    <div class="md:col-span-2">
+                        <h3 class="font-semibold mb-2">Witness/es:</h3>
+                        <div v-if="selectedBlotter?.witness"
+                            class="pl-4 max-h-32 overflow-y-auto bg-gray-50 border border-gray-300 rounded p-2 text-gray-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li v-for="(witness, index) in selectedBlotter.witness.split('\n').filter(name => name.trim())"
+                                    :key="index">
+                                    {{ witness.trim() }}
+                                </li>
+                            </ul>
+                        </div>
+                        <p v-else class="italic text-gray-400">No witnesses listed</p>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="md:col-span-2">
+                        <h3 class="font-semibold mb-1">Status:</h3>
+                        <p :class="{
+                            'text-green-600 font-semibold': selectedBlotter?.status === 'Resolved',
+                            'text-yellow-600 font-semibold': selectedBlotter?.status === 'In Progress',
+                            'text-red-600 font-semibold': selectedBlotter?.status === 'Open'
+                        }">
+                            {{ selectedBlotter?.status || 'N/A' }}
+                        </p>
                     </div>
 
                     <!-- Description -->
-                    <div class="col-span-2">
-                        <strong>Description:</strong><br />
+                    <div class="md:col-span-2">
+                        <h3 class="font-semibold mb-1">Description:</h3>
                         <textarea readonly
-                            class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed"
-                            :value="selectedBlotter?.description"></textarea>
+                            class="w-full h-40 p-3 border border-gray-300 rounded resize-none bg-gray-50 text-gray-800 text-sm leading-relaxed focus:outline-none"
+                            :value="selectedBlotter?.description || 'N/A'"></textarea>
                     </div>
 
                     <!-- Supporting Documents Section -->
-                    <div class="col-span-2">
-                        <strong>Supporting Documents:</strong><br />
+                    <div class="md:col-span-2">
+                        <h3 class="font-semibold mb-1">Supporting Documents:</h3>
                         <div v-if="getSupportingDocuments(selectedBlotter).length > 0">
-                            <ul class="list-disc pl-5">
+                            <ul class="list-disc list-inside space-y-1">
                                 <li v-for="(doc, index) in getSupportingDocuments(selectedBlotter)" :key="index">
                                     <a :href="`/storage/${getFilePath(doc)}`" target="_blank"
-                                        class="text-blue-500 hover:underline">
+                                        class="text-blue-600 hover:underline font-medium">
                                         {{ getFileName(doc) }}
                                     </a>
                                 </li>
                             </ul>
                         </div>
-                        <div v-else class="text-gray-500 italic">
-                            No supporting documents available
-                        </div>
+                        <p v-else class="italic text-gray-400">No supporting documents available</p>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 </template>
 
