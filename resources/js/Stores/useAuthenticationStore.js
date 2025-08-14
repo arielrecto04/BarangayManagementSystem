@@ -30,7 +30,6 @@ export const useAuthenticationStore = defineStore("authentication", {
                 localStorage.setItem("user", JSON.stringify(response.data?.user));
                 this._isAuthenticated = true;
                 console.log(this._user);
-                this.router.push({ name: "Dashboard" });
 
             } catch (error) {
 
