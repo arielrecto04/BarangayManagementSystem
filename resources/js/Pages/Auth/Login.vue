@@ -39,7 +39,7 @@
 <template>
     <BaseLayout>
         <form ref="loginForm" @submit.prevent="login" class="flex flex-col gap-4 w-[400px] p-5 bg-white shadow-lg rounded-3xl mx-auto">
-            <h1 class="text-2xl font-bold text-green-800">Login</h1>
+            <h1 class="text-2xl font-bold text-green-800">Login Gat Sakalam</h1>
             <label for="username">Username</label>
             <input type="text" placeholder="Username" name="email" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-800 border-green-800 " />
             <template v-if="error?.errors?.email">
