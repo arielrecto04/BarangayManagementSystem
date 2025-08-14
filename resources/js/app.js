@@ -3,7 +3,7 @@ import 'venobox/dist/venobox.min.css';
 
 import { createApp } from "vue";
 import App from "@/App.vue";
-import router from "@/router";
+import router from "@/router/index.js";
 import { createPinia } from "pinia";
 
 // ✅ Assign to variable so you can access `config`

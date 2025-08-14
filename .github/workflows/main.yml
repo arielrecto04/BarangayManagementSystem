@@ -28,6 +28,10 @@ jobs:
         run: |
           composer install --no-interaction --prefer-dist
 
+      - name: setup env
+        run: |
+          cp .env.example .env
+
       - name: Install NPM Dependencies
         run: |
           npm install
