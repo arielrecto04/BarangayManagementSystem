@@ -1,0 +1,70 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Composer
+        uses: actions/setup-composer@v2
+
+      - name: Install Dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
+
+      - name: Install NPM Dependencies
+        run: |
+          npm install
+
+      - name: Build Assets
+        run: |
+          npm run build
+
+      - name: generate App Key
+        run: |
+          php artisan key:generate
+
+
+      - name: Migrate Database
+        run: |
+          php artisan migrate --force
+
+
+      - name: Clear Cache
+        run: |
+          php artisan cache:clear
+          php artisan config:clear
+          php artisan route:clear
+          php artisan view:clear
+
+      - name: Deploy to Hostinger
+        uses: easingthemes/ssh-deploy@main
+        with:
+          source: "."
+          host: ${{ secrets.HOSTINGER_SSH_HOST }}
+          username: ${{ secrets.HOSTINGER_SSH_USER }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          key : ${{ secrets.HOSTINGER_SSH_KEY }}
+          target: ${{ secrets.HOSTINGER_SSH_TARGET_PATH }}
+
+
+          SCRIPT_BEFORE: |
+            ls -a
+
+          exclude: "/node_modules, /vendor, /storage, /bootstrap/cache, /public/storage, /env, /.github"
+
+
+
+
