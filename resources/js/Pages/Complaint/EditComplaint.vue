@@ -5,7 +5,7 @@ import { onMounted, ref, watch, computed, onUnmounted, nextTick, onBeforeUnmount
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useComplaintStore, useResidentStore } from '@/Stores';
 import useToast from '@/Utils/useToast';
-import { axios } from '@/utils';
+import { axios } from '@/Utils';
 
 const router = useRouter();
 const route = useRoute();
