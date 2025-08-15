@@ -11,6 +11,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\AuthenticationController;
 use App\Http\Controllers\DocumentRequestController;
 use App\Http\Controllers\ClinicVisitController;
+use App\Http\Controllers\AnnouncementEventController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -49,5 +50,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('documents', DocumentController::class);
     Route::apiResource('document-requests', DocumentRequestController::class);
     Route::apiResource('clinic-visits', ClinicVisitController::class);
+    Route::resource('announcement-events', AnnouncementEventController::class);
 });
-    

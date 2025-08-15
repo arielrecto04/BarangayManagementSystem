@@ -1,19 +1,19 @@
 <script setup>
-import { AuthLayout } from "@/Layouts";
 import { Table, Paginate } from '@/Components';
-import { useComplaintStore } from '@/Stores';
+import Modal from '../../Components/Modal.vue'; // Import the Modal component
+import { useComplaintStore, useResidentStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
 import { onMounted, onUnmounted, ref, nextTick } from "vue";
 import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
-import { watch } from 'vue';
-// Import the print template component
 import ComplaintPrintTemplate from './ComplaintPrintTemplate.vue';
 
-// Format date and time
+// Initialize resident store
+const residentStore = useResidentStore();
+const { residents } = storeToRefs(residentStore);
+
 const formatDateTime = (isoString) => {
   if (!isoString) return 'N/A';
-
   const options = {
     year: 'numeric',
     month: 'long',
@@ -22,75 +22,54 @@ const formatDateTime = (isoString) => {
     minute: '2-digit',
     hour12: true,
   };
-
   return new Date(isoString).toLocaleString('en-US', options);
 };
 
-// Helper function to check if supporting documents exist and are valid
+const getResidentNumber = (id) => {
+  if (!id) return 'N/A';
+  const resident = residents.value.find(r => r.id == id);
+  return resident ? resident.resident_number : 'N/A';
+};
+
+const getResidentName = (id) => {
+  if (!id) return 'N/A';
+  const resident = residents.value.find(r => r.id == id);
+  return resident ? `${resident.first_name} ${resident.last_name}` : 'N/A';
+};
+
 const getSupportingDocuments = (complaint) => {
   if (!complaint?.supporting_documents) return [];
-
-  // Handle both array and string cases
   if (Array.isArray(complaint.supporting_documents)) {
-    // New format: array of objects with 'path' and 'name'
     return complaint.supporting_documents.filter(doc => {
-      // Handle new format (objects with path and name)
-      if (typeof doc === 'object' && doc.path && doc.name) {
-        return true;
-      }
-      // Handle old format (just strings)
-      if (typeof doc === 'string') {
-        return true;
-      }
+      if (typeof doc === 'object' && doc.path && doc.name) return true;
+      if (typeof doc === 'string') return true;
       return false;
     });
   }
-
-  // If it's a string (JSON), try to parse it
   if (typeof complaint.supporting_documents === 'string') {
     try {
       const parsed = JSON.parse(complaint.supporting_documents);
       return Array.isArray(parsed) ? parsed.filter(doc => {
-        if (typeof doc === 'object' && doc.path && doc.name) {
-          return true;
-        }
-        if (typeof doc === 'string') {
-          return true;
-        }
+        if (typeof doc === 'object' && doc.path && doc.name) return true;
+        if (typeof doc === 'string') return true;
         return false;
       }) : [];
     } catch (e) {
-      console.warn('Failed to parse supporting documents:', e);
       return [];
     }
   }
-
   return [];
 };
 
-// Helper function to get filename - handles both old and new formats
 const getFileName = (doc) => {
-  // New format: object with name property
-  if (typeof doc === 'object' && doc.name) {
-    return doc.name;
-  }
-  // Old format: just file path string
-  if (typeof doc === 'string') {
-    return doc.split('/').pop() || 'Unknown file';
-  }
+  if (typeof doc === 'object' && doc.name) return doc.name;
+  if (typeof doc === 'string') return doc.split('/').pop() || 'Unknown file';
   return 'Unknown file';
 };
 
-// Helper function to get file path - handles both old and new formats
 const getFilePath = (doc) => {
-  // New format: object with path property
-  if (typeof doc === 'object' && doc.path) {
-    return doc.path;
-  }
-  // Old format: just file path string
-  if (typeof doc === 'string') {
-    return doc;
-  }
+  if (typeof doc === 'object' && doc.path) return doc.path;
+  if (typeof doc === 'string') return doc;
   return '';
 };
 
@@ -102,13 +81,13 @@ const complaintStore = useComplaintStore();
 const { complaints, isLoading, paginate } = storeToRefs(complaintStore);
 
 const currentPage = ref(route.query.page || 1);
-const resolutionUpdates = ref({});
-const statusUpdates = ref({});
 const menuPosition = ref({ top: 0, left: 0 });
 const teleportMenuRowId = ref(null);
 
-// Burger menu state
-const openMenus = ref({});
+const showModal = ref(false);
+const selectedComplaint = ref(null);
+const showPrintModal = ref(false);
+const selectedPrintComplaint = ref(null);
 
 const handlePageChange = (page) => {
   currentPage.value = page;
@@ -116,42 +95,24 @@ const handlePageChange = (page) => {
   router.replace({ query: { page: page } });
 };
 
-const showModal = ref(false);
-const selectedComplaint = ref(null);
-
-// Print modal states
-const showPrintModal = ref(false);
-const selectedPrintComplaint = ref(null);
-
-// FIXED: Better menu toggle with proper close functionality
 const toggleMenu = async (event, complaintId) => {
-  // If clicking the same menu that's already open, close it
   if (teleportMenuRowId.value === complaintId) {
     teleportMenuRowId.value = null;
     return;
   }
-
-  // Close any existing menu first
   if (teleportMenuRowId.value !== null) {
     teleportMenuRowId.value = null;
-    // Wait for DOM to update before opening new menu
     await nextTick();
   }
 
   const rect = event.currentTarget.getBoundingClientRect();
-  const dropdownWidth = 192; // Tailwind 'w-48' approx width in px
+  const dropdownWidth = 192;
   const viewportWidth = window.innerWidth;
   const scrollX = window.scrollX;
 
   let leftPosition = rect.left + scrollX;
-
-  // Check if dropdown will overflow right edge
   if (rect.left + dropdownWidth > viewportWidth) {
-    // Open dropdown to the left of the button
     leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
-  } else {
-    // Open dropdown aligned to button's left edge (right side)
-    leftPosition = rect.left + scrollX;
   }
   leftPosition = Math.max(leftPosition, 0);
 
@@ -160,27 +121,27 @@ const toggleMenu = async (event, complaintId) => {
     left: leftPosition,
   };
 
-  // Set after position is calculated
   await nextTick();
   teleportMenuRowId.value = complaintId;
 };
 
-const closeMenu = (complaintId) => {
-  openMenus.value[complaintId] = false;
+const closeMenu = () => {
   teleportMenuRowId.value = null;
 };
 
-const closeAllMenus = () => {
-  Object.keys(openMenus.value).forEach(id => {
-    openMenus.value[id] = false;
-  });
-  teleportMenuRowId.value = null;
+const handleClickOutside = (event) => {
+  const target = event.target;
+  if (!target.closest('.burger-menu-container') &&
+    !target.closest('[data-teleport-menu]') &&
+    teleportMenuRowId.value !== null) {
+    teleportMenuRowId.value = null;
+  }
 };
 
 const openModal = (complaint) => {
   selectedComplaint.value = complaint;
   showModal.value = true;
-  closeAllMenus();
+  closeMenu();
 };
 
 const closeModal = () => {
@@ -188,11 +149,10 @@ const closeModal = () => {
   selectedComplaint.value = null;
 };
 
-// Print modal functions
 const openPrintModal = (complaint) => {
   selectedPrintComplaint.value = complaint;
   showPrintModal.value = true;
-  closeAllMenus();
+  closeMenu();
 };
 
 const closePrintModal = () => {
@@ -204,34 +164,13 @@ const handlePrint = () => {
   showToast({ icon: 'success', title: 'Print dialog opened successfully' });
 };
 
-const emit = defineEmits(['status-updated']);
-
-const updateStatus = async (complaintId, newStatus) => {
-  if (!newStatus) {
-    showToast({ icon: 'warning', title: 'Please select a status.' });
-    return;
-  }
-  try {
-    await complaintStore.updateComplaint(complaintId, { status: newStatus });
-    const index = complaints.value.findIndex(c => c.id === complaintId);
-    if (index !== -1) {
-      complaints.value[index].status = newStatus;
-    }
-    statusUpdates.value[complaintId] = newStatus;
-    showToast({ icon: 'success', title: 'Status updated successfully' });
-    closeMenu(complaintId);
-  } catch (error) {
-    showToast({ icon: 'error', title: error.message });
-  }
-};
-
 const deleteComplaint = async (complaintId) => {
   if (confirm('Are you sure you want to delete this complaint?')) {
     try {
       await complaintStore.deleteComplaint(complaintId);
       showToast({ icon: 'success', title: 'Complaint deleted successfully' });
       complaintStore.getComplaints(currentPage.value);
-      closeMenu(complaintId);
+      closeMenu();
     } catch (error) {
       showToast({ icon: 'error', title: error.message });
     }
@@ -240,7 +179,7 @@ const deleteComplaint = async (complaintId) => {
 
 const editComplaint = (complaintId) => {
   router.push(`/complaints/edit-complaint/${complaintId}`);
-  closeMenu(complaintId);
+  closeMenu();
 };
 
 const columns = [
@@ -254,38 +193,14 @@ const columns = [
 
 onMounted(() => {
   const page = currentPage.value;
-  const status = route.query.status;
-
-  if (status) {
-    complaintStore.getComplaints(page, status);
-  } else {
-    complaintStore.getComplaints(page);
-  }
-
-  // FIXED: Better click outside handler
-  const handleClickOutside = (event) => {
-    const target = event.target;
-    if (!target.closest('.burger-menu-container') &&
-      !target.closest('[data-teleport-menu]') &&
-      teleportMenuRowId.value !== null) {
-      teleportMenuRowId.value = null;
-    }
-  };
+  complaintStore.getComplaints(page);
+  residentStore.getResidents(); // Load resident data
 
   document.addEventListener('click', handleClickOutside);
-
-  // Cleanup listener on unmount
-  onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
-  });
 });
 
-watch(complaints, (newComplaints) => {
-  newComplaints.forEach(complaint => {
-    if (!(complaint.id in statusUpdates.value)) {
-      statusUpdates.value[complaint.id] = complaint.status || "";
-    }
-  });
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -303,7 +218,6 @@ watch(complaints, (newComplaints) => {
     }))">
       <template #actions="{ row }">
         <div class="relative burger-menu-container">
-          <!-- Burger Menu Button -->
           <button @click="(e) => toggleMenu(e, row.id)"
             class="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             :class="{ 'bg-gray-100': teleportMenuRowId === row.id }">
@@ -317,7 +231,6 @@ watch(complaints, (newComplaints) => {
       </template>
     </Table>
 
-    <!-- FIXED: Moved Teleport outside of Table template and added unique container -->
     <Teleport to="body">
       <div v-if="teleportMenuRowId !== null" data-teleport-menu :style="{
         position: 'absolute',
@@ -325,8 +238,6 @@ watch(complaints, (newComplaints) => {
         left: menuPosition.left + 'px',
         zIndex: 9999
       }" class="bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-48">
-
-        <!-- Edit Option -->
         <button @click="editComplaint(teleportMenuRowId)"
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +247,6 @@ watch(complaints, (newComplaints) => {
           Edit
         </button>
 
-        <!-- View Option -->
         <button @click="openModal(complaints.find(c => c.id === teleportMenuRowId))"
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -348,7 +258,6 @@ watch(complaints, (newComplaints) => {
           View
         </button>
 
-        <!-- Print Option -->
         <button @click="openPrintModal(complaints.find(c => c.id === teleportMenuRowId))"
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,10 +267,8 @@ watch(complaints, (newComplaints) => {
           Print
         </button>
 
-        <!-- Divider -->
         <hr class="my-2 border-gray-200">
 
-        <!-- Delete Option -->
         <button @click="deleteComplaint(teleportMenuRowId)"
           class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -377,120 +284,176 @@ watch(complaints, (newComplaints) => {
       :totalPages="paginate.last_page" :totalItems="paginate.total" :currentPage="paginate.current_page"
       :itemsPerPage="paginate.per_page" />
 
-    <!-- View Details Modal -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div class="relative z-60 bg-white rounded-xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
-        <!-- Close Button -->
-        <button @click="closeModal" class="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">
-          &times;
-        </button>
-
-        <!-- Modal Title -->
-        <h2 class="text-lg font-bold mb-6 text-gray-700">Complaint Details</h2>
-
-        <!-- Grid Layout for Fields -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
-          <!-- Complaint Name -->
-          <div>
-            <strong>Complainant:</strong><br />
-            {{ selectedComplaint?.complainant_name || 'N/A' }}
-          </div>
-          <!-- Respondent Name -->
-          <div>
-            <strong>Respondent:</strong><br />
-            {{ selectedComplaint?.respondent_name || 'N/A' }}
-          </div>
-          <!-- Nature of Complaint -->
-          <div>
-            <strong>Nature of Complaint:</strong><br />
-            {{ selectedComplaint?.nature_of_complaint || 'N/A' }}
-          </div>
-          <!-- Location of Incident -->
-          <div>
-            <strong>Location of Incident:</strong><br />
-            {{ selectedComplaint?.incident_location || 'N/A' }}
-          </div>
-          <!-- Case Number -->
-          <div>
-            <strong>Case Number:</strong><br />
-            {{ selectedComplaint?.case_no || 'N/A' }}
-          </div>
-          <!-- Title -->
-          <div>
-            <strong>Title:</strong><br />
-            {{ selectedComplaint?.title || 'N/A' }}
-          </div>
-
-          <!-- Date and Time of Incident -->
-          <div>
-            <strong>Date & Time of Incident:</strong><br />
-            {{ formatDateTime(selectedComplaint?.incident_datetime) }}
-          </div>
-          <!-- Filing data and time -->
-          <div>
-            <strong>Filing Date & Time:</strong><br />
-            {{ formatDateTime(selectedComplaint?.filing_date) }}
-          </div>
-          <!-- Complainant ID -->
-          <div>
-            <strong>Complainant ID:</strong><br />
-            ID: {{ selectedComplaint?.complainant_id || 'N/A' }}
-          </div>
-          <!-- Respondent ID -->
-          <div>
-            <strong>Respondent ID:</strong><br />
-            ID: {{ selectedComplaint?.respondent_id || 'N/A' }}
-          </div>
-          <!-- Witness -->
-          <div>
-            <strong>Witness(es):</strong><br />
-            {{ selectedComplaint?.witness || 'N/A' }}
-          </div>
-          <!-- Status -->
-          <div>
-            <strong>Status:</strong><br />
-            {{ selectedComplaint?.status || 'N/A' }}
-          </div>
-
-          <!-- Description -->
-          <div class="md:col-span-2">
-            <strong>Description:</strong>
-            <textarea readonly
-              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
-                selectedComplaint?.description || 'N/A' }}</textarea>
-          </div>
-
-          <!-- Resolution -->
-          <div class="md:col-span-2">
-            <strong>Resolution:</strong>
-            <textarea readonly
-              class="w-full h-40 mt-1 p-2 border rounded bg-gray-50 resize-none overflow-y-auto text-sm leading-relaxed">{{
-                selectedComplaint?.resolution || 'N/A' }}</textarea>
-          </div>
-
-          <!-- Supporting Documents - FIXED -->
-          <div class="md:col-span-2">
-            <strong>Supporting Documents:</strong><br />
-            <div v-if="getSupportingDocuments(selectedComplaint).length > 0">
-              <ul class="list-disc pl-5">
-                <li v-for="(doc, index) in getSupportingDocuments(selectedComplaint)" :key="index">
-                  <a :href="`/storage/${getFilePath(doc)}`" target="_blank" class="text-blue-500 hover:underline">
-                    {{ getFileName(doc) }}
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div v-else class="text-gray-500 italic">
-              No supporting documents available
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
     <!-- Print Template Modal -->
     <ComplaintPrintTemplate v-if="showPrintModal" :complaint="selectedPrintComplaint" @close="closePrintModal"
       @print="handlePrint" />
+
+    <!-- Modal for Complaint Details using Modal.vue component -->
+    <Modal :show="showModal" title="Complaint Details" max-width="4xl" @close="closeModal">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-gray-800 text-sm">
+        <!-- Complainant Section -->
+        <div>
+          <h3 class="font-semibold mb-3 text-blue-800">Complainant Information</h3>
+
+          <div class="mb-3">
+            <h4 class="font-medium mb-1 text-gray-600">Name:</h4>
+            <p class="text-gray-900">{{ getResidentName(selectedComplaint?.complainant_id) || 'N/A' }}</p>
+          </div>
+
+          <div class="mb-3">
+            <h4 class="font-medium mb-1 text-gray-600">Resident Number:</h4>
+            <div class="bg-blue-50 inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono select-all">
+              {{ getResidentNumber(selectedComplaint?.complainant_id) || 'N/A' }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <h4 class="font-medium mb-1 text-gray-600">Resident ID:</h4>
+            <p class="text-gray-500 text-sm">
+              {{ selectedComplaint?.complainant_id || 'N/A' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Respondent Section -->
+        <div>
+          <h3 class="font-semibold mb-3 text-red-800">Respondent Information</h3>
+
+          <div class="mb-3">
+            <h4 class="font-medium mb-1 text-gray-600">Name:</h4>
+            <p class="text-gray-900">{{ getResidentName(selectedComplaint?.respondent_id) || 'N/A' }}</p>
+          </div>
+
+          <div class="mb-3">
+            <h4 class="font-medium mb-1 text-gray-600">Resident Number:</h4>
+            <div class="bg-blue-50 inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono select-all">
+              {{ getResidentNumber(selectedComplaint?.respondent_id) || 'N/A' }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <h4 class="font-medium mb-1 text-gray-600">Resident ID:</h4>
+            <p class="text-gray-500 text-sm">
+              {{ selectedComplaint?.respondent_id || 'N/A' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Case Number -->
+        <div>
+          <h3 class="font-semibold mb-1">Case Number:</h3>
+          <p>{{ selectedComplaint?.case_no || 'N/A' }}</p>
+        </div>
+
+        <!-- Title -->
+        <div>
+          <h3 class="font-semibold mb-1">Title:</h3>
+          <p>{{ selectedComplaint?.title || 'N/A' }}</p>
+        </div>
+
+        <!-- Nature of Complaint -->
+        <div>
+          <h3 class="font-semibold mb-1">Nature of Complaint:</h3>
+          <p>{{ selectedComplaint?.nature_of_complaint || 'N/A' }}</p>
+        </div>
+
+        <!-- Status -->
+        <div>
+          <h3 class="font-semibold mb-1">Status:</h3>
+          <p :class="{
+            'text-green-600 font-semibold': selectedComplaint?.status === 'Resolved',
+            'text-yellow-600 font-semibold': selectedComplaint?.status === 'In Progress',
+            'text-red-600 font-semibold': selectedComplaint?.status === 'Open'
+          }">
+            {{ selectedComplaint?.status || 'N/A' }}
+          </p>
+        </div>
+
+        <!-- Filing Date -->
+        <div>
+          <h3 class="font-semibold mb-1">Filing Date:</h3>
+          <p>{{ formatDateTime(selectedComplaint?.filing_date) || 'N/A' }}</p>
+        </div>
+
+        <!-- Incident Date -->
+        <div>
+          <h3 class="font-semibold mb-1">Date & Time of Incident:</h3>
+          <p>{{ formatDateTime(selectedComplaint?.incident_datetime) || 'N/A' }}</p>
+        </div>
+
+        <!-- Location -->
+        <div>
+          <h3 class="font-semibold mb-1">Location of Incident:</h3>
+          <p>{{ selectedComplaint?.incident_location || 'N/A' }}</p>
+        </div>
+
+        <!-- Witnesses -->
+        <div class="md:col-span">
+          <h3 class="font-semibold mb-2">Witness/es:</h3>
+          <div v-if="selectedComplaint?.witness"
+            class="pl-4 max-h-32 overflow-y-auto bg-gray-50 border border-gray-300 rounded p-2 text-gray-700">
+            <ul class="list-disc list-inside space-y-1">
+              <li v-for="(witness, index) in selectedComplaint.witness.split('\n').filter(name => name.trim())"
+                :key="index">
+                {{ witness.trim() }}
+              </li>
+            </ul>
+          </div>
+          <p v-else class="italic text-gray-400">No witnesses listed</p>
+        </div>
+
+        <!-- Description -->
+        <div class="md:col-span-2">
+          <h3 class="font-semibold mb-1">Description:</h3>
+          <textarea readonly
+            class="w-full h-40 p-3 border border-gray-300 rounded resize-none bg-gray-50 text-gray-800 text-sm leading-relaxed focus:outline-none"
+            :value="selectedComplaint?.description || 'N/A'"></textarea>
+        </div>
+
+        <!-- Resolution -->
+        <div class="md:col-span-2">
+          <h3 class="font-semibold mb-1">Resolution:</h3>
+          <textarea readonly
+            class="w-full h-40 p-3 border border-gray-300 rounded resize-none bg-gray-50 text-gray-800 text-sm leading-relaxed focus:outline-none"
+            :value="selectedComplaint?.resolution || 'N/A'"></textarea>
+        </div>
+
+        <!-- Supporting Documents -->
+        <div class="md:col-span-2">
+          <h3 class="font-semibold mb-1">Supporting Documents:</h3>
+          <div v-if="getSupportingDocuments(selectedComplaint).length > 0">
+            <ul class="list-disc list-inside space-y-1">
+              <li v-for="(doc, index) in getSupportingDocuments(selectedComplaint)" :key="index">
+                <a :href="`/storage/${getFilePath(doc)}`" target="_blank"
+                  class="text-blue-600 hover:underline font-medium">
+                  {{ getFileName(doc) }}
+                </a>
+              </li>
+            </ul>
+          </div>
+          <p v-else class="italic text-gray-400">No supporting documents available</p>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
+
+<style>
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+</style>

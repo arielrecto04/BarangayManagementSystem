@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia';
 import { onMounted, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import useToast from '@/Utils/useToast';
+import Modal from '../../Components/Modal.vue'
 
 const officialStore = useOfficialStore();
 const { officials, isLoading } = storeToRefs(officialStore);
@@ -886,102 +887,86 @@ onMounted(() => {
     </template>
 
     <!-- View Modal (keeping the same modal from previous version) -->
-    <div v-if="showModal"
-      class="fixed inset-0 bg-white/30 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in"
-      @click="closeModal">
-      <div
-        class="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform scale-95 animate-slide-up"
-        @click.stop>
-        <!-- Header -->
-        <div class="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 class="text-2xl font-bold text-gray-900 tracking-tight">
-            Official Details
-          </h2>
-          <button @click="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors text-2xl font-bold">
-            ×
-          </button>
+    <Modal :show="showModal" title="Official Details" maxWidth="2xl" @close="closeModal">
+      <div v-if="selectedOfficial">
+        <!-- Profile -->
+        <div class="flex flex-col items-center mb-6 text-center">
+          <div class="w-32 h-32 bg-gradient-to-tr from-gray-200 to-gray-300 rounded-full mb-4 shadow-inner"></div>
+          <h3 class="text-3xl font-bold text-gray-900">
+            {{ selectedOfficial.name }}
+          </h3>
+          <p class="text-lg text-blue-600 font-semibold">
+            {{ selectedOfficial.position }}
+          </p>
         </div>
 
-        <!-- Content -->
-        <div v-if="selectedOfficial" class="p-6">
-          <!-- Profile -->
-          <div class="flex flex-col items-center mb-6 text-center">
-            <div class="w-32 h-32 bg-gradient-to-tr from-gray-200 to-gray-300 rounded-full mb-4 shadow-inner"></div>
-            <h3 class="text-3xl font-bold text-gray-900">
-              {{ selectedOfficial.name }}
-            </h3>
-            <p class="text-lg text-blue-600 font-semibold">
-              {{ selectedOfficial.position }}
-            </p>
-          </div>
-
-          <!-- Details Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Basic Info -->
-            <div class="space-y-4">
-              <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">
-                Basic Information
-              </h4>
-              <div>
-                <label class="text-sm font-medium text-gray-500">Full Name:</label>
-                <p class="text-gray-900">{{ selectedOfficial.name || 'N/A' }}</p>
-              </div>
-              <div>
-                <label class="text-sm font-medium text-gray-500">Position:</label>
-                <p class="text-gray-900">{{ selectedOfficial.position || 'N/A' }}</p>
-              </div>
-              <div>
-                <label class="text-sm font-medium text-gray-500">Terms:</label>
-                <p class="text-gray-900">{{ selectedOfficial.terms || 'N/A' }}</p>
-              </div>
-              <div>
-                <label class="text-sm font-medium text-gray-500">Number of Terms:</label>
-                <p class="text-gray-900">
-                  {{ selectedOfficial.no_of_per_term || 'N/A' }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Important Dates -->
-            <div class="space-y-4">
-              <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">
-                Important Dates
-              </h4>
-              <div>
-                <label class="text-sm font-medium text-gray-500">Elected Date:</label>
-                <p class="text-gray-900">
-                  {{ formatDate(selectedOfficial.elected_date) }}
-                </p>
-              </div>
-              <div>
-                <label class="text-sm font-medium text-gray-500">Start Date:</label>
-                <p class="text-gray-900">
-                  {{ formatDate(selectedOfficial.start_date) }}
-                </p>
-              </div>
-              <div>
-                <label class="text-sm font-medium text-gray-500">End Date:</label>
-                <p class="text-gray-900">
-                  {{ formatDate(selectedOfficial.end_date) }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Description -->
-          <div class="mt-6">
-            <h4 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">
-              Description
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Basic Info -->
+          <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">
+              Basic Information
             </h4>
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <p class="text-gray-700 leading-relaxed">
-                {{ selectedOfficial.description || 'No description available.' }}
+            <div>
+              <label class="text-sm font-medium text-gray-500">Full Name:</label>
+              <p class="text-gray-900">{{ selectedOfficial.name || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Position:</label>
+              <p class="text-gray-900">{{ selectedOfficial.position || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Terms:</label>
+              <p class="text-gray-900">{{ selectedOfficial.terms || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Number of Terms:</label>
+              <p class="text-gray-900">
+                {{ selectedOfficial.no_of_per_term || 'N/A' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Important Dates -->
+          <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">
+              Important Dates
+            </h4>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Elected Date:</label>
+              <p class="text-gray-900">
+                {{ formatDate(selectedOfficial.elected_date) }}
+              </p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Start Date:</label>
+              <p class="text-gray-900">
+                {{ formatDate(selectedOfficial.start_date) }}
+              </p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">End Date:</label>
+              <p class="text-gray-900">
+                {{ formatDate(selectedOfficial.end_date) }}
               </p>
             </div>
           </div>
         </div>
+
+        <!-- Description -->
+        <div class="mt-6">
+          <h4 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">
+            Description
+          </h4>
+          <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <p class="text-gray-700 leading-relaxed">
+              {{ selectedOfficial.description || 'No description available.' }}
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+    </Modal>
+
   </div>
 </template>
 

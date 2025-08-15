@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia';
 import { onMounted, onUnmounted, ref, watch, nextTick } from "vue";
 import useToast from '@/Utils/useToast';
 import { useRouter, useRoute } from 'vue-router';
+import Modal from '../../Components/Modal.vue'
 
 const { showToast } = useToast();
 const router = useRouter();
@@ -243,96 +244,86 @@ const columns = [
     </div>
 
     <!-- Modal Template -->
-    <transition name="fade">
-        <div v-if="showModal" class="fixed inset-0 z-50 flex justify-center items-center bg-black/50 backdrop-blur-sm">
+    <Modal :show="showModal" title="Resident Profile" maxWidth="6xl" @close="closeModal">
+        <div class="flex flex-col md:flex-row max-h-[90vh] overflow-auto">
+            <!-- Left Column -->
             <div
-                class="bg-white rounded-2xl shadow-xl flex flex-col md:flex-row max-w-6xl w-full max-h-[90vh] overflow-auto relative">
-                <!-- Left Column -->
-                <div
-                    class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
-                    <h1 class="text-2xl font-bold mb-4 text-center">Resident Profile</h1>
-
-                    <!-- Avatar or Placeholder -->
-                    <div class="w-40 h-40 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-default"
-                        :class="{ 'border-gray-300': !selectedResident?.avatar, 'border-transparent': selectedResident?.avatar }">
-                        <img v-if="selectedResident?.avatar" :src="selectedResident.avatar" alt="Resident Avatar"
-                            class="w-40 h-40 rounded-xl object-cover" />
-                        <div v-else class="text-center text-4xl text-gray-400 select-none">📸</div>
-                    </div>
+                class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
+                <!-- Avatar or Placeholder -->
+                <div class="w-40 h-40 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-default"
+                    :class="{ 'border-gray-300': !selectedResident?.avatar, 'border-transparent': selectedResident?.avatar }">
+                    <img v-if="selectedResident?.avatar" :src="selectedResident.avatar" alt="Resident Avatar"
+                        class="w-40 h-40 rounded-xl object-cover" />
+                    <div v-else class="text-center text-4xl text-gray-400 select-none">📸</div>
                 </div>
+            </div>
 
-                <!-- Right Column -->
-                <div class="p-8 md:w-2/3 overflow-auto">
-                    <button @click="closeModal"
-                        class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-3xl font-bold leading-none"
-                        aria-label="Close modal">
-                        &times;
-                    </button>
+            <!-- Right Column -->
+            <div class="p-8 md:w-2/3 overflow-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Resident Number</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.resident_number || '-' }}</p>
+                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Resident Number</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.resident_number || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Full Name</label>
+                        <p class="mt-1 text-gray-900">
+                            {{ selectedResident?.first_name || '-' }}
+                            {{ selectedResident?.middle_name || '' }}
+                            {{ selectedResident?.last_name || '-' }}
+                        </p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Full Name</label>
-                            <p class="mt-1 text-gray-900">
-                                {{ selectedResident?.first_name || '-' }}
-                                {{ selectedResident?.middle_name || '' }}
-                                {{ selectedResident?.last_name || '-' }}
-                            </p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Birthday</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.birthday || '-' }}</p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Birthday</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.birthday || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Age</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.age || '-' }}</p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Age</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.age || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Gender</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.gender || '-' }}</p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Gender</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.gender || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Address</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.address || '-' }}</p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Address</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.address || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Contact Number</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.contact_number || '-' }}</p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Contact Number</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.contact_number || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Contact Person</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.contact_person || '-' }}</p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Contact Person</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.contact_person || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Family Member</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.family_member || '-' }}</p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Family Member</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.family_member || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Emergency Contact</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.emergency_contact || '-' }}</p>
+                    </div>
 
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Emergency Contact</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.emergency_contact || '-' }}</p>
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700">Email</label>
-                            <p class="mt-1 text-gray-900">{{ selectedResident?.email || '-' }}</p>
-                        </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700">Email</label>
+                        <p class="mt-1 text-gray-900">{{ selectedResident?.email || '-' }}</p>
                     </div>
                 </div>
             </div>
         </div>
-    </transition>
+    </Modal>
+
 </template>
 
 <style>
