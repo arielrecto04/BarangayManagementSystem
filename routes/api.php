@@ -28,6 +28,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/search', [ProjectController::class, 'search']);
     });
 
+    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
+
+
     Route::prefix('document-requests')->group(function () {
         Route::get('/statistic', [DocumentRequestController::class, 'statistic']);
         Route::get('/search', [DocumentRequestController::class, 'search']);
@@ -37,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('residents')->group(function () {
         Route::get('/get-resident-by-number/{number}', [ResidentController::class, 'getResidentByNumber']);
     });
+
 
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);
@@ -48,3 +52,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('clinic-visits', ClinicVisitController::class);
     Route::apiResource('immunizations', VaccinationRecordController::class);
 });
+    

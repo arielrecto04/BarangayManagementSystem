@@ -1,78 +1,143 @@
 <script setup>
-    import { AuthLayout } from '@/Layouts'
-  
+import { AuthLayout } from '@/Layouts'
+import { ref } from 'vue'
+
+const totalResidents = ref(1250);
+const documentsProcessed = ref(890);
+const activeComplaints = ref(34);
+const ongoingProjects = ref(12);
+
+const recentActivities = ref([
+    { description: 'John Doe updated profile', time: '10 mins ago' },
+    { description: 'New project "Water System" created', time: '1 hour ago' },
+    { description: 'Complaint #123 resolved', time: 'Yesterday' }
+]);
+
+const latestProjects = ref([
+    { name: 'Community Park Renovation', startDate: '2024-07-01' },
+    { name: 'Road Improvement Phase 2', startDate: '2024-06-15' },
+    { name: 'Health Clinic Expansion', startDate: '2024-05-20' }
+]);
+
 </script>
 
 <template>
     <AuthLayout>
-  
-    <div class='mt-5'>
-        <h1 class='text-2xl uppercase'>Dashboard Overview</h1>
-        <!-- USE MESSAGE -->
-        <h2 class='mt-2'> Welcome back, Admin!</h2> 
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
-        <!-- Card 1 -->
-        <div class="flex items-center bg-white rounded-lg shadow-md p-5 space-x-4">
-            <div class="text-3xl text-green-700">
-                <i class="fas fa-users"></i> 
+        <div class="mt-5 px-6">
+            <h1 class="text-2xl uppercase font-bold tracking-wide">Dashboard Overview</h1>
+            <h2 class="mt-2 text-gray-700 text-lg">Welcome back, Admin!</h2>
 
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                <!-- Card 1: Total Residents -->
+                <div
+                    class="flex items-center bg-white rounded-lg shadow-md p-5 space-x-4 hover:shadow-lg transition-shadow cursor-pointer">
+                    <div class="text-green-700 text-4xl">
+                        <!-- Heroicon users -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17 20h5v-2a4 4 0 00-3-3.87m-4 5H7v-2a4 4 0 013-3.87M6 8a4 4 0 100-8 4 4 0 000 8zm12 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <!-- Uncomment this to use FontAwesome instead -->
+                        <!-- <i class="fas fa-users text-4xl"></i> -->
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Residents</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ totalResidents }}</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: Documents Processed -->
+                <div
+                    class="flex items-center bg-white rounded-lg shadow-md p-5 space-x-4 hover:shadow-lg transition-shadow cursor-pointer">
+                    <div class="text-blue-600 text-4xl">
+                        <!-- Document icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h5l5 5v9a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Documents Processed</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ documentsProcessed }}</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: Active Complaints -->
+                <div
+                    class="flex items-center bg-white rounded-lg shadow-md p-5 space-x-4 hover:shadow-lg transition-shadow cursor-pointer">
+                    <div class="text-red-600 text-4xl">
+                        <!-- Exclamation Triangle icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.7 3.86a2 2 0 00-3.41 0zM12 9v4m0 4h.01" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Active Complaints</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ activeComplaints }}</p>
+                    </div>
+                </div>
+
+                <!-- Card 4: Ongoing Projects -->
+                <div
+                    class="flex items-center bg-white rounded-lg shadow-md p-5 space-x-4 hover:shadow-lg transition-shadow cursor-pointer">
+                    <div class="text-purple-600 text-4xl">
+                        <!-- Project Diagram icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9v6M12 3v18M7 9v6" />
+                            <circle cx="7" cy="9" r="2" />
+                            <circle cx="12" cy="12" r="2" />
+                            <circle cx="17" cy="15" r="2" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Ongoing Projects</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ ongoingProjects }}</p>
+                    </div>
+                </div>
             </div>
-            <div>
-                <p class="text-sm text-gray-600">Total Residents</p>
-                <p class="text-xl font-semibold">{{}}</p>
-            </div>
-            </div>
-            <!-- Card 2 -->
-        <div class="flex items-center bg-white rounded-lg shadow-md p-4 space-x-4">
-            <div class="text-3xl text-blue-600">
-                <i class="fas fa-file-alt"></i>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Documents Processed</p>
-                <p class="text-xl font-semibold">{{}}</p>
-            </div>
-            </div>
-            <!-- Card 3 -->
-        <div class="flex items-center bg-white rounded-lg shadow-md p-4 space-x-4">
-            <div class="text-3xl text-red-600">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Active Complaints</p>
-                <p class="text-xl font-semibold">{{  }}</p>
-            </div>
-            </div>
-            <!-- Card 4 -->
-        <div class="flex items-center bg-white rounded-lg shadow-md p-4 space-x-4">
-            <div class="text-3xl text-purple-600">
-                <i class="fas fa-project-diagram"></i>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Ongoing Projects</p>
-                <p class="text-xl font-semibold">{{  }}</p>
-            </div>
-            </div>
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-5">
-    <!-- Recent Activities -->
-        <div class="bg-white rounded-lg shadow-md p-5">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">Recent Activities:</h2>
-                <a href="{{  }}" class="text-sm text-blue-600 hover:underline">View All</a>
+
+            <!-- Lower Panels -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 px-2">
+                <!-- Recent Activities -->
+                <section class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800">Recent Activities</h2>
+                        <a href="/activities" class="text-blue-600 text-sm hover:underline font-medium">View All</a>
+                    </div>
+                    <!-- You can replace the ul/li with your actual activity list -->
+                    <ul class="overflow-y-auto max-h-64 divide-y divide-gray-100">
+                        <li v-for="(activity, index) in recentActivities" :key="index" class="py-3">
+                            <p class="text-gray-700 text-sm">{{ activity.description }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ activity.time }}</p>
+                        </li>
+                        <li v-if="recentActivities.length === 0" class="text-gray-400 text-center py-6">No recent
+                            activities</li>
+                    </ul>
+                </section>
+
+                <!-- Latest Projects -->
+                <section class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800">Latest Projects</h2>
+                        <a href="/projects" class="text-blue-600 text-sm hover:underline font-medium">View All</a>
+                    </div>
+                    <!-- Replace this with your projects list -->
+                    <ul class="overflow-y-auto max-h-64 divide-y divide-gray-100">
+                        <li v-for="(project, index) in latestProjects" :key="index" class="py-3">
+                            <p class="text-gray-700 font-medium">{{ project.name }}</p>
+                            <p class="text-xs text-gray-400 mt-1">Started: {{ project.startDate }}</p>
+                        </li>
+                        <li v-if="latestProjects.length === 0" class="text-gray-400 text-center py-6">No recent projects
+                        </li>
+                    </ul>
+                </section>
             </div>
         </div>
-
-    <!-- Latest Projects -->
-        <div class="bg-white rounded-lg shadow-md p-5">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">Latest Projects</h2>
-                <a href="{{  }}" class="text-sm text-blue-600 hover:underline">View All</a>
-    </div>
-        </div>
-    </div>
-    
-    
-   
     </AuthLayout>
 </template>

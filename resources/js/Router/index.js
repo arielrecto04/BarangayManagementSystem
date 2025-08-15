@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthenticationStore } from "@/Stores";
 
-
 const routes = [
     {
         path: "/",
@@ -115,7 +114,8 @@ const routes = [
                     title: "Add Document",
                     requiresAuth: true,
                 },
-                component: () => import("@/Pages/Document/AddRequestDocument.vue"),
+                component: () =>
+                    import("@/Pages/Document/AddRequestDocument.vue"),
             },
             {
                 path: "stage-document/:documentType",
@@ -124,8 +124,9 @@ const routes = [
                     title: "Stage Request Document",
                     requiresAuth: true,
                 },
-                component: () => import("@/Pages/Document/StageRequestDocument.vue"),
-            }
+                component: () =>
+                    import("@/Pages/Document/StageRequestDocument.vue"),
+            },
         ],
     },
     {
@@ -135,7 +136,37 @@ const routes = [
             title: "Complaints",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Dashboard/Complaints.vue"),
+        redirect: { name: "List Complaints" },
+        component: () => import("@/Pages/Complaint/ParentComplaintView.vue"),
+        children: [
+            {
+                path: "list-complaints",
+                name: "List Complaints",
+                meta: {
+                    title: "List Complaints",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/ListComplaints.vue"),
+            },
+            {
+                path: "add-complaint",
+                name: "Add Complaint",
+                meta: {
+                    title: "Add Complaint",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/AddComplaint.vue"),
+            },
+            {
+                path: "edit-complaint/:id",
+                name: "Edit Complaint",
+                meta: {
+                    title: "Edit Complaint",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Complaint/EditComplaint.vue"),
+            },
+        ],
     },
     {
         path: "/blotter",
@@ -174,7 +205,7 @@ const routes = [
                 },
                 component: () => import("@/Pages/Blotter/EditBlotter.vue"),
             },
-        ]
+        ],
     },
     {
         path: "/projects",
@@ -222,8 +253,7 @@ const routes = [
                 },
                 component: () => import("@/Pages/Official/EditOfficial.vue"),
             },
-
-        ]
+        ],
     },
     {
         path: "/health",
@@ -232,8 +262,9 @@ const routes = [
             title: "Health Services",
             requiresAuth: true,
         },
-        redirect: { name: "Health Dashboard"},
-        component: () => import("@/Pages/HealthService/ParentHealthServiceView.vue"),
+        redirect: { name: "Health Dashboard" },
+        component: () =>
+            import("@/Pages/HealthService/ParentHealthServiceView.vue"),
         children: [
             {
                 path: "dashboard",
@@ -241,7 +272,7 @@ const routes = [
                 meta: {
                     title: "Health Dashboard",
                     requiresAuth: true,
-                }, 
+                },
                 component: () => import("@/Pages/HealthService/Dashboard.vue"),
             },
             {
@@ -251,7 +282,10 @@ const routes = [
                     title: "Clinic Visits Log",
                     requiresAuth: true,
                 },
-                component: () => import("@/Pages/HealthService/ClinicVisit/ClinicVisits.vue"),
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/ClinicVisit/ClinicVisits.vue"
+                    ),
             },
             {
                 path: "immunizations",
@@ -260,43 +294,64 @@ const routes = [
                     title: "Immunization Records",
                     requiresAuth: true,
                 },
-                component: () => import("@/Pages/HealthService/Immunization/ImmunizationRecords.vue"),
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Immunization/ImmunizationRecords.vue"
+                    ),
             },
             {
                 path: "mch",
                 name: "Maternal & Child Health",
-                component: () => import("@/Pages/HealthService/MaternalChildHealth/MaternalChildHealth.vue"),
-                redirect: { name: 'Prenatal Records' }, 
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/MaternalChildHealth/MaternalChildHealth.vue"
+                    ),
+                redirect: { name: "Prenatal Records" },
                 children: [
                     {
                         path: "prenatal",
                         name: "Prenatal Records",
-                        component: () => import("@/Pages/HealthService/MaternalChildHealth/PrenatalRecords.vue"),
+                        component: () =>
+                            import(
+                                "@/Pages/HealthService/MaternalChildHealth/PrenatalRecords.vue"
+                            ),
                     },
                     {
                         path: "child-growth",
                         name: "Child Growth Records",
-                        component: () => import("@/Pages/HealthService/MaternalChildHealth/ChildGrowthRecords.vue"),
-                    }
-                ]
+                        component: () =>
+                            import(
+                                "@/Pages/HealthService/MaternalChildHealth/ChildGrowthRecords.vue"
+                            ),
+                    },
+                ],
             },
             {
                 path: "programs",
                 name: "Community Programs",
-                component: () => import("@/Pages/HealthService/CommunityProgram/CommunityPrograms.vue"),
-                redirect: { name: 'Family Planning' }, // Default to the first sub-tab
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/CommunityProgram/CommunityPrograms.vue"
+                    ),
+                redirect: { name: "Family Planning" }, // Default to the first sub-tab
                 children: [
                     {
                         path: "family-planning",
                         name: "Family Planning",
-                        component: () => import("@/Pages/HealthService/CommunityProgram/FamilyPlanning.vue"),
+                        component: () =>
+                            import(
+                                "@/Pages/HealthService/CommunityProgram/FamilyPlanning.vue"
+                            ),
                     },
                     {
                         path: "nutrition-status",
                         name: "Nutrition Status",
-                        component: () => import("@/Pages/HealthService/CommunityProgram/NutritionStatus.vue"),
-                    }
-                ]
+                        component: () =>
+                            import(
+                                "@/Pages/HealthService/CommunityProgram/NutritionStatus.vue"
+                            ),
+                    },
+                ],
             },
             {
                 path: "reports",
@@ -305,18 +360,13 @@ const routes = [
                     title: "Health Reports",
                     requiresAuth: true,
                 },
-                component: () => import("@/Pages/HealthService/HealthReports.vue"),
+                component: () =>
+                    import("@/Pages/HealthService/HealthReports.vue"),
             },
             {
                 path: "settings",
-                name: "Manage Health Services",
-                meta: {
-                    title: "Manage Health Services",
-                    requiresAuth: true,
-                },
-                component: () => import("@/Pages/Dashboard/HealthServices.vue"),
             },
-        ]
+        ],
     },
     {
         path: "/login",

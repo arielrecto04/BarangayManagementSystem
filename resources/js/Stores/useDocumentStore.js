@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { axios } from "@/utils"; // Make sure axios is imported
+import { axios } from "@/Utils"; // Make sure axios is imported
 
 export const useDocumentStore = defineStore("document", {
     state: () => ({

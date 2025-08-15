@@ -11,25 +11,48 @@ class Blotter extends Model
         'filing_date',
         'title_case',
         'nature_of_case',
-        'complainant_type',
-        'complainant_id',
-        'respondent_type',
-        'respondent_id',
+        'complainants_name',
+        'complainants_id',
+
+        'respondents_name',
+        'respondents_id',
+        'complainant_address',
+        'respondent_address',
         'place',
         'datetime_of_incident',
         'blotter_type',
         'barangay_case_no',
         'total_cases',
         'status',
+        'description',
+        'witness',
+        'supporting_documents',
     ];
 
-    public function complainants()
+    protected $casts = [
+        'filing_date' => 'date',
+        'datetime_of_incident' => 'date',
+        'supporting_documents' => 'array',
+    ];
+
+    public function complainant()
     {
-        return $this->morphToMany(Resident::class, 'complainant');
+        return $this->morphTo('complainant', 'complainants_name', 'complainants_id');
     }
 
-    public function respondents()
+    public function respondent()
     {
-        return $this->morphToMany(Resident::class, 'respondent');
+        return $this->morphTo('respondent', 'respondents_name', 'respondents_id');
+    }
+
+    protected $with = ['complainant', 'respondent'];
+    public function getSupportingDocumentsAttribute($value)
+    {
+        return json_decode($value, true) ?: [];
+    }
+
+    public function setSupportingDocumentsAttribute($value)
+    {
+        $this->attributes['supporting_documents'] = json_encode($value);
     }
 }

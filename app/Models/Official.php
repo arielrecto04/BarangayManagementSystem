@@ -23,4 +23,3 @@ class Official extends Model
         return $this->belongsTo(Resident::class);
     }
 }
-

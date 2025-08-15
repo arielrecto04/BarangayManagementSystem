@@ -12,10 +12,10 @@ class OfficialController extends Controller
      */
     public function index()
     {
-            $officials = Official::all();
-    return response()->json([
-        'data' => $officials
-    ]);
+        $officials = Official::all();
+        return response()->json([
+            'data' => $officials
+        ]);
     }
 
     /**
@@ -29,27 +29,28 @@ class OfficialController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string',
-        'position' => 'required|string',
-        'description' => 'required|string',
-        'terms' => 'required|string',
-        'no_of_per_term' => 'required|integer',
-        'elected_date' => 'required|date',
-        'start_date' => 'required|date',
-        'end_date' => 'required|date',
-        'resident_id' => 'required|string',
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'position' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'terms' => 'nullable|string',
+            'no_of_per_term' => 'nullable|integer',
+            'elected_date' => 'nullable|date',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'resident_id' => 'nullable|integer|exists:residents,id',
+        ]);
 
-    $official = Official::create($validated);
+        $official = Official::create($validated);
 
-    return response()->json([
-        'message' => 'Official created successfully',
-        'data' => $official,
-    ], 201); // ✅ Send success response
-}
+        return response()->json([
+            'message' => 'Official created successfully',
+            'data' => $official,
+        ], 201);
+    }
+
     /**
      * Display the specified resource.
      */
@@ -71,20 +72,21 @@ public function store(Request $request)
      */
     public function update(Request $request, string $id)
     {
-         $request->validate([
-            'name' => 'required',
-            'description' => 'required',
-            'position' => 'required',
-            'terms' => 'required',
-            'no_of_per_term' => 'required',
-            'elected_date' => 'required',
-            'end_date' => 'required',
-            'resident_id' => 'required',
-            
+        // Fixed validation rules - made most fields nullable to match frontend behavior
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'position' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'terms' => 'nullable|string',
+            'no_of_per_term' => 'nullable|integer',
+            'elected_date' => 'nullable|date',
+            'start_date' => 'nullable|date', // Added missing field
+            'end_date' => 'nullable|date',
+            'resident_id' => 'nullable|integer|exists:residents,id',
         ]);
 
         $official = Official::findOrFail($id);
-        $official->update($request->all());
+        $official->update($validated); // Use validated data instead of $request->all()
 
         return response()->json([
             'message' => 'Official updated successfully',

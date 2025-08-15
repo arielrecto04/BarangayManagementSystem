@@ -17,14 +17,23 @@ return new class extends Migration
             $table->date('filing_date');
             $table->string('title_case');
             $table->string('nature_of_case');
-            $table->morphs('complainants');
-            $table->morphs('respondents');
+            $table->string('complainants_name');
+            $table->string('complainants_id');
+
+            $table->string('respondents_name');
+            $table->string('respondents_id');
+            $table->string('complainant_address');
+            $table->string('respondent_address');
             $table->string('place');
             $table->date('datetime_of_incident');
             $table->longText('blotter_type');
             $table->string('barangay_case_no');
             $table->string('total_cases');
             $table->string('status')->default('Open');
+            $table->longText('description');
+            $table->string('witness')->nullable();
+            // Store both file paths and original names
+            $table->json('supporting_documents')->nullable(); // Array of objects with 'path
             $table->timestamps();
         });
     }

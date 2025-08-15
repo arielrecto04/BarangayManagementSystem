@@ -5,7 +5,7 @@ import { Modal, Loader, Table, FileType, Paginate } from '@/Components'
 import { useDocumentStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
 import { ArrowDownOnSquareIcon, TrashIcon, EyeIcon } from '@heroicons/vue/24/outline'
-import VenoBox from 'venoBox';
+import VenoBox from 'venobox';
 import { formatFileSize } from '@/Utils';
 import { useRoute, useRouter } from 'vue-router';
 import { Squares2X2Icon, TableCellsIcon } from '@heroicons/vue/24/outline'
@@ -192,6 +192,7 @@ watch(() => documentStore.documents, () => {
 
 
 onUnmounted(() => {
+    // venoBox.value.destroy();
     venoBox.value.close();
 })
 

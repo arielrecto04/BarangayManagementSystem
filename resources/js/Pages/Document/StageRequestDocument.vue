@@ -15,8 +15,6 @@ const documentRequestStore = useDocumentRequestStore();
 const router = useRouter();
 const { documentRequests, isLoading, documentRequest } = storeToRefs(documentRequestStore);
 
-
-
 const {
     stages,
     getStatusColor,
