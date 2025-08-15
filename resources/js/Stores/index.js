@@ -7,3 +7,4 @@ export { useProjectStore } from "./useProjectStore";
 export { useDocumentStore } from "./useDocumentStore";
 export { useDocumentRequestStore } from "./useDocumentRequestStore";
 export { useClinicVisitStore} from "./useClinicVisitStore";
+export { useImmunizationStore } from "./useImmunizationStore";
