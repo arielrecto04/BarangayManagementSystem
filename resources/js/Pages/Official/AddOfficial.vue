@@ -27,18 +27,12 @@ const officialDataForm = ref({
   start_date: '',
   end_date: '',
   description: '',
-  resident_id: null
 })
 
 // Load residents
 onMounted(async () => {
   await residentStore.getResidents()
   residents.value = residentStore.residents
-})
-
-// Watch resident selection
-watch(selectedResident, (val) => {
-  officialDataForm.value.resident_id = val ? val.id : null
 })
 
 // Position options
@@ -109,7 +103,7 @@ const positionValidation = computed(() => {
 
 // Validate form
 const validateForm = () => {
-  if (!officialDataForm.value.resident_id) {
+  if (!selectedResident.value) {
     showToast({ icon: 'error', title: 'Please select a resident.' })
     return false
   }
@@ -185,71 +179,59 @@ const createOfficial = async () => {
         <!-- Right Column (Form) -->
         <div class="p-8 md:w-2/3">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- First Name -->
+            <!-- Full Name Searchable Dropdown -->
             <div>
-              <label class="text-sm font-semibold text-gray-700">First Name *</label>
-              <input type="text" v-model="officialDataForm.firstName" placeholder="Juan" required
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
+              <label class="text-sm font-semibold text-gray-700">Select Resident *</label>
+              <Multiselect v-model="selectedResident" :options="residents"
+                :custom-label="resident => `${resident.first_name} ${resident.middle_name || ''} ${resident.last_name}`.trim()"
+                placeholder="Search and select resident" track-by="id" :searchable="true" :show-labels="false"
+                :allow-empty="true" />
             </div>
 
-            <!-- Middle Name -->
+            <!-- Position -->
             <div>
-              <label class="text-sm font-semibold text-gray-700">Middle Name</label>
-              <input type="text" v-model="officialDataForm.middleName" placeholder="Dela"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
-            </div>
-
-            <!-- Last Name -->
-            <div>
-              <label class="text-sm font-semibold text-gray-700">Last Name *</label>
-              <input type="text" v-model="officialDataForm.lastName" placeholder="Cruz" required
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
-            </div>
-
-            <!-- Resident ID -->
-            <div>
-              <label class="text-sm font-semibold text-gray-700">Resident ID</label>
-              <input type="number" v-model="officialDataForm.resident_id" placeholder="Enter Resident ID"
-                class="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full transition-all" />
-            </div>
-          </div>
-
-          <!-- Position -->
-          <div class="mt-4">
-            <label class="text-sm font-semibold text-gray-700">Position *</label>
-            <select v-model="officialDataForm.position" required
-              class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              :class="{ 'border-red-500': !positionValidation.canAdd }">
-              <option value="">Select Position</option>
-              <optgroup v-for="(positions, section) in groupedPositions" :key="section" :label="section">
-                <option v-for="position in positions" :key="position.value" :value="position.value">
-                  {{ position.label }} (Max: {{ position.limit === 999 ? 'Varies' : position.limit }})
-                </option>
-              </optgroup>
-            </select>
-            <div v-if="positionValidation.message" :class="positionValidation.canAdd ? 'text-blue-600' : 'text-red-600'"
-              class="text-sm mt-1">
-              {{ positionValidation.message }}
+              <label class="text-sm font-semibold text-gray-700">Position *</label>
+              <select v-model="officialDataForm.position" required
+                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                :class="{ 'border-red-500': !positionValidation.canAdd }">
+                <option value="">Select Position</option>
+                <optgroup v-for="(positions, section) in groupedPositions" :key="section" :label="section">
+                  <option v-for="position in positions" :key="position.value" :value="position.value">
+                    {{ position.label }} (Max: {{ position.limit === 999 ? 'Varies' : position.limit }})
+                  </option>
+                </optgroup>
+              </select>
+              <div v-if="positionValidation.message"
+                :class="positionValidation.canAdd ? 'text-blue-600' : 'text-red-600'" class="text-sm mt-1">
+                {{ positionValidation.message }}
+              </div>
             </div>
           </div>
 
           <!-- Terms -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <!-- Term From (Year) -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Term From (Year)</label>
               <input type="number" v-model="officialDataForm.termFrom" min="2000" max="2099" placeholder="2022"
                 class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
+
+            <!-- Term To (Year) -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Term To (Year)</label>
               <input type="number" v-model="officialDataForm.termTo" min="2000" max="2099" placeholder="2025"
                 class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
+
+            <!-- Number of Terms -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Number of Terms</label>
               <input type="number" v-model="officialDataForm.no_of_per_term" min="1" placeholder="1"
                 class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
+
+            <!-- Elected Date -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Elected Date</label>
               <input type="date" v-model="officialDataForm.elected_date"
@@ -259,11 +241,13 @@ const createOfficial = async () => {
 
           <!-- Dates -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <!-- Start Date -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Start Date</label>
               <input type="date" v-model="officialDataForm.start_date"
                 class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
+            <!-- End Date -->
             <div>
               <label class="text-sm font-semibold text-gray-700">End Date</label>
               <input type="date" v-model="officialDataForm.end_date"
@@ -285,7 +269,8 @@ const createOfficial = async () => {
               :class="positionValidation.canAdd ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'"
               class="text-white px-8 py-3 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105">
               <span class="flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
                 Save Official
@@ -293,7 +278,8 @@ const createOfficial = async () => {
             </button>
             <router-link to="/officials"
               class="bg-white border-2 border-gray-300 hover:border-gray-400 px-8 py-3 rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-105 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
               Cancel

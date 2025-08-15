@@ -35,6 +35,14 @@ const close = () => {
     }
 };
 
+// Handle backdrop click - prevent event bubbling
+const handleBackdropClick = (e) => {
+    // Only close if the click target is the backdrop itself, not a child element
+    if (e.target === e.currentTarget) {
+        close();
+    }
+};
+
 // Add event listeners when component is mounted
 onMounted(() => {
     document.addEventListener('keydown', closeOnEscape);
@@ -51,11 +59,12 @@ onBeforeUnmount(() => {
         <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100"
             leave-active-class="ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
             <div v-show="show" class="fixed inset-0 overflow-y-auto z-50" scroll-region>
-                <!-- Overlay -->
+                <!-- Overlay with proper background and click handling -->
                 <transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0"
                     enter-to-class="opacity-100" leave-active-class="ease-in duration-200"
                     leave-from-class="opacity-100" leave-to-class="opacity-0">
-                    <div v-show="show" class="fixed inset-0 transition-opacity" @click="close">
+                    <div v-show="show" class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+                        @click="handleBackdropClick">
                     </div>
                 </transition>
 
@@ -81,7 +90,7 @@ onBeforeUnmount(() => {
                                 'sm:max-w-6xl': maxWidth === '6xl',
                                 'sm:max-w-7xl': maxWidth === '7xl',
                                 'sm:w-full': !maxWidth
-                            }">
+                            }" @click.stop>
                             <!-- Header -->
                             <div v-if="title || closeable"
                                 class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">

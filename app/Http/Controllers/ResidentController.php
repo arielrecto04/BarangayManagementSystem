@@ -93,18 +93,31 @@ class ResidentController extends Controller
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
+            'email' => "nullable|email|max:255|unique:residents,email",
             'birthday' => 'required|date',
             'age' => 'required|integer|min:0|max:150',
-            'gender' => 'required|string|in:Male,Female,Not Specified',
+            'gender' => 'required|string|in:Male,Female',
             'address' => 'required|string|max:500',
             'contact_number' => 'required|string|max:20',
             'contact_person' => 'nullable|string|max:255',
-            'family_member' => 'required|string|max:255',
-            'emergency_contact' => 'required|string|max:255',
+            'family_member' => 'nullable|string|max:255',
+            'emergency_contact' => 'nullable|string|max:255',
             'avatar' => 'nullable|url',
         ]);
 
-        $resident = Resident::create($request->all());
+        // Generate a unique resident_number in the format RES-XXXXXX
+        do {
+            $randomNumber = random_int(100000, 999999);
+            $residentNumber = 'RES-' . $randomNumber;
+            $exists = Resident::where('resident_number', $residentNumber)->exists();
+        } while ($exists);
+
+        // Merge the generated resident_number into request data
+        $data = $request->all();
+        $data['resident_number'] = $residentNumber;
+
+        $resident = Resident::create($data);
+
 
         return response()->json([
             'message' => 'Resident created successfully',
@@ -142,13 +155,14 @@ class ResidentController extends Controller
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
             'birthday' => 'required|date',
+            'email' => "nullable|email|max:255|unique:residents,email,{$id}",
             'age' => 'required|integer|min:0|max:150',
-            'gender' => 'required|string|in:Male,Female,Not Specified',
+            'gender' => 'required|string|in:Male,Female',
             'address' => 'required|string|max:500',
             'contact_number' => 'required|string|max:20',
             'contact_person' => 'nullable|string|max:255',
-            'family_member' => 'required|string|max:255',
-            'emergency_contact' => 'required|string|max:255',
+            'family_member' => 'nullable|string|max:255',
+            'emergency_contact' => 'nullable|string|max:255',
             'avatar' => 'nullable|url',
         ]);
 

@@ -99,7 +99,7 @@ const updateBlotterData = async () => {
             respondent_address: blotter.value.respondent_address,
             complainants_name: 'App\\Models\\Resident',
             respondents_name: 'App\\Models\\Resident',
-            place: blotter.value.place,
+            incident_location: blotter.value.incident_location,
             datetime_of_incident: blotter.value.datetime_of_incident,
             blotter_type: blotter.value.blotter_type,
             barangay_case_no: blotter.value.barangay_case_no,
@@ -239,160 +239,170 @@ const handleCancel = () => {
             </div>
         </template>
         <template v-else>
-            <form @submit.prevent="updateBlotterData">
-                <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-5xl">
-                    <h1 class="text-2xl font-bold mb-6">Edit Blotter</h1>
-                    <h2 class="text-lg font-semibold mb-4">Blotter Details</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col gap-2">
-                            <label for="blotter_no" class="text-sm font-semibold text-gray-600">Blotter No</label>
-                            <input id="blotter_no" type="text" v-model="blotter.blotter_no"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="filing_date" class="text-sm font-semibold text-gray-600">Filing Date</label>
-                            <input id="filing_date" type="date" v-model="blotter.filing_date"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="title_case" class="text-sm font-semibold text-gray-600">Title Case</label>
-                            <input id="title_case" type="text" v-model="blotter.title_case"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="nature_of_case" class="text-sm font-semibold text-gray-600">Nature of
-                                Case</label>
-                            <select id="nature_of_case" v-model="blotter.nature_of_case"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2">
-                                <option value="" disabled>Select Nature of Case</option>
-                                <option value="Civil case">Civil Case</option>
-                                <option value="Criminal case">Criminal Case</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="complainants_id" class="text-sm font-semibold text-gray-600">Complainant</label>
-                            <Multiselect v-model="selectedComplainant" :options="filteredComplainants"
-                                :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
-                                track-by="id" placeholder="Search or select complainant" :searchable="true"
-                                :show-labels="false" @input="val => blotter.complainants_id = val?.id" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="complainant_address" class="text-sm font-semibold text-gray-600">Complainant
-                                Address</label>
-                            <input id="complainant_address" type="text" placeholder="Complainant address will auto-fill"
-                                v-model="blotter.complainant_address"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" readonly />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="respondents_id" class="text-sm font-semibold text-gray-600">Respondent</label>
-                            <Multiselect v-model="selectedRespondent" :options="filteredRespondents"
-                                :custom-label="resident => `${resident.first_name} ${resident.last_name} `"
-                                track-by="id" placeholder="Search or select respondent" :searchable="true"
-                                :show-labels="false" @input="val => blotter.respondents_id = val?.id" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="respondent_address" class="text-sm font-semibold text-gray-600">Respondent
-                                Address</label>
-                            <input id="respondent_address" type="text" placeholder="Respondent address will auto-fill"
-                                v-model="blotter.respondent_address"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" readonly />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="place" class="text-sm font-semibold text-gray-600">Place</label>
-                            <input id="place" type="text" v-model="blotter.place"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="datetime_of_incident" class="text-sm font-semibold text-gray-600">Date/Time of
-                                Incident</label>
-                            <input id="datetime_of_incident" type="datetime-local"
-                                v-model="blotter.datetime_of_incident"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="blotter_type" class="text-sm font-semibold text-gray-600">Blotter Type</label>
-                            <input id="blotter_type" type="text" v-model="blotter.blotter_type"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="barangay_case_no" class="text-sm font-semibold text-gray-600">Barangay Case
-                                No</label>
-                            <input id="barangay_case_no" type="text" v-model="blotter.barangay_case_no"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="col-span-2 flex flex-col gap-2">
-                            <label for="description" class="text-sm font-semibold text-gray-600">Description</label>
-                            <textarea id="description" v-model="blotter.description"
-                                class="input-style col-span-2 border border-gray-200 rounded-md px-4 py-2"
-                                rows="4"></textarea>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="witness" class="text-sm font-semibold text-gray-600">Witness</label>
-                            <textarea id="witness" v-model="blotter.witness"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label for="status" class="text-sm font-semibold text-gray-600">Status</label>
-                            <select id="status" v-model="blotter.status"
-                                class="input-style col-span-1 border border-gray-200 rounded-md px-4 py-2">
-                                <option value="Open">Open</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Resolved">Resolved</option>
-                            </select>
-                        </div>
+            <form @submit.prevent="updateBlotterData" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
+                <h1 class="text-2xl font-bold mb-6">Edit Blotter</h1>
+
+                <div class="grid grid-cols-2 gap-4">
+
+                    <!-- Complainant Searchable Dropdown -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm mb-1">Complainant</label>
+                        <Multiselect v-model="selectedComplainant" :options="filteredComplainants"
+                            :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
+                            placeholder="Search or select complainant" :searchable="true" :show-labels="false"
+                            :allow-empty="true" @input="val => blotter.complainants_id = val?.id" />
+                    </div>
+
+                    <!-- Respondent Searchable Dropdown -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm mb-1">Respondent</label>
+                        <Multiselect v-model="selectedRespondent" :options="filteredRespondents"
+                            :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
+                            placeholder="Search or select respondent" :searchable="true" :show-labels="false"
+                            :allow-empty="true" @input="val => blotter.respondents_id = val?.id" />
+                    </div>
+
+                    <!-- Nature of Case -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Nature of Case</label>
+                        <select v-model="blotter.nature_of_case" class="border rounded-md p-2">
+                            <option value="" disabled>Select Nature of Case</option>
+                            <option value="civil case">Civil Case</option>
+                            <option value="criminal case">Criminal Case</option>
+                        </select>
+                    </div>
+
+                    <!-- Blotter Type -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Blotter Type</label>
+                        <select v-model="blotter.blotter_type" class="border rounded-md p-2">
+                            <option value="" disabled>Select Blotter Type</option>
+                            <option value="Incident">Incident</option>
+                            <option value="Complaint">Complaint</option>
+                            <option value="Request">Request</option>
+                        </select>
+                    </div>
+
+                    <!-- Blotter Number -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Blotter Number</label>
+                        <input v-model="blotter.blotter_no" type="text" class="border rounded-md p-2"
+                            placeholder="Enter Blotter No" />
+                    </div>
+
+                    <!-- Barangay Case Number -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Barangay Case Number</label>
+                        <input v-model="blotter.barangay_case_no" type="text" class="border rounded-md p-2"
+                            placeholder="Enter Case No" />
+                    </div>
+
+                    <!-- Title Case -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Title Case</label>
+                        <input v-model="blotter.title_case" type="text" class="border rounded-md p-2"
+                            placeholder="Enter Title Case" />
+                    </div>
+
+                    <!-- Location of Incident -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Location of Incident</label>
+                        <input v-model="blotter.incident_location" type="text" class="border rounded-md p-2"
+                            placeholder="Enter Location of Incident" />
+                    </div>
+
+                    <!-- Date & Time of Incident -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Date & Time of Incident</label>
+                        <input type="datetime-local" v-model="blotter.datetime_of_incident"
+                            class="border rounded-md p-2" />
+                    </div>
+
+                    <!-- Filing Date & Time -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Filing Date & Time</label>
+                        <input type="datetime-local" v-model="blotter.filing_date" class="border rounded-md p-2" />
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Status</label>
+                        <select v-model="blotter.status" class="border rounded-md p-2">
+                            <option value="" disabled>Select Status</option>
+                            <option value="Open">Open</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                    </div>
+
+                    <!-- Witness -->
+                    <div class="flex flex-col">
+                        <label class="font-semibold text-sm">Witness/es</label>
+                        <textarea v-model="blotter.witness" class="border rounded-md p-2"
+                            placeholder="Enter Witness Name"></textarea>
+                    </div>
+
+                    <!-- Description (full width) -->
+                    <div class="flex flex-col col-span-2">
+                        <label class="font-semibold text-sm">Description</label>
+                        <textarea v-model="blotter.description" class="border rounded-md p-2"
+                            placeholder="Enter Description" rows="4"></textarea>
+                    </div>
+
+                    <!-- Supporting Documents Upload (full width) -->
+                    <div class="flex flex-col col-span-2">
+                        <label class="font-semibold text-sm mb-1">Supporting Documents</label>
+                        <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                        <button type="button"
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit"
+                            @click="$refs.fileInput.click()">
+                            Upload Files
+                        </button>
 
                         <!-- Existing Supporting Documents -->
-                        <div class="col-span-2 flex flex-col gap-2" v-if="existingSupportingDocuments.length > 0">
-                            <label class="text-sm font-semibold text-gray-600">Current Supporting Documents</label>
-                            <div class="space-y-1 text-sm text-gray-700">
-                                <div v-for="(doc, index) in existingSupportingDocuments" :key="index"
-                                    class="flex items-center gap-2 justify-between bg-blue-50 rounded px-2 py-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-blue-600">📄</span>
-                                        <span>{{ getFileName(doc) }}</span>
-                                        <a v-if="doc.url" :href="doc.url" target="_blank"
-                                            class="text-blue-500 hover:underline text-xs">(View)</a>
-                                    </div>
-                                    <button type="button" class="text-red-500 hover:underline"
-                                        @click="removeExistingDocument(index)"
-                                        aria-label="Remove existing document">✖</button>
+                        <div v-if="existingSupportingDocuments.length > 0" class="mt-2 space-y-1 text-sm text-gray-700">
+                            <div v-for="(doc, index) in existingSupportingDocuments" :key="index"
+                                class="flex items-center gap-2 justify-between bg-blue-50 rounded px-2 py-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-blue-600">📄</span>
+                                    <span>{{ getFileName(doc) }}</span>
+                                    <a v-if="doc.url" :href="doc.url" target="_blank"
+                                        class="text-blue-500 hover:underline text-xs">(View)</a>
                                 </div>
+                                <button type="button" class="text-red-500 hover:underline"
+                                    @click="removeExistingDocument(index)" aria-label="Remove existing document">
+                                    ✖
+                                </button>
                             </div>
                         </div>
 
-                        <!-- New Supporting Documents Upload -->
-                        <div class="col-span-2 flex flex-col gap-2">
-                            <label for="new_supporting_documents" class="text-sm font-semibold text-gray-600">Add New
-                                Supporting Documents</label>
-                            <input id="new_supporting_documents" type="file" multiple class="hidden"
-                                @change="handleFileUpload" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" ref="fileInput" />
-                            <button type="button"
-                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md w-fit"
-                                @click="$refs.fileInput.click()">
-                                Upload Files
-                            </button>
-                            <div v-if="newSupportingDocuments.length" class="mt-2 space-y-1 text-sm text-gray-700">
-                                <div v-for="(file, index) in newSupportingDocuments" :key="index"
-                                    class="flex items-center gap-2 justify-between bg-green-50 rounded px-2 py-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-green-600">📄</span>
-                                        <span>{{ file.name }}</span>
-                                        <span class="text-green-600 text-xs">(New)</span>
-                                    </div>
-                                    <button type="button" class="text-red-500 hover:underline"
-                                        @click="removeNewDocument(index)" aria-label="Remove new document">✖</button>
+                        <!-- New Supporting Documents -->
+                        <div v-if="newSupportingDocuments.length" class="mt-2 space-y-1 text-sm text-gray-700">
+                            <div v-for="(file, index) in newSupportingDocuments" :key="index"
+                                class="flex items-center gap-2 justify-between bg-green-50 rounded px-2 py-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-green-600">📄</span>
+                                    <span>{{ file.name }}</span>
+                                    <span class="text-green-600 text-xs">(New)</span>
                                 </div>
+                                <button type="button" class="text-red-500 hover:underline"
+                                    @click="removeNewDocument(index)" aria-label="Remove new document">
+                                    ✖
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="flex justify-center mt-10 gap-4">
-                        <button type="submit"
-                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl shadow-md">Save</button>
-                        <button @click="handleCancel"
-                            class="bg-white px-6 py-2 rounded-xl shadow-xl ml-4 font-bold hover:bg-gray-200">
-                            Cancel
-                        </button>
-                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="mt-6 flex justify-end gap-4">
+                    <button type="submit"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">Save</button>
+                    <button @click="handleCancel" type="button"
+                        class="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
                 </div>
             </form>
         </template>
@@ -425,10 +435,10 @@ const handleCancel = () => {
 }
 
 .multiselect__option--highlight {
-    background: #3b82f6;
+    background: #16A34A;
 }
 
 .multiselect__option--highlight::after {
-    background: #3b82f6;
+    background: #16A34A;
 }
 </style>

@@ -13,12 +13,9 @@ class Blotter extends Model
         'nature_of_case',
         'complainants_name',
         'complainants_id',
-
         'respondents_name',
         'respondents_id',
-        'complainant_address',
-        'respondent_address',
-        'place',
+        'incident_location',
         'datetime_of_incident',
         'blotter_type',
         'barangay_case_no',
@@ -30,19 +27,19 @@ class Blotter extends Model
     ];
 
     protected $casts = [
-        'filing_date' => 'date',
-        'datetime_of_incident' => 'date',
+        'filing_date' => 'datetime',
+        'datetime_of_incident' => 'datetime',
         'supporting_documents' => 'array',
     ];
 
     public function complainant()
     {
-        return $this->morphTo('complainant', 'complainants_name', 'complainants_id');
+        return $this->belongsTo(Resident::class, 'complainants_id');
     }
 
     public function respondent()
     {
-        return $this->morphTo('respondent', 'respondents_name', 'respondents_id');
+        return $this->belongsTo(Resident::class, 'respondents_id');
     }
 
     protected $with = ['complainant', 'respondent'];

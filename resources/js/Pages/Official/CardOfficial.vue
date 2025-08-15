@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia';
 import { onMounted, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import useToast from '@/Utils/useToast';
+import Modal from '../../Components/Modal.vue'
 
 const officialStore = useOfficialStore();
 const { officials, isLoading } = storeToRefs(officialStore);
@@ -161,12 +162,26 @@ onMounted(() => {
                 <!-- Action Buttons -->
                 <div class="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs"
-                    title="View">👁️</button>
+                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs" title="View"> <svg
+                      class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg></button>
                   <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs" title="Edit">✏️</button>
+                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs" title="Edit"> <svg
+                      class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
                   <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs" title="Delete">🗑️</button>
+                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs" title="Delete"> <svg
+                      class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -188,9 +203,17 @@ onMounted(() => {
                   <button @click="viewOfficial(official)"
                     class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs">👁️</button>
                   <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs">✏️</button>
+                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
                   <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">🗑️</button>
+                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
 
@@ -205,11 +228,26 @@ onMounted(() => {
 
                 <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs">👁️</button>
+                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
                   <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs">✏️</button>
+                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
                   <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">🗑️</button>
+                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -230,11 +268,26 @@ onMounted(() => {
 
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded hover:bg-green-600 text-xs">👁️</button>
+                    class="bg-green-500 text-white px-1 py-1 rounded hover:bg-green-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
                   <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded hover:bg-blue-600 text-xs">✏️</button>
+                    class="bg-blue-500 text-white px-1 py-1 rounded hover:bg-blue-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
                   <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded hover:bg-red-600 text-xs">🗑️</button>
+                    class="bg-red-500 text-white px-1 py-1 rounded hover:bg-red-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -253,11 +306,26 @@ onMounted(() => {
 
                 <div class="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs">👁️</button>
+                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
                   <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs">✏️</button>
+                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
                   <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">🗑️</button>
+                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -276,11 +344,26 @@ onMounted(() => {
 
                 <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs">👁️</button>
+                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
                   <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs">✏️</button>
+                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
                   <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">🗑️</button>
+                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
 
@@ -294,11 +377,26 @@ onMounted(() => {
 
                 <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs">👁️</button>
+                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
                   <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs">✏️</button>
+                    class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
                   <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">🗑️</button>
+                    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -319,11 +417,26 @@ onMounted(() => {
 
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded hover:bg-green-600 text-xs">👁️</button>
+                    class="bg-green-500 text-white px-1 py-1 rounded hover:bg-green-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
                   <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded hover:bg-blue-600 text-xs">✏️</button>
+                    class="bg-blue-500 text-white px-1 py-1 rounded hover:bg-blue-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
                   <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded hover:bg-red-600 text-xs">🗑️</button>
+                    class="bg-red-500 text-white px-1 py-1 rounded hover:bg-red-600 text-xs"> <svg class="w-4 h-4"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -348,12 +461,24 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
 
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -375,12 +500,24 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
 
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -398,12 +535,24 @@ onMounted(() => {
                 <p class="text-xs text-rose-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -421,12 +570,24 @@ onMounted(() => {
                 <p class="text-xs text-indigo-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -444,12 +605,24 @@ onMounted(() => {
                 <p class="text-xs text-lime-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -467,12 +640,24 @@ onMounted(() => {
                 <p class="text-xs text-purple-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -496,12 +681,24 @@ onMounted(() => {
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -519,12 +716,24 @@ onMounted(() => {
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -542,12 +751,24 @@ onMounted(() => {
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -565,12 +786,24 @@ onMounted(() => {
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -588,12 +821,24 @@ onMounted(() => {
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -611,12 +856,24 @@ onMounted(() => {
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="viewOfficial(official)"
-                    class="bg-green-500 text-white px-1 py-1 rounded text-xs">👁️</button>
-                  <button @click="editOfficial(official.id)"
-                    class="bg-blue-500 text-white px-1 py-1 rounded text-xs">✏️</button>
-                  <button @click="deleteOfficial(official.id)"
-                    class="bg-red-500 text-white px-1 py-1 rounded text-xs">🗑️</button>
+                  <button @click="viewOfficial(official)" class="bg-green-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button @click="editOfficial(official.id)" class="bg-blue-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg></button>
+                  <button @click="deleteOfficial(official.id)" class="bg-red-500 text-white px-1 py-1 rounded text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg></button>
                 </div>
               </div>
             </div>
@@ -630,65 +887,86 @@ onMounted(() => {
     </template>
 
     <!-- View Modal (keeping the same modal from previous version) -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      @click="closeModal">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
-        <div class="flex justify-between items-center p-6 border-b">
-          <h2 class="text-2xl font-bold text-gray-800">Official Details</h2>
-          <button @click="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl font-bold">×</button>
+    <Modal :show="showModal" title="Official Details" maxWidth="2xl" @close="closeModal">
+      <div v-if="selectedOfficial">
+        <!-- Profile -->
+        <div class="flex flex-col items-center mb-6 text-center">
+          <div class="w-32 h-32 bg-gradient-to-tr from-gray-200 to-gray-300 rounded-full mb-4 shadow-inner"></div>
+          <h3 class="text-3xl font-bold text-gray-900">
+            {{ selectedOfficial.name }}
+          </h3>
+          <p class="text-lg text-blue-600 font-semibold">
+            {{ selectedOfficial.position }}
+          </p>
         </div>
-        <div v-if="selectedOfficial" class="p-6">
-          <div class="flex flex-col items-center mb-6">
-            <div class="w-32 h-32 bg-gray-200 rounded-full mb-4"></div>
-            <h3 class="text-3xl font-bold text-gray-800">{{ selectedOfficial.name }}</h3>
-            <p class="text-xl text-blue-600 font-semibold">{{ selectedOfficial.position }}</p>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-4">
-              <h4 class="text-lg font-semibold text-gray-700 border-b pb-2">Basic Information</h4>
-              <div><label class="text-sm font-medium text-gray-600">Full Name:</label>
-                <p class="text-gray-800">{{ selectedOfficial.name || 'N/A' }}</p>
-              </div>
-              <div><label class="text-sm font-medium text-gray-600">Position:</label>
-                <p class="text-gray-800">{{ selectedOfficial.position || 'N/A' }}</p>
-              </div>
-              <div><label class="text-sm font-medium text-gray-600">Terms:</label>
-                <p class="text-gray-800">{{ selectedOfficial.terms || 'N/A' }}</p>
-              </div>
-              <div><label class="text-sm font-medium text-gray-600">Number of Terms:</label>
-                <p class="text-gray-800">{{ selectedOfficial.no_of_per_term || 'N/A' }}</p>
-              </div>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Basic Info -->
+          <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">
+              Basic Information
+            </h4>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Full Name:</label>
+              <p class="text-gray-900">{{ selectedOfficial.name || 'N/A' }}</p>
             </div>
-            <div class="space-y-4">
-              <h4 class="text-lg font-semibold text-gray-700 border-b pb-2">Important Dates</h4>
-              <div><label class="text-sm font-medium text-gray-600">Elected Date:</label>
-                <p class="text-gray-800">{{ formatDate(selectedOfficial.elected_date) }}</p>
-              </div>
-              <div><label class="text-sm font-medium text-gray-600">Start Date:</label>
-                <p class="text-gray-800">{{ formatDate(selectedOfficial.start_date) }}</p>
-              </div>
-              <div><label class="text-sm font-medium text-gray-600">End Date:</label>
-                <p class="text-gray-800">{{ formatDate(selectedOfficial.end_date) }}</p>
-              </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Position:</label>
+              <p class="text-gray-900">{{ selectedOfficial.position || 'N/A' }}</p>
             </div>
-          </div>
-          <div class="mt-6">
-            <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-3">Description</h4>
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <p class="text-gray-700 leading-relaxed">{{ selectedOfficial.description || 'No description available.' }}
+            <div>
+              <label class="text-sm font-medium text-gray-500">Terms:</label>
+              <p class="text-gray-900">{{ selectedOfficial.terms || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Number of Terms:</label>
+              <p class="text-gray-900">
+                {{ selectedOfficial.no_of_per_term || 'N/A' }}
               </p>
             </div>
           </div>
-          <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
-            <button @click="editOfficial(selectedOfficial.id)"
-              class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">Edit
-              Official</button>
-            <button @click="closeModal"
-              class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">Close</button>
+
+          <!-- Important Dates -->
+          <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">
+              Important Dates
+            </h4>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Elected Date:</label>
+              <p class="text-gray-900">
+                {{ formatDate(selectedOfficial.elected_date) }}
+              </p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Start Date:</label>
+              <p class="text-gray-900">
+                {{ formatDate(selectedOfficial.start_date) }}
+              </p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">End Date:</label>
+              <p class="text-gray-900">
+                {{ formatDate(selectedOfficial.end_date) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mt-6">
+          <h4 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">
+            Description
+          </h4>
+          <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <p class="text-gray-700 leading-relaxed">
+              {{ selectedOfficial.description || 'No description available.' }}
+            </p>
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
+
   </div>
 </template>
 
