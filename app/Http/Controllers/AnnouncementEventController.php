@@ -22,6 +22,7 @@ class AnnouncementEventController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'location' => 'nullable|string|max:255',
             'author' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10240'
         ]);
 
         $record = AnnouncementEvent::create($validate);
@@ -44,6 +45,7 @@ class AnnouncementEventController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'location' => 'nullable|string|max:255',
             'author' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10240'
         ]);
 
         $record = AnnouncementEvent::findOrFail($id);

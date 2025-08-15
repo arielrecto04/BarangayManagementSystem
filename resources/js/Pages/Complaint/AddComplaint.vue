@@ -204,7 +204,7 @@ const submitForm = async () => {
             <option value="Business | Economic">Business | Economic</option>
           </select>
           <p v-if="formErrors.nature_of_complaint" class="text-red-500 text-sm mt-1">{{ formErrors.nature_of_complaint
-          }}</p>
+            }}</p>
         </div>
         <!-- Case Number -->
         <div class="flex flex-col">
@@ -332,7 +332,7 @@ const submitForm = async () => {
 }
 
 .multiselect__option--highlight {
-  background: #16A34A;
+  background: hsl(142, 76%, 36%);
 }
 
 .multiselect__option--highlight::after {

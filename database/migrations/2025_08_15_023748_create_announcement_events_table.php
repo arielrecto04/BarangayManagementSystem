@@ -20,6 +20,10 @@ return new class extends Migration
             $table->date('end_date')->nullable();
             $table->string('location')->nullable();
             $table->string('author')->nullable();
+            $table->string('image')->nullable();
+            $table->enum('status', ['Upcoming', 'Ongoing', 'Past'])
+                ->default('Upcoming')
+                ->after('author'); // Adjust position if needed
             $table->timestamps();
         });
     }

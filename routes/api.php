@@ -50,5 +50,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('documents', DocumentController::class);
     Route::apiResource('document-requests', DocumentRequestController::class);
     Route::apiResource('clinic-visits', ClinicVisitController::class);
-    Route::resource('announcement-events', AnnouncementEventController::class);
+    Route::apiResource('announcement-events', AnnouncementEventController::class);
 });
