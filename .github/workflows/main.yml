@@ -44,10 +44,14 @@ jobs:
         run: |
           php artisan key:generate
 
+      - name: database sqlite
+        run: |
+          touch database/database.sqlite
+
 
       - name: Migrate Database
         run: |
-          php artisan migrate --force
+          php artisan migrate --seed
 
 
       - name: Clear Cache
@@ -70,12 +74,6 @@ jobs:
 
           SCRIPT_BEFORE: |
             ls -a
-
-
-
-          SCRIPT_AFTER: |
-            php artisan db:seed
-
 
           EXCLUDE: "/node_modules, /vendor, /storage, /bootstrap/cache, /public/storage, /env, /.github"
 
