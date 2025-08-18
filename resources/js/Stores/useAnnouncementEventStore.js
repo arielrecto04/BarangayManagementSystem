@@ -1,136 +1,92 @@
+// useAnnouncementEventStore.js
 import { axios } from "@/utils";
 import { defineStore } from "pinia";
 
 export const useAnnouncementEventStore = defineStore("announcementEvent", {
     state: () => ({
-        _announcementEvents: [], // Always an array
-        _announcementEvent: null,
+        _events: [],
+        _event: null,
         _paginate: null,
         _isLoading: false,
         _error: null,
-        _lastPage: 1, // Track last page fetched
-        _currentType: "", // Track current filter type
     }),
 
     getters: {
-        announcementEvents: (state) => state._announcementEvents,
-        announcementEvent: (state) => state._announcementEvent,
+        events: (state) => state._events,
+        event: (state) => state._event,
         paginate: (state) => state._paginate,
         isLoading: (state) => state._isLoading,
         error: (state) => state._error,
-        lastPage: (state) => state._lastPage,
-        currentType: (state) => state._currentType,
     },
 
     actions: {
-        async getAnnouncementEvents(page = 1, type = "") {
+        async getEvents(page = 1, perPage = 10) {
             this._isLoading = true;
             this._error = null;
             try {
-                let url = `/announcement-events?page=${page}`;
-                if (type) url += `&type=${type}`;
+                const response = await axios.get(
+                    `/announcement-events?page=${page}&per_page=${perPage}`
+                );
 
-                const response = await axios.get(url);
-
-                // Always ensure an array
-                this._announcementEvents = Array.isArray(response.data.data)
-                    ? response.data.data
-                    : [];
-
-                this._paginate = {
-                    current_page: response.data.current_page || 1,
-                    last_page: response.data.last_page || 1,
-                    per_page: response.data.per_page || 10,
-                    total: response.data.total || 0,
-                };
-
-                // Save pagination state
-                this._lastPage = page;
-                this._currentType = type;
+                if (response.data.data) {
+                    // Paginated response
+                    this._events = response.data.data;
+                    this._paginate = {
+                        current_page: response.data.current_page,
+                        last_page: response.data.last_page,
+                        per_page: response.data.per_page,
+                        total: response.data.total,
+                    };
+                } else {
+                    // Non-paginated (fallback)
+                    this._events = response.data;
+                    this._paginate = null;
+                }
             } catch (error) {
-                console.error("Error fetching announcement events:", error);
-                this._announcementEvents = [];
-                this._paginate = null;
+                console.error("Error fetching events:", error);
                 this._error = error;
             } finally {
                 this._isLoading = false;
             }
         },
 
-        async fetchAnnouncementEvent(id) {
+        async fetchEvent(id) {
             this._isLoading = true;
             this._error = null;
             try {
                 const response = await axios.get(`/announcement-events/${id}`);
-                this._announcementEvent = response.data || null;
+                this._event = response.data;
             } catch (error) {
-                console.error(
-                    `Error fetching announcement event ID ${id}:`,
-                    error
-                );
+                console.error(`Error fetching event ID ${id}:`, error);
                 this._error = error;
             } finally {
                 this._isLoading = false;
             }
         },
 
-        async createAnnouncementEvent(formData) {
-            this._isLoading = true;
-            this._error = null;
-            try {
-                const response = await axios.post(
-                    "/announcement-events",
-                    formData,
-                    { headers: { "Content-Type": "multipart/form-data" } }
-                );
-
-                // Only add to local array if on first page
-                if (!Array.isArray(this._announcementEvents))
-                    this._announcementEvents = [];
-                if (this._paginate?.current_page === 1) {
-                    this._announcementEvents.unshift(response.data.data);
-                }
-
-                return response.data;
-            } catch (error) {
-                console.error("Error creating announcement event:", error);
-                this._error = error;
-                throw error;
-            } finally {
-                this._isLoading = false;
-            }
-        },
-
-        async updateAnnouncementEvent(id, data) {
+        async addEvent(data) {
             this._isLoading = true;
             this._error = null;
             try {
                 let response;
                 if (data instanceof FormData) {
-                    response = await axios.post(
-                        `/announcement-events/${id}`,
-                        data,
-                        { headers: { "Content-Type": "multipart/form-data" } }
-                    );
+                    response = await axios.post("/announcement-events", data, {
+                        headers: { "Content-Type": "multipart/form-data" },
+                    });
                 } else {
-                    response = await axios.patch(
-                        `/announcement-events/${id}`,
-                        data
-                    );
+                    response = await axios.post("/announcement-events", data);
                 }
 
-                const index = this._announcementEvents.findIndex(
-                    (a) => a.id === id
-                );
-                if (index !== -1)
-                    this._announcementEvents[index] = response.data.data;
+                // If paginated, re-fetch first page instead of pushing
+                if (this._paginate) {
+                    await this.getEvents(1, this._paginate.per_page);
+                } else {
+                    this._events.push(response.data);
+                }
 
                 return response.data;
             } catch (error) {
-                console.error(
-                    `Error updating announcement event ID ${id}:`,
-                    error
-                );
+                console.error("Error adding event:", error);
                 this._error = error;
                 throw error;
             } finally {
@@ -138,21 +94,52 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
-        async deleteAnnouncementEvent(id) {
+        async updateEvent(id, data) {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                let response;
+
+                if (data instanceof FormData) {
+                    response = await axios.post(
+                        `/announcement-events/${id}`,
+                        data,
+                        {
+                            headers: {
+                                "Content-Type": "multipart/form-data",
+                            },
+                        }
+                    );
+                } else {
+                    response = await axios.put(
+                        `/announcement-events/${id}`,
+                        data
+                    );
+                }
+
+                const index = this._events.findIndex((e) => e.id === id);
+                if (index !== -1) {
+                    this._events[index] = response.data;
+                }
+
+                return response.data;
+            } catch (error) {
+                console.error(`Error updating event ID ${id}:`, error);
+                this._error = error;
+                throw error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        async deleteEvent(id) {
             this._isLoading = true;
             this._error = null;
             try {
                 await axios.delete(`/announcement-events/${id}`);
-                if (Array.isArray(this._announcementEvents)) {
-                    this._announcementEvents = this._announcementEvents.filter(
-                        (a) => a.id !== id
-                    );
-                }
+                this._events = this._events.filter((e) => e.id !== id);
             } catch (error) {
-                console.error(
-                    `Error deleting announcement event ID ${id}:`,
-                    error
-                );
+                console.error(`Error deleting event ID ${id}:`, error);
                 this._error = error;
             } finally {
                 this._isLoading = false;

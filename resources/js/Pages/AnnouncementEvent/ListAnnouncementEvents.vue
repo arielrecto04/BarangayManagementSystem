@@ -1,213 +1,358 @@
 <script setup>
-import { Table, Paginate } from "@/Components";
-import { useAnnouncementEventStore } from "@/Stores";
-import { storeToRefs } from "pinia";
-import { onMounted, ref, computed, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { Table, Paginate } from '@/Components';
+import Modal from '../../Components/Modal.vue';
+import { useAnnouncementEventStore } from '@/Stores';
+import { storeToRefs } from 'pinia';
+import { onMounted, onUnmounted, ref, nextTick } from "vue";
+import useToast from '@/Utils/useToast';
+import { useRoute, useRouter } from 'vue-router';
 
+// Store
+const announcementEventStore = useAnnouncementEventStore();
+const { events, isLoading, paginate } = storeToRefs(announcementEventStore);
+
+const { showToast } = useToast();
 const route = useRoute();
 const router = useRouter();
 
-const announcementEventStore = useAnnouncementEventStore();
-const { announcementEvents, paginate } = storeToRefs(announcementEventStore);
+// State
+const currentPage = ref(route.query.page || 1);
+const menuPosition = ref({ top: 0, left: 0 });
+const teleportMenuRowId = ref(null);
+const showModal = ref(false);
+const selectedEvent = ref(null);
 
-const currentPage = ref(1);
-const selectedType = ref(route.query.type || ""); // "", "Announcement", "Event"
-
-// Fetch data
-const getData = async () => {
-    await announcementEventStore.getAnnouncementEvents(currentPage.value, selectedType.value);
+// Helpers
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
 };
 
-watch(
-    () => route.query,
-    (newQuery) => {
-        if (newQuery.newItem) {
-            // Scroll to top to see the new item
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            // Remove the query param
-            router.replace({ query: {} });
+// Actions
+const handlePageChange = (page) => {
+    currentPage.value = page;
+    announcementEventStore.getEvents(page);
+    router.replace({ query: { page } });
+};
+
+const toggleMenu = async (event, eventId) => {
+    if (teleportMenuRowId.value === eventId) {
+        teleportMenuRowId.value = null;
+        return;
+    }
+    if (teleportMenuRowId.value !== null) {
+        teleportMenuRowId.value = null;
+        await nextTick();
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const dropdownWidth = 192;
+    const viewportWidth = window.innerWidth;
+    const scrollX = window.scrollX;
+
+    let leftPosition = rect.left + scrollX;
+    if (rect.left + dropdownWidth > viewportWidth) {
+        leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
+    }
+    leftPosition = Math.max(leftPosition, 0);
+
+    menuPosition.value = {
+        top: rect.bottom + window.scrollY,
+        left: leftPosition,
+    };
+
+    await nextTick();
+    teleportMenuRowId.value = eventId;
+};
+
+const closeMenu = () => {
+    teleportMenuRowId.value = null;
+};
+
+const handleClickOutside = (event) => {
+    const target = event.target;
+    if (!target.closest('.burger-menu-container') &&
+        !target.closest('[data-teleport-menu]') &&
+        teleportMenuRowId.value !== null) {
+        teleportMenuRowId.value = null;
+    }
+};
+
+const openModal = (eventData) => {
+    selectedEvent.value = eventData;
+    showModal.value = true;
+    closeMenu();
+};
+
+const closeModal = () => {
+    showModal.value = false;
+    selectedEvent.value = null;
+};
+
+const editEvent = (eventId) => {
+    router.push(`/announcement-events/edit-announcement-event/${eventId}`);
+    closeMenu();
+};
+
+const deleteEvent = async (eventId) => {
+    if (confirm('Are you sure you want to delete this announcement/event?')) {
+        try {
+            await announcementEventStore.deleteEvent(eventId);
+            showToast({ icon: 'success', title: 'Event deleted successfully' });
+            announcementEventStore.getEvents(currentPage.value);
+            closeMenu();
+        } catch (error) {
+            showToast({ icon: 'error', title: error.message });
         }
-    },
-    { immediate: true }
-);
+    }
+};
+
+// Table Columns
+const columns = [
+    { key: "type", label: "Type" },
+    { key: "title", label: "Title" },
+    { key: "author", label: "Author" },
+    { key: "location", label: "Location" },
+    { key: "formatted_start_date", label: "Start Date" },
+    { key: "formatted_end_date", label: "End Date" },
+    { key: "status", label: "Status" }
+];
 
 onMounted(() => {
-    getData();
+    const page = currentPage.value;
+    announcementEventStore.getEvents(page);
+    document.addEventListener('click', handleClickOutside);
 });
 
-// Filter change
-const filterByType = (type) => {
-    selectedType.value = type;
-    router.push({ query: { type } });
-    getData();
-};
-
-// Pagination change
-const onPageChange = (page) => {
-    currentPage.value = page;
-    getData();
-};
-
-// Formatted date
-const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-};
-
-// Empty state message based on selected filter
-const emptyStateMessage = computed(() => {
-    if (selectedType.value === "Announcement") {
-        return {
-            title: "No Announcements Found",
-            message: "There are currently no announcements available.",
-        };
-    } else if (selectedType.value === "Event") {
-        return {
-            title: "No Events Found",
-            message: "There are currently no events available.",
-        };
-    } else {
-        return {
-            title: "No Announcements or Events Found",
-            message: "There are currently no announcements or events available.",
-        };
-    }
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
 <template>
-    <div class="mt-6">
-        <!-- Filter buttons -->
-        <div class="flex gap-2 mb-4">
-            <button @click="filterByType('')"
-                :class="['px-4 py-2 rounded', selectedType === '' ? 'bg-black text-white' : 'bg-gray-200 hover:bg-gray-300']">
-                All
-            </button>
-            <button @click="filterByType('Announcement')"
-                :class="['px-4 py-2 rounded', selectedType === 'Announcement' ? 'bg-black text-white' : 'bg-gray-200 hover:bg-gray-300']">
-                Announcements
-            </button>
-            <button @click="filterByType('Event')"
-                :class="['px-4 py-2 rounded', selectedType === 'Event' ? 'bg-black text-white' : 'bg-gray-200 hover:bg-gray-300']">
-                Events
-            </button>
-        </div>
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 lg:py-8 overflow-x-hidden">
 
-        <!-- Content Area -->
-        <div v-if="!announcementEvents || announcementEvents.length === 0" class="text-center py-12">
-            <div class="max-w-md mx-auto">
-                <div class="mb-4">
-                    <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Loader -->
+            <div v-if="isLoading" class="flex justify-center items-center py-20">
+                <div class="relative">
+                    <div class="w-16 h-16 border-4 border-indigo-200 rounded-full animate-spin"></div>
+                    <div
+                        class="w-16 h-16 border-4 border-indigo-600 rounded-full animate-spin absolute top-0 left-0 border-t-transparent border-r-transparent">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else-if="events.length === 0" class="bg-white rounded-2xl p-8 text-center shadow-sm">
+                <div class="mx-auto h-24 w-24 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                     </svg>
                 </div>
-
-                <h3 class="text-lg font-medium text-gray-900 mb-2">
-                    {{ emptyStateMessage.title }}
-                </h3>
-
-                <p class="text-gray-500 mb-6">
-                    {{ emptyStateMessage.message }}
-                </p>
+                <h3 class="mt-4 text-xl font-medium text-gray-900">No announcements or events yet</h3>
+                <p class="mt-2 text-gray-500">Get started by creating your first announcement or event</p>
+                <div class="mt-6">
+                    <router-link to="/announcements-events/add"
+                        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Create New
+                    </router-link>
+                </div>
             </div>
-        </div>
 
-        <!-- Card Grid -->
-        <div v-else>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div v-for="item in announcementEvents || []" :key="item?.id"
-                    class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+            <!-- Card Grid -->
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+                <div v-for="event in events" :key="event.id"
+                    class="group relative bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col min-h-[400px]">
 
-                    <!-- Card Header with Image -->
-                    <div class="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600 overflow-hidden">
-                        <div v-if="!item?.image" class="w-full h-full flex items-center justify-center">
-                            <div class="text-center text-white">
-                                <svg v-if="item?.type === 'Announcement'" class="w-16 h-16 mx-auto mb-2 opacity-80"
-                                    fill="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    <!-- Image Section -->
+                    <div class="relative h-40 sm:h-44 md:h-48 overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent z-10"></div>
+                        <img v-if="event.image" :src="`/${event.image}`" :alt="event.title"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <div v-else
+                            class="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                            <div class="text-white text-6xl opacity-30">
+                                <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                                        clip-rule="evenodd" />
                                 </svg>
-                                <svg v-else class="w-16 h-16 mx-auto mb-2 opacity-80" fill="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zM19 19H5V8h14v11z" />
-                                </svg>
-                                <span class="text-sm font-medium opacity-90">{{ item?.type }}</span>
                             </div>
                         </div>
-                        <img v-else :src="item.image" :alt="item.title || ''" class="w-full h-full object-cover">
 
-                        <!-- Type Badge -->
-                        <div class="absolute top-4 left-4">
-                            <span :class="[
-                                'px-3 py-1 rounded-full text-xs font-semibold text-white',
-                                item?.type === 'Announcement' ? 'bg-blue-600 bg-opacity-90' : 'bg-green-600 bg-opacity-90'
-                            ]">
-                                {{ item?.type }}
+                        <!-- Action Menu Button -->
+                        <div class="absolute top-3 right-3 burger-menu-container z-20">
+                            <button @click="(e) => toggleMenu(e, event.id)"
+                                class="w-9 h-9 bg-white/90 hover:bg-white border border-white/50 shadow rounded-full flex items-center justify-center transition-all duration-300 group-hover:shadow-md"
+                                :class="{ 'bg-white shadow-md': teleportMenuRowId === event.id }">
+                                <svg class="w-4.5 h-4.5 text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                                    <circle cx="4" cy="10" r="2" />
+                                    <circle cx="10" cy="10" r="2" />
+                                    <circle cx="16" cy="10" r="2" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Status Badge -->
+                        <div class="absolute top-3 left-3 z-20">
+                            <span :class="{
+                                'bg-emerald-500/90 text-white': event.status === 'Ongoing',
+                                'bg-amber-500/90 text-white': event.status === 'Upcoming',
+                                'bg-slate-500/90 text-white': event.status === 'Past'
+                            }"
+                                class="backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow">
+                                {{ event.status }}
                             </span>
                         </div>
 
-                        <!-- Action Buttons -->
-                        <div class="absolute top-4 right-4 flex space-x-2">
-                            <button
-                                class="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-all duration-200">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                            </button>
-                            <router-link :to="`/announcement-events/edit-announcement-event/${item?.id}`"
-                                class="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-all duration-200 inline-block">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                            </router-link>
+                        <!-- Type Badge -->
+                        <div class="absolute bottom-3 left-3 z-20">
+                            <span :class="[
+                                event.type === 'announcement' ? 'bg-blue-500/90 text-white' : 'bg-purple-500/90 text-white',
+                                'backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow'
+                            ]">
+                                {{ event.type }}
+                            </span>
                         </div>
                     </div>
 
-                    <!-- Card Content -->
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-                            {{ item?.title || 'No Title' }}
+                    <!-- Content Section -->
+                    <div class="p-4 sm:p-5 space-y-3 flex-grow flex flex-col">
+                        <!-- Title -->
+                        <h3
+                            class="font-bold text-lg md:text-xl text-slate-900 group-hover:text-indigo-700 transition-colors duration-300 line-clamp-2">
+                            {{ event.title }}
                         </h3>
 
-                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">
-                            {{ item?.description || 'No description available.' }}
-                        </p>
-                    </div>
-
-                    <!-- Card Footer -->
-                    <div class="border-t border-gray-100">
-                        <div class="p-6 flex items-center justify-between">
-                            <div class="flex items-center text-gray-500 text-sm">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span>{{ formatDate(item?.date) }}</span>
+                        <!-- Author & Location -->
+                        <div class="flex flex-wrap items-center gap-3 text-sm">
+                            <div v-if="event.author" class="flex items-center gap-2 min-w-0">
+                                <div
+                                    class="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
+                                    {{ event.author.charAt(0).toUpperCase() }}
+                                </div>
+                                <span class="font-semibold text-slate-700 truncate min-w-0">{{ event.author }}</span>
                             </div>
-
-                            <div v-if="item?.status" class="text-right">
-                                <span :class="[
-                                    'px-2 py-1 rounded text-xs font-medium',
-                                    item.status === 'active' ? 'bg-green-100 text-green-800' :
-                                        item.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                                            'bg-gray-100 text-gray-800'
-                                ]">
-                                    {{ item.status }}
-                                </span>
+                            <div v-if="event.location" class="flex items-center gap-1 text-slate-500 min-w-0">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1113.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span class="truncate min-w-0">{{ event.location }}</span>
                             </div>
                         </div>
+
+                        <!-- Dates -->
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <div class="shrink-0 w-3 h-3 rounded-full bg-emerald-400"></div>
+                                <span class="font-medium text-slate-600 shrink-0">Start:</span>
+                                <span class="text-slate-900 truncate">{{ formatDate(event.start_date) }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="shrink-0 w-3 h-3 rounded-full bg-rose-400"></div>
+                                <span class="font-medium text-slate-600 shrink-0">End:</span>
+                                <span class="text-slate-900 truncate">{{ formatDate(event.end_date) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <p class="text-slate-600 text-sm leading-relaxed line-clamp-3 mt-auto pt-2">
+                            {{ event.description && event.description.length > 120
+                                ? event.description.slice(0, 120) + '…'
+                                : event.description || 'No description available' }}
+                        </p>
                     </div>
                 </div>
             </div>
 
+            <!-- Dropdown Menu (Teleport) -->
+            <Teleport to="body">
+                <div v-if="teleportMenuRowId !== null" data-teleport-menu :style="{
+                    position: 'absolute',
+                    top: menuPosition.top + 'px',
+                    left: menuPosition.left + 'px',
+                    zIndex: 9999
+                }"
+                    class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/50 py-2 w-48 animate-in fade-in duration-200">
+                    <button @click="editEvent(teleportMenuRowId)"
+                        class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-indigo-50 flex items-center gap-3 font-medium transition-colors duration-200 rounded-xl mx-2">
+                        <span class="text-lg">✏️</span>
+                        Edit Event
+                    </button>
+                    <hr class="my-2 border-slate-200">
+                    <button @click="deleteEvent(teleportMenuRowId)"
+                        class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 font-medium transition-colors duration-200 rounded-xl mx-2">
+                        <span class="text-lg">🗑️</span>
+                        Delete Event
+                    </button>
+                </div>
+            </Teleport>
+
             <!-- Pagination -->
-            <Paginate v-if="paginate?.last_page > 1" :pagination="paginate" @page-change="onPageChange" />
+            <div v-if="paginate && !isLoading" class="mt-8 sm:mt-10 flex justify-center">
+                <div class="bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-2">
+                    <Paginate @page-changed="handlePageChange" :maxVisibleButtons="5" :totalPages="paginate.last_page"
+                        :totalItems="paginate.total" :currentPage="paginate.current_page"
+                        :itemsPerPage="paginate.per_page" />
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <Modal :show="showModal" title="Announcement / Event Details" max-width="3xl" @close="closeModal">
+                <!-- Your detailed modal content goes here -->
+            </Modal>
         </div>
     </div>
 </template>
+
+<style scoped>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in.fade-in {
+    animation: fade-in 0.2s ease-out;
+}
+
+.min-w-0 {
+    min-width: 0;
+}
+
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
