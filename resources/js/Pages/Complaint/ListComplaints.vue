@@ -1,209 +1,3 @@
-<script setup>
-import { Table, Paginate } from '@/Components';
-import Modal from '../../Components/Modal.vue'; // Import the Modal component
-import { useComplaintStore, useResidentStore } from '@/Stores';
-import { storeToRefs } from 'pinia';
-import { onMounted, onUnmounted, ref, nextTick } from "vue";
-import useToast from '@/Utils/useToast';
-import { useRoute, useRouter } from 'vue-router';
-import ComplaintPrintTemplate from './ComplaintPrintTemplate.vue';
-
-// Initialize resident store
-const residentStore = useResidentStore();
-const { residents } = storeToRefs(residentStore);
-
-const formatDateTime = (isoString) => {
-  if (!isoString) return 'N/A';
-  const options = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  };
-  return new Date(isoString).toLocaleString('en-US', options);
-};
-
-const getResidentNumber = (id) => {
-  if (!id) return 'N/A';
-  const resident = residents.value.find(r => r.id == id);
-  return resident ? resident.resident_number : 'N/A';
-};
-
-const getResidentName = (id) => {
-  if (!id) return 'N/A';
-  const resident = residents.value.find(r => r.id == id);
-  return resident ? `${resident.first_name} ${resident.last_name}` : 'N/A';
-};
-
-const getSupportingDocuments = (complaint) => {
-  if (!complaint?.supporting_documents) return [];
-  if (Array.isArray(complaint.supporting_documents)) {
-    return complaint.supporting_documents.filter(doc => {
-      if (typeof doc === 'object' && doc.path && doc.name) return true;
-      if (typeof doc === 'string') return true;
-      return false;
-    });
-  }
-  if (typeof complaint.supporting_documents === 'string') {
-    try {
-      const parsed = JSON.parse(complaint.supporting_documents);
-      return Array.isArray(parsed) ? parsed.filter(doc => {
-        if (typeof doc === 'object' && doc.path && doc.name) return true;
-        if (typeof doc === 'string') return true;
-        return false;
-      }) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-  return [];
-};
-
-const getFileName = (doc) => {
-  if (typeof doc === 'object' && doc.name) return doc.name;
-  if (typeof doc === 'string') return doc.split('/').pop() || 'Unknown file';
-  return 'Unknown file';
-};
-
-const getFilePath = (doc) => {
-  if (typeof doc === 'object' && doc.path) return doc.path;
-  if (typeof doc === 'string') return doc;
-  return '';
-};
-
-const { showToast } = useToast();
-const route = useRoute();
-const router = useRouter();
-
-const complaintStore = useComplaintStore();
-const { complaints, isLoading, paginate } = storeToRefs(complaintStore);
-
-const currentPage = ref(route.query.page || 1);
-const menuPosition = ref({ top: 0, left: 0 });
-const teleportMenuRowId = ref(null);
-
-const showModal = ref(false);
-const selectedComplaint = ref(null);
-const showPrintModal = ref(false);
-const selectedPrintComplaint = ref(null);
-
-const handlePageChange = (page) => {
-  currentPage.value = page;
-  complaintStore.getComplaints(page);
-  router.replace({ query: { page: page } });
-};
-
-const toggleMenu = async (event, complaintId) => {
-  if (teleportMenuRowId.value === complaintId) {
-    teleportMenuRowId.value = null;
-    return;
-  }
-  if (teleportMenuRowId.value !== null) {
-    teleportMenuRowId.value = null;
-    await nextTick();
-  }
-
-  const rect = event.currentTarget.getBoundingClientRect();
-  const dropdownWidth = 192;
-  const viewportWidth = window.innerWidth;
-  const scrollX = window.scrollX;
-
-  let leftPosition = rect.left + scrollX;
-  if (rect.left + dropdownWidth > viewportWidth) {
-    leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
-  }
-  leftPosition = Math.max(leftPosition, 0);
-
-  menuPosition.value = {
-    top: rect.bottom + window.scrollY,
-    left: leftPosition,
-  };
-
-  await nextTick();
-  teleportMenuRowId.value = complaintId;
-};
-
-const closeMenu = () => {
-  teleportMenuRowId.value = null;
-};
-
-const handleClickOutside = (event) => {
-  const target = event.target;
-  if (!target.closest('.burger-menu-container') &&
-    !target.closest('[data-teleport-menu]') &&
-    teleportMenuRowId.value !== null) {
-    teleportMenuRowId.value = null;
-  }
-};
-
-const openModal = (complaint) => {
-  selectedComplaint.value = complaint;
-  showModal.value = true;
-  closeMenu();
-};
-
-const closeModal = () => {
-  showModal.value = false;
-  selectedComplaint.value = null;
-};
-
-const openPrintModal = (complaint) => {
-  selectedPrintComplaint.value = complaint;
-  showPrintModal.value = true;
-  closeMenu();
-};
-
-const closePrintModal = () => {
-  showPrintModal.value = false;
-  selectedPrintComplaint.value = null;
-};
-
-const handlePrint = () => {
-  showToast({ icon: 'success', title: 'Print dialog opened successfully' });
-};
-
-const deleteComplaint = async (complaintId) => {
-  if (confirm('Are you sure you want to delete this complaint?')) {
-    try {
-      await complaintStore.deleteComplaint(complaintId);
-      showToast({ icon: 'success', title: 'Complaint deleted successfully' });
-      complaintStore.getComplaints(currentPage.value);
-      closeMenu();
-    } catch (error) {
-      showToast({ icon: 'error', title: error.message });
-    }
-  }
-};
-
-const editComplaint = (complaintId) => {
-  router.push(`/complaints/edit-complaint/${complaintId}`);
-  closeMenu();
-};
-
-const columns = [
-  { key: "complainant_name", label: "Complainant" },
-  { key: "respondent_name", label: "Respondent" },
-  { key: "case_no", label: "Case No" },
-  { key: "title", label: "Title" },
-  { key: "formatted_filing_date", label: "Filing Date" },
-  { key: "status", label: "Status" }
-];
-
-onMounted(() => {
-  const page = currentPage.value;
-  complaintStore.getComplaints(page);
-  residentStore.getResidents(); // Load resident data
-
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
-</script>
-
 <template>
   <div class="flex flex-col gap-2">
     <h1 class="text-xl font-bold text-gray-600">List of Complaints</h1>
@@ -212,7 +6,8 @@ onUnmounted(() => {
       <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
     </div>
 
-    <Table v-else :columns="columns" :rows="complaints.map(c => ({
+    <!-- FIXED: Add more defensive checks -->
+    <Table v-else-if="isMounted && !isDestroyed && complaints && complaints.length >= 0" :columns="columns" :rows="complaints.map(c => ({
       ...c,
       formatted_filing_date: formatDateTime(c.filing_date)
     }))">
@@ -220,7 +15,7 @@ onUnmounted(() => {
         <div class="relative burger-menu-container">
           <button @click="(e) => toggleMenu(e, row.id)"
             class="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            :class="{ 'bg-gray-100': teleportMenuRowId === row.id }">
+            :class="{ 'bg-gray-100': teleportMenuRowId === row.id }" :disabled="isDestroyed || !isMounted">
             <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
               <path d="M10 4a2 2 0 100-4 2 2 0 000 4z" />
@@ -231,15 +26,17 @@ onUnmounted(() => {
       </template>
     </Table>
 
-    <Teleport to="body">
-      <div v-if="teleportMenuRowId !== null" data-teleport-menu :style="{
+    <!-- FIXED: More defensive teleport with error boundary -->
+    <Teleport to="body" v-if="isMounted && !isDestroyed && canShowTeleport">
+      <div v-if="teleportMenuRowId !== null && selectedComplaintForMenu" data-teleport-menu :style="{
         position: 'absolute',
         top: menuPosition.top + 'px',
         left: menuPosition.left + 'px',
         zIndex: 9999
       }" class="bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-48">
-        <button @click="editComplaint(teleportMenuRowId)"
-          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2">
+
+        <button @click="editComplaint(teleportMenuRowId)" :disabled="isDestroyed || !isMounted"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2 disabled:opacity-50">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -247,8 +44,8 @@ onUnmounted(() => {
           Edit
         </button>
 
-        <button @click="openModal(complaints.find(c => c.id === teleportMenuRowId))"
-          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2">
+        <button @click="openModal(selectedComplaintForMenu)" :disabled="isDestroyed || !isMounted"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2 disabled:opacity-50">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -258,8 +55,8 @@ onUnmounted(() => {
           View
         </button>
 
-        <button @click="openPrintModal(complaints.find(c => c.id === teleportMenuRowId))"
-          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2">
+        <button @click="openPrintModal(selectedComplaintForMenu)" :disabled="isDestroyed || !isMounted"
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2 disabled:opacity-50">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -269,8 +66,8 @@ onUnmounted(() => {
 
         <hr class="my-2 border-gray-200">
 
-        <button @click="deleteComplaint(teleportMenuRowId)"
-          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2">
+        <button @click="deleteComplaint(teleportMenuRowId)" :disabled="isDestroyed || !isMounted"
+          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2 disabled:opacity-50">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -280,62 +77,52 @@ onUnmounted(() => {
       </div>
     </Teleport>
 
-    <Paginate v-if="paginate && !isLoading" @page-changed="handlePageChange" :maxVisibleButtons="5"
-      :totalPages="paginate.last_page" :totalItems="paginate.total" :currentPage="paginate.current_page"
-      :itemsPerPage="paginate.per_page" />
+    <Paginate v-if="paginate && !isLoading && isMounted && !isDestroyed" @page-changed="handlePageChange"
+      :maxVisibleButtons="5" :totalPages="paginate.last_page" :totalItems="paginate.total"
+      :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
 
     <!-- Print Template Modal -->
-    <ComplaintPrintTemplate v-if="showPrintModal" :complaint="selectedPrintComplaint" @close="closePrintModal"
-      @print="handlePrint" />
+    <ComplaintPrintTemplate v-if="showPrintModal && !isDestroyed" :complaint="selectedPrintComplaint"
+      @close="closePrintModal" @print="handlePrint" />
 
-    <!-- Modal for Complaint Details using Modal.vue component -->
-    <Modal :show="showModal" title="Complaint Details" max-width="4xl" @close="closeModal">
+    <!-- Modal for Complaint Details -->
+    <Modal :show="showModal && !isDestroyed" title="Complaint Details" max-width="4xl" @close="closeModal">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-gray-800 text-sm">
         <!-- Complainant Section -->
         <div>
           <h3 class="font-semibold mb-3 text-blue-800">Complainant Information</h3>
-
           <div class="mb-3">
             <h4 class="font-medium mb-1 text-gray-600">Name:</h4>
             <p class="text-gray-900">{{ getResidentName(selectedComplaint?.complainant_id) || 'N/A' }}</p>
           </div>
-
           <div class="mb-3">
             <h4 class="font-medium mb-1 text-gray-600">Resident Number:</h4>
             <div class="bg-blue-50 inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono select-all">
               {{ getResidentNumber(selectedComplaint?.complainant_id) || 'N/A' }}
             </div>
           </div>
-
           <div class="mb-3">
             <h4 class="font-medium mb-1 text-gray-600">Resident ID:</h4>
-            <p class="text-gray-500 text-sm">
-              {{ selectedComplaint?.complainant_id || 'N/A' }}
-            </p>
+            <p class="text-gray-500 text-sm">{{ selectedComplaint?.complainant_id || 'N/A' }}</p>
           </div>
         </div>
 
         <!-- Respondent Section -->
         <div>
           <h3 class="font-semibold mb-3 text-red-800">Respondent Information</h3>
-
           <div class="mb-3">
             <h4 class="font-medium mb-1 text-gray-600">Name:</h4>
             <p class="text-gray-900">{{ getResidentName(selectedComplaint?.respondent_id) || 'N/A' }}</p>
           </div>
-
           <div class="mb-3">
             <h4 class="font-medium mb-1 text-gray-600">Resident Number:</h4>
             <div class="bg-blue-50 inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono select-all">
               {{ getResidentNumber(selectedComplaint?.respondent_id) || 'N/A' }}
             </div>
           </div>
-
           <div class="mb-3">
             <h4 class="font-medium mb-1 text-gray-600">Resident ID:</h4>
-            <p class="text-gray-500 text-sm">
-              {{ selectedComplaint?.respondent_id || 'N/A' }}
-            </p>
+            <p class="text-gray-500 text-sm">{{ selectedComplaint?.respondent_id || 'N/A' }}</p>
           </div>
         </div>
 
@@ -438,22 +225,324 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style>
-.overflow-y-auto::-webkit-scrollbar {
-  width: 6px;
-}
+<script setup>
+import { Table, Paginate } from '@/Components';
+import Modal from '../../Components/Modal.vue';
+import { useComplaintStore, useResidentStore } from '@/Stores';
+import { storeToRefs } from 'pinia';
+import { onMounted, onUnmounted, ref, nextTick, onBeforeUnmount, computed } from "vue";
+import useToast from '@/Utils/useToast';
+import { useRoute, useRouter } from 'vue-router';
+import ComplaintPrintTemplate from './ComplaintPrintTemplate.vue';
 
-.overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
+// Initialize resident store
+const residentStore = useResidentStore();
+const { residents } = storeToRefs(residentStore);
 
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
+// FIXED: Add component lifecycle management with better state tracking
+const isDestroyed = ref(false);
+const isMounted = ref(false);
+const isNavigating = ref(false);
 
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-</style>
+// FIXED: Add computed property for teleport safety
+const canShowTeleport = computed(() => {
+  return isMounted.value &&
+    !isDestroyed.value &&
+    !isNavigating.value &&
+    typeof document !== 'undefined' &&
+    document.body;
+});
+
+// FIXED: Add computed property for selected complaint safety
+const selectedComplaintForMenu = computed(() => {
+  if (!teleportMenuRowId.value || isDestroyed.value || !complaints.value) return null;
+  return complaints.value.find(c => c.id === teleportMenuRowId.value) || null;
+});
+
+const formatDateTime = (isoString) => {
+  if (!isoString) return 'N/A';
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  };
+  return new Date(isoString).toLocaleString('en-US', options);
+};
+
+const getResidentNumber = (id) => {
+  if (!id || isDestroyed.value) return 'N/A';
+  const resident = residents.value.find(r => Number(r.id) === Number(id));
+  return resident ? resident.resident_number : 'N/A';
+};
+
+const getResidentName = (id) => {
+  if (!id || isDestroyed.value) return 'N/A';
+  const resident = residents.value.find(r => Number(r.id) === Number(id));
+  return resident ? `${resident.first_name} ${resident.last_name}` : 'N/A';
+};
+
+const getSupportingDocuments = (complaint) => {
+  if (!complaint?.supporting_documents || isDestroyed.value) return [];
+  if (Array.isArray(complaint.supporting_documents)) {
+    return complaint.supporting_documents.filter(doc => {
+      if (typeof doc === 'object' && doc.path && doc.name) return true;
+      if (typeof doc === 'string') return true;
+      return false;
+    });
+  }
+  if (typeof complaint.supporting_documents === 'string') {
+    try {
+      const parsed = JSON.parse(complaint.supporting_documents);
+      return Array.isArray(parsed) ? parsed.filter(doc => {
+        if (typeof doc === 'object' && doc.path && doc.name) return true;
+        if (typeof doc === 'string') return true;
+        return false;
+      }) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+};
+
+const getFileName = (doc) => {
+  if (typeof doc === 'object' && doc.name) return doc.name;
+  if (typeof doc === 'string') return doc.split('/').pop() || 'Unknown file';
+  return 'Unknown file';
+};
+
+const getFilePath = (doc) => {
+  if (typeof doc === 'object' && doc.path) return doc.path;
+  if (typeof doc === 'string') return doc;
+  return '';
+};
+
+const { showToast } = useToast();
+const route = useRoute();
+const router = useRouter();
+
+const complaintStore = useComplaintStore();
+const { complaints, isLoading, paginate } = storeToRefs(complaintStore);
+
+const currentPage = ref(route.query.page || 1);
+const menuPosition = ref({ top: 0, left: 0 });
+const teleportMenuRowId = ref(null);
+
+const showModal = ref(false);
+const selectedComplaint = ref(null);
+const showPrintModal = ref(false);
+const selectedPrintComplaint = ref(null);
+
+const handlePageChange = (page) => {
+  if (isDestroyed.value || isNavigating.value) return;
+  currentPage.value = page;
+  complaintStore.getComplaints(page);
+  router.replace({ query: { page: page } });
+};
+
+// FIXED: Enhanced toggleMenu with better error handling
+const toggleMenu = async (event, complaintId) => {
+  if (isDestroyed.value || !isMounted.value || isNavigating.value) return;
+
+  try {
+    if (teleportMenuRowId.value === complaintId) {
+      teleportMenuRowId.value = null;
+      return;
+    }
+
+    if (teleportMenuRowId.value !== null) {
+      teleportMenuRowId.value = null;
+      await nextTick();
+    }
+
+    if (isDestroyed.value || isNavigating.value) return; // Check again after nextTick
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const dropdownWidth = 192;
+    const viewportWidth = window.innerWidth;
+    const scrollX = window.scrollX;
+
+    let leftPosition = rect.left + scrollX;
+    if (rect.left + dropdownWidth > viewportWidth) {
+      leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
+    }
+    leftPosition = Math.max(leftPosition, 0);
+
+    menuPosition.value = {
+      top: rect.bottom + window.scrollY,
+      left: leftPosition,
+    };
+
+    await nextTick();
+    if (!isDestroyed.value && isMounted.value && !isNavigating.value) {
+      teleportMenuRowId.value = complaintId;
+    }
+  } catch (error) {
+    console.error('Error in toggleMenu:', error);
+    teleportMenuRowId.value = null;
+  }
+};
+
+const closeMenu = () => {
+  if (!isDestroyed.value && !isNavigating.value) {
+    teleportMenuRowId.value = null;
+  }
+};
+
+const handleClickOutside = (event) => {
+  if (isDestroyed.value || isNavigating.value) return;
+
+  try {
+    const target = event.target;
+    if (!target.closest('.burger-menu-container') &&
+      !target.closest('[data-teleport-menu]') &&
+      teleportMenuRowId.value !== null) {
+      teleportMenuRowId.value = null;
+    }
+  } catch (error) {
+    console.error('Error in handleClickOutside:', error);
+    teleportMenuRowId.value = null;
+  }
+};
+
+const openModal = (complaint) => {
+  if (isDestroyed.value || isNavigating.value) return;
+  selectedComplaint.value = complaint;
+  showModal.value = true;
+  closeMenu();
+};
+
+const closeModal = () => {
+  if (isDestroyed.value) return;
+  showModal.value = false;
+  selectedComplaint.value = null;
+};
+
+const openPrintModal = (complaint) => {
+  if (isDestroyed.value || isNavigating.value) return;
+  selectedPrintComplaint.value = complaint;
+  showPrintModal.value = true;
+  closeMenu();
+};
+
+const closePrintModal = () => {
+  if (isDestroyed.value) return;
+  showPrintModal.value = false;
+  selectedPrintComplaint.value = null;
+};
+
+const handlePrint = () => {
+  if (isDestroyed.value) return;
+  showToast({ icon: 'success', title: 'Print dialog opened successfully' });
+};
+
+const deleteComplaint = async (complaintId) => {
+  if (isDestroyed.value || isNavigating.value) return;
+
+  if (confirm('Are you sure you want to delete this complaint?')) {
+    try {
+      await complaintStore.deleteComplaint(complaintId);
+      if (!isDestroyed.value && !isNavigating.value) {
+        showToast({ icon: 'success', title: 'Complaint deleted successfully' });
+        complaintStore.getComplaints(currentPage.value);
+        closeMenu();
+      }
+    } catch (error) {
+      if (!isDestroyed.value && !isNavigating.value) {
+        showToast({ icon: 'error', title: error.message });
+      }
+    }
+  }
+};
+
+// FIXED: Enhanced editComplaint with navigation state management
+const editComplaint = async (complaintId) => {
+  if (isDestroyed.value || isNavigating.value) return;
+
+  try {
+    isNavigating.value = true;
+    closeMenu();
+
+    // Small delay to allow menu to close
+    await nextTick();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    if (!isDestroyed.value) {
+      await router.push(`/complaints/edit-complaint/${complaintId}`);
+    }
+  } catch (error) {
+    console.error('Navigation error:', error);
+    isNavigating.value = false;
+  }
+};
+
+const columns = [
+  { key: "complainant_name", label: "Complainant" },
+  { key: "respondent_name", label: "Respondent" },
+  { key: "case_no", label: "Case No" },
+  { key: "title", label: "Title" },
+  { key: "formatted_filing_date", label: "Filing Date" },
+  { key: "status", label: "Status" }
+];
+
+// FIXED: Enhanced cleanup function
+const cleanup = () => {
+  isDestroyed.value = true;
+  isMounted.value = false;
+  isNavigating.value = false;
+
+  // Clear all reactive refs
+  teleportMenuRowId.value = null;
+  selectedComplaint.value = null;
+  selectedPrintComplaint.value = null;
+  showModal.value = false;
+  showPrintModal.value = false;
+
+  // Remove event listeners
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('click', handleClickOutside);
+  }
+};
+
+// FIXED: Proper lifecycle hook registration
+onBeforeUnmount(() => {
+  cleanup();
+});
+
+onUnmounted(() => {
+  cleanup();
+});
+
+onMounted(async () => {
+  try {
+    isDestroyed.value = false;
+    isNavigating.value = false;
+
+    // Load data with proper error handling
+    const page = currentPage.value;
+    await Promise.all([
+      complaintStore.getComplaints(page),
+      residentStore.getResidents()
+    ]);
+
+    if (!isDestroyed.value) {
+      // Add event listener only if component is still mounted
+      document.addEventListener('click', handleClickOutside);
+
+      // Wait for DOM to be ready before setting mounted
+      await nextTick();
+      if (!isDestroyed.value) {
+        isMounted.value = true;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading complaints data:', error);
+    if (!isDestroyed.value) {
+      showToast({ icon: 'error', title: 'Failed to load complaints data' });
+    }
+  }
+});
+</script>

@@ -386,7 +386,7 @@ const handleCancel = () => {
                                     <span>{{ file.name }}</span>
                                     <span class="text-green-600 text-xs">(New)</span>
                                 </div>
-                                <button type="button" class="text-red-500 hover:underline"
+                                <button type="button" class="transition-transform duration-300 hover:rotate-180"
                                     @click="removeNewDocument(index)" aria-label="Remove new document">
                                     ✖
                                 </button>

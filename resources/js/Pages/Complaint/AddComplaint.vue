@@ -286,7 +286,7 @@ const submitForm = async () => {
             <div v-for="(file, index) in complaintForm.supporting_documents" :key="index"
               class="flex items-center gap-2">
               <span>{{ file.name }}</span>
-              <button type="button" class="text-red-500 hover:underline"
+              <button type="button" class="transition-transform duration-300 hover:rotate-180"
                 @click="complaintForm.supporting_documents.splice(index, 1)">
                 ✖
               </button>
