@@ -33,8 +33,21 @@ export const useResidentStore = defineStore("resident", {
         },
 
         selectResidentById(residentId) {
-            this._resident = this._residents.find(
-                (resident) => resident.id == residentId
+            // Fix: Use strict equality and proper type conversion
+            const id = Number(residentId);
+            this._resident =
+                this._residents.find(
+                    (resident) => Number(resident.id) === id
+                ) || null;
+        },
+
+        // Add method to safely get resident by ID without setting store state
+        getResidentByIdSync(residentId) {
+            const id = Number(residentId);
+            return (
+                this._residents.find(
+                    (resident) => Number(resident.id) === id
+                ) || null
             );
         },
 
@@ -89,17 +102,21 @@ export const useResidentStore = defineStore("resident", {
 
             try {
                 const response = await axios.post("/residents", resident);
+                const newResident = {
+                    ...response.data,
+                    id: Number(response.data.id),
+                };
 
                 // If we're not on the last page, we might need to refetch
                 // or just add to current list if there's space
                 if (this._residents.length < this._paginate.per_page) {
-                    this._residents.push(response.data);
+                    this._residents.push(newResident);
                 }
 
                 // Update pagination totals
                 this._paginate.total += 1;
 
-                return response.data;
+                return newResident;
             } catch (error) {
                 console.error("Error adding resident:", error);
                 this._error =
@@ -127,9 +144,13 @@ export const useResidentStore = defineStore("resident", {
                 );
 
                 // Update in the residents list
-                const updatedResident = response.data.data || response.data;
+                const updatedResident = {
+                    ...(response.data.data || response.data),
+                    id: Number((response.data.data || response.data).id),
+                };
+
                 this._residents = this._residents.map((resident) =>
-                    resident.id === updatedResident.id
+                    Number(resident.id) === Number(updatedResident.id)
                         ? updatedResident
                         : resident
                 );
@@ -156,7 +177,11 @@ export const useResidentStore = defineStore("resident", {
 
             try {
                 const response = await axios.get(`/residents/${residentId}`);
-                this._resident = response.data.data || response.data;
+                const residentData = response.data.data || response.data;
+                this._resident = {
+                    ...residentData,
+                    id: Number(residentData.id),
+                };
                 return this._resident;
             } catch (error) {
                 console.error("Error fetching resident:", error);
@@ -176,16 +201,17 @@ export const useResidentStore = defineStore("resident", {
             try {
                 await axios.delete(`/residents/${residentId}`);
 
-                // Remove from local list
+                // Remove from local list using strict equality
+                const id = Number(residentId);
                 this._residents = this._residents.filter(
-                    (resident) => resident.id !== residentId
+                    (resident) => Number(resident.id) !== id
                 );
 
                 // Update pagination totals
                 this._paginate.total = Math.max(0, this._paginate.total - 1);
 
                 // Clear selected resident if it was deleted
-                if (this._resident?.id === residentId) {
+                if (this._resident && Number(this._resident.id) === id) {
                     this._resident = null;
                 }
 
@@ -200,13 +226,17 @@ export const useResidentStore = defineStore("resident", {
                 this._isLoading = false;
             }
         },
+
         async getResidentByNumber(residentNumber) {
             try {
                 const response = await axios.get(
                     `/residents/get-resident-by-number/${residentNumber}`
                 );
                 console.log(response.data);
-                this._resident = response.data;
+                this._resident = {
+                    ...response.data,
+                    id: Number(response.data.id),
+                };
             } catch (error) {
                 console.log(error);
 
@@ -219,6 +249,13 @@ export const useResidentStore = defineStore("resident", {
                     }
                 }
             }
+        },
+
+        // Add method to clear store state safely
+        clearState() {
+            this._resident = null;
+            this._error = null;
+            // Don't clear residents array as it might be needed by other components
         },
     },
 });

@@ -71,7 +71,14 @@ const menuLinks = [
         name: 'Health Services',
         icon: 'fi fi-rr-heart',
         isActive: false,
-    }
+    },
+
+    {
+        href: '/announcement-events',
+        name: 'Announcements & Events',
+        icon: 'fi fi-rr-megaphone',
+        isActive: false,
+    },
 ]
 
 const subMenuActiveParentIndex = ref();

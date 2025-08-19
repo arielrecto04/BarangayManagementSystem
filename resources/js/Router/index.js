@@ -368,6 +368,57 @@ const routes = [
             },
         ],
     },
+
+    {
+        path: "/announcement-events",
+        name: "Announcement Events",
+        meta: {
+            title: "Announcement & Events",
+            requiresAuth: true,
+        },
+        redirect: { name: "List Announcement Events" },
+        component: () =>
+            import("@/Pages/AnnouncementEvent/ParentAnnouncementEventView.vue"),
+        children: [
+            {
+                path: "list-announcements-events",
+                name: "List Announcement Events",
+                meta: {
+                    title: "List Announcement Events",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/AnnouncementEvent/ListAnnouncementEvents.vue"
+                    ),
+            },
+            {
+                path: "add-announcement-event",
+                name: "Add Announcement Event",
+                meta: {
+                    title: "Add Announcement Event",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/AnnouncementEvent/AddAnnouncementEvent.vue"
+                    ),
+            },
+            {
+                path: "edit-announcement-event/:id",
+                name: "Edit Announcement Event",
+                meta: {
+                    title: "Edit Announcement Event",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/AnnouncementEvent/EditAnnouncementEvent.vue"
+                    ),
+            },
+        ],
+    },
+
     {
         path: "/login",
         name: "Login",
