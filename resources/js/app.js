@@ -1,5 +1,4 @@
 import "./bootstrap";
-import 'venobox/dist/venobox.min.css';
 
 import { createApp } from "vue";
 import App from "@/App.vue";
@@ -14,8 +13,8 @@ app.use(router);
 
 // ✅ Global error handler
 app.config.errorHandler = (err, instance, info) => {
-  console.error('Global error:', err, info);
-  // Optional: Show a toast or send to a logging service
+    console.error("Global error:", err, info);
+    // Optional: Show a toast or send to a logging service
 };
 
 app.mount("#app");

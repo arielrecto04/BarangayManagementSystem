@@ -1,45 +1,47 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { AuthLayout } from '@/Layouts';
 import { Modal, Loader, Table, FileType, Paginate } from '@/Components'
 import { useDocumentStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
 import { ArrowDownOnSquareIcon, TrashIcon, EyeIcon } from '@heroicons/vue/24/outline'
-import VenoBox from 'venoBox';
+import VueEasyLightbox from 'vue-easy-lightbox'
 import { formatFileSize } from '@/Utils';
 import { useRoute, useRouter } from 'vue-router';
 import { Squares2X2Icon, TableCellsIcon } from '@heroicons/vue/24/outline'
 
-//instantiate section
+// Instantiate section
 const documentStore = useDocumentStore();
 const route = useRoute();
 const router = useRouter();
 
-
-
-
-//Ref Section
+// Ref Section
 const showUploadModal = ref(false);
 const uploadForm = ref(null);
 const searchQuery = ref('');
 const documentToUpload = ref([]);
 const { documents, isLoading, paginate } = storeToRefs(documentStore);
-const venoBox = ref(null);
 const viewType = ref(route.query.viewType || 'list');
+
+// Lightbox state
+const lightboxVisible = ref(false);
+const lightboxIndex = ref(0);
+const lightboxSources = computed(() =>
+    documents.value.map(doc => ({
+        src: doc.file_path,
+        title: doc.file_name,
+        type: 'iframe'
+    }))
+);
+
+// Columns definition
 const columns = [
-    {
-        label: 'File Name',
-        key: 'file_name',
-    },
-    {
-        label: 'File Size',
-        key: 'file_sizes',
-    },
-    {
-        label: 'Uploaded By',
-        key: 'uploaded_by',
-    }
+    { label: 'File Name', key: 'file_name' },
+    { label: 'File Size', key: 'file_sizes' },
+    { label: 'Uploaded By', key: 'uploaded_by' }
 ];
+
+// Quick access data
 const quickAccess = [
     { id: 1, name: 'Shared with me', itemCount: 24 },
     { id: 2, name: 'Recent', itemCount: 15 },
@@ -47,7 +49,7 @@ const quickAccess = [
     { id: 4, name: 'Trash', itemCount: 3 }
 ];
 
-
+// Methods
 const changeViewType = (type) => {
     viewType.value = type;
     router.replace({ query: { viewType: type } });
@@ -55,78 +57,23 @@ const changeViewType = (type) => {
 
 const getDocuments = (e) => {
     const files = e.target.files;
-
     documentToUpload.value = Array.from(files).map(file => ({
         name: file.name,
         type: file.type,
         size: file.size,
         file: file,
-        lastModified: file.lastModified,
         progress: 0,
-        status: 'pending',
-        error: null
+        status: 'pending'
     }));
-
-
-    console.log(documentToUpload.value, 'documentToUpload.value in getDocuments');
 }
-
-// File icon component
-const FileIcon = ({ type }) => {
-    const iconClass = 'h-8 w-8';
-
-    // switch(type.toLowerCase()) {
-    //     case 'pdf':
-    //         return (
-    //             <svg class={`${iconClass} text-red-500`} viewBox="0 0 24 24" fill="currentColor">
-    //                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6zm4-8h2v5h-2v-5zm0-3h2v2h-2V9zm0 6h2v2h-2v-2z"/>
-    //             </svg>
-    //         );
-    //     case 'document':
-    //         return (
-    //             <svg class={`${iconClass} text-blue-500`} viewBox="0 0 24 24" fill="currentColor">
-    //                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 4h7v5h5v11H6V4zm8 14h-2v-5h2v5zm0-7h-2V9h2v2z"/>
-    //             </svg>
-    //         );
-    //     case 'spreadsheet':
-    //         return (
-    //             <svg class={`${iconClass} text-green-500`} viewBox="0 0 24 24" fill="currentColor">
-    //                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 4h7v5h5v11H6V4zm4 14v-4h4v4h-4z"/>
-    //             </svg>
-    //         );
-    //     case 'presentation':
-    //         return (
-    //             <svg class={`${iconClass} text-yellow-500`} viewBox="0 0 24 24" fill="currentColor">
-    //                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 4h7v5h5v11H6V4zm8 14v-4h4v4h-4z"/>
-    //             </svg>
-    //         );
-    //     case 'folder':
-    //         return (
-    //             <svg class={`${iconClass} text-yellow-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    //                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-    //             </svg>
-    //         );
-    //     default:
-    //         return (
-    //             <svg class={`${iconClass} text-gray-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    //                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    //             </svg>
-    //         );
-    // }
-};
 
 const uploadModalAction = () => {
     showUploadModal.value = !showUploadModal.value;
 }
 
-
-
 const uploadDocuments = async () => {
-    console.log(documentToUpload.value, 'documentToUpload.value in uploadDocuments');
     const uploadPromises = documentToUpload.value.map(doc => {
-
         const formData = new FormData();
-
         formData.append('document', doc.file);
         doc.status = 'uploading';
 
@@ -136,68 +83,23 @@ const uploadDocuments = async () => {
             doc.status = 'uploaded';
         }).catch((error) => {
             doc.status = 'failed';
-            doc.error = error;
         });
     });
 
-    try {
-        await Promise.all(uploadPromises);
-
-    } catch (error) {
-        console.error(error);
-    }
+    await Promise.all(uploadPromises);
 }
 
+// Lightbox methods
+const showLightbox = (index) => {
+    lightboxIndex.value = index;
+    lightboxVisible.value = true;
+}
 
-
-
-
-
-
-
-// Helper functions
-const getInitials = (name) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-};
-
-const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-};
-
-
-
-
+// Initialize documents
 onMounted(() => {
     documentStore.getDocuments();
-    venoBox.value = new VenoBox({
-        selector: '.venobox',
-        numeration: true,
-        infinigall: true,
-    });
 })
-
-
-watch(() => documentStore.documents, () => {
-    if (documentStore.documents.length > 0) {
-        nextTick(() => {
-            venoBox.value = new VenoBox({
-                selector: '.venobox',
-                numeration: true,
-                infinigall: true,
-            });
-        })
-    }
-})
-
-
-onUnmounted(() => {
-    // venoBox.value.destroy();
-    venoBox.value.close();
-})
-
 </script>
-
 
 <template>
     <AuthLayout>
@@ -291,14 +193,9 @@ onUnmounted(() => {
                     <button class="text-sm text-blue-600 hover:text-blue-800">View all</button>
                 </div>
 
-
-
-                <!-- Table View -->
-
                 <Loader v-if="isLoading" />
 
-
-
+                <!-- Table View -->
                 <Table v-show="viewType === 'list'" :columns="columns" :rows="documents" :searchable="false"
                     :selectable="false">
 
@@ -319,13 +216,10 @@ onUnmounted(() => {
                         {{ formatFileSize(row.file_sizes) }}
                     </template>
                     <template #actions="{ row }">
-
-
-                        <button :data-href="row.file_path" class="venobox p-2 bg-gray-50 rounded-lg hover:bg-gray-100"
-                            data-gall="document-gallery" data-vbtype="iframe">
+                        <button @click="showLightbox(documents.indexOf(row))"
+                            class="p-2 bg-gray-50 rounded-lg hover:bg-gray-100">
                             <EyeIcon class="w-5 h-5" />
                         </button>
-
                         <button @click="downloadDocument(row)" class="p-2 bg-gray-50 rounded-lg hover:bg-gray-100">
                             <ArrowDownOnSquareIcon class="w-5 h-5" />
                         </button>
@@ -333,27 +227,24 @@ onUnmounted(() => {
                             <TrashIcon class="w-5 h-5 text-white" />
                         </button>
                     </template>
-
                 </Table>
 
-
-
-                <d v-show="viewType === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div v-for="document in documents" :key="document.id"
-                        class="p-4 bg-white shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <a :data-href="document.file_path" data-gall="document-gallery" data-vbtype="iframe"
-                            class="venobox flex items-center">
+                <!-- Grid View -->
+                <div v-show="viewType === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div v-for="(document, index) in documents" :key="document.id"
+                        class="p-4 bg-white shadow-sm rounded-lg hover:bg-gray-50 cursor-pointer"
+                        @click="showLightbox(index)">
+                        <div class="flex items-center">
                             <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
                                 <FileType :type="document.file_type" />
                             </div>
                             <div>
                                 <h3 class="font-medium text-gray-900">{{ document.file_name }}</h3>
-                                <p class="text-sm text-gray-500">{{ document.file_sizes }}</p>
+                                <p class="text-sm text-gray-500">{{ formatFileSize(document.file_sizes) }}</p>
                             </div>
-                        </a>
+                        </div>
                     </div>
-                </d>
-
+                </div>
 
                 <template v-if="documents.length === 0">
                     <div class="flex items-center justify-center h-full">
@@ -363,13 +254,13 @@ onUnmounted(() => {
 
                 <Paginate :maxVisibleButtons="5" :totalPages="paginate.total" :totalItems="paginate.total"
                     :itemsPerPage="paginate.per_page" :currentPage="paginate.current_page"
-                    @page-changed="getDocuments" />
+                    @page-changed="documentStore.getDocuments" />
             </div>
         </div>
 
+        <!-- Upload Modal -->
         <Modal title="Upload Document" :show="showUploadModal" @close="uploadModalAction">
             <form ref="uploadForm" @submit.prevent="uploadDocuments" enctype="multipart/form-data">
-
                 <label for="documents"
                     class="text-sm font-medium text-gray-700 w-full border border-gray-200 rounded-md p-2 items-center flex cursor-pointer h-12 gap-5 ">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -382,25 +273,31 @@ onUnmounted(() => {
                         class="mt-1 block w-full">
                 </label>
 
-
                 <div v-if="documentToUpload.length" class="mt-4">
                     <ul>
                         <li v-for="document in documentToUpload" :key="document.name">
                             <div class="flex flex-col gap-2 p-2 border border-gray-200 rounded-md mb-2">
                                 <p class="font-medium">{{ document.name }}</p>
-
                                 <div class="flex items-center gap-2">
                                     <p class="text-sm text-gray-500">{{ document.type }}</p>
                                     <p class="text-sm text-gray-500">{{ formatFileSize(document.size) }}</p>
                                 </div>
-
                                 <div class="flex items-center gap-2">
-                                    <p
-                                        :class="document.status === 'uploaded' || document.status === 'uploading' ? 'text-sm text-green-500 font-medium' : 'text-sm text-red-500 font-medium'">
-                                        {{ document.progress }} %</p>
-                                    <p
-                                        :class="document.status === 'uploaded' || document.status === 'uploading' ? 'text-sm text-green-500 font-medium' : 'text-sm text-red-500 font-medium'">
-                                        {{ document.status }}</p>
+                                    <p :class="{
+                                        'text-sm font-medium': true,
+                                        'text-green-500': document.status === 'uploaded' || document.status === 'uploading',
+                                        'text-red-500': document.status === 'failed'
+                                    }">
+                                        {{ document.progress }} %
+                                    </p>
+                                    <p :class="{
+                                        'text-sm font-medium': true,
+                                        'text-green-500': document.status === 'uploaded',
+                                        'text-blue-500': document.status === 'uploading',
+                                        'text-red-500': document.status === 'failed'
+                                    }">
+                                        {{ document.status }}
+                                    </p>
                                 </div>
                             </div>
                         </li>
@@ -415,9 +312,12 @@ onUnmounted(() => {
                 </div>
             </form>
         </Modal>
+
+        <!-- Lightbox Component -->
+        <VueEasyLightbox :visible="lightboxVisible" :imgs="lightboxSources" :index="lightboxIndex"
+            @hide="lightboxVisible = false" />
     </AuthLayout>
 </template>
-
 
 <style scoped>
 /* Add any custom styles here */
