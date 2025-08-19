@@ -1,10 +1,11 @@
 <script setup>
 import { useResidentStore } from '@/Stores'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onBeforeUnmount } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import useToast from '@/Utils/useToast'
 
 const router = useRouter()
+const route = useRoute()
 const { showToast } = useToast()
 const residentStore = useResidentStore()
 
@@ -23,26 +24,15 @@ const residentDataForm = ref({
     email: '',
 })
 
-// Reactive object to hold errors for each field
 const formErrors = ref({})
 
-// Restrict number inputs for contact fields
 const restrictPhoneInput = (field) => {
     let value = residentDataForm.value[field]
-
-    // Remove any non-digit characters
     value = value.replace(/\D/g, '')
-
-    // Ensure it starts with 09
     if (value.length > 0 && !value.startsWith('09')) {
         value = '09' + value.replace(/^0+/, '').replace(/^9?/, '')
     }
-
-    // Limit to 11 digits only
-    if (value.length > 11) {
-        value = value.slice(0, 11)
-    }
-
+    if (value.length > 11) value = value.slice(0, 11)
     residentDataForm.value[field] = value
 }
 
@@ -67,14 +57,12 @@ const validateForm = () => {
         }
     }
 
-    // ✅ Extra validation for Contact Number
     const contact = residentDataForm.value.contact_number
     if (contact && !/^09\d{9}$/.test(contact)) {
         formErrors.value.contact_number = 'Contact Number must start with 09 and be exactly 11 digits.'
         isValid = false
     }
 
-    // ✅ Extra validation for Emergency Contact (if provided)
     const emergencyContact = residentDataForm.value.emergency_contact
     if (emergencyContact && emergencyContact.trim() !== '' && !/^09\d{9}$/.test(emergencyContact)) {
         formErrors.value.emergency_contact = 'Emergency Contact must start with 09 and be exactly 11 digits.'
@@ -95,7 +83,6 @@ const createResident = async () => {
         showToast({ icon: 'success', title: 'Resident created successfully' })
         router.push('/residents')
     } catch (error) {
-        // If server returns 422 validation errors, parse and display them
         if (error.response && error.response.status === 422 && error.response.data.errors) {
             const errors = error.response.data.errors
             formErrors.value = {}
@@ -109,21 +96,21 @@ const createResident = async () => {
         }
     }
 }
+
+onBeforeUnmount(() => {
+    residentStore.clearState()
+})
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
+    <div :key="route.fullPath" class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
         <form @submit.prevent="createResident" class="w-full max-w-6xl">
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
                 <!-- Left Column -->
                 <div
                     class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
                     <h1 class="text-2xl font-bold mb-4 text-center">Add New Resident</h1>
-                    <h2 class="text-base font-medium mb-6 text-center text-gray-600">
-                        Resident Profile
-                    </h2>
-
-                    <!-- Image Placeholder -->
+                    <h2 class="text-base font-medium mb-6 text-center text-gray-600">Resident Profile</h2>
                     <div
                         class="w-40 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
                         <div class="text-center">
@@ -142,9 +129,8 @@ const createResident = async () => {
                             <input type="text" placeholder="First Name" v-model="residentDataForm.first_name"
                                 :class="{ 'border-red-500': formErrors.first_name }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            <p v-if="formErrors.first_name" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.first_name }}
-                            </p>
+                            <p v-if="formErrors.first_name" class="text-red-500 text-sm mt-1">{{ formErrors.first_name
+                            }}</p>
                         </div>
 
                         <!-- Middle Name -->
@@ -160,8 +146,7 @@ const createResident = async () => {
                             <input type="text" placeholder="Last Name" v-model="residentDataForm.last_name"
                                 :class="{ 'border-red-500': formErrors.last_name }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            <p v-if="formErrors.last_name" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.last_name }}
+                            <p v-if="formErrors.last_name" class="text-red-500 text-sm mt-1">{{ formErrors.last_name }}
                             </p>
                         </div>
 
@@ -171,8 +156,7 @@ const createResident = async () => {
                             <input type="date" v-model="residentDataForm.birthday"
                                 :class="{ 'border-red-500': formErrors.birthday }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            <p v-if="formErrors.birthday" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.birthday }}
+                            <p v-if="formErrors.birthday" class="text-red-500 text-sm mt-1">{{ formErrors.birthday }}
                             </p>
                         </div>
 
@@ -182,9 +166,7 @@ const createResident = async () => {
                             <input type="number" placeholder="Age" v-model="residentDataForm.age"
                                 :class="{ 'border-red-500': formErrors.age }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            <p v-if="formErrors.age" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.age }}
-                            </p>
+                            <p v-if="formErrors.age" class="text-red-500 text-sm mt-1">{{ formErrors.age }}</p>
                         </div>
 
                         <!-- Gender -->
@@ -196,32 +178,25 @@ const createResident = async () => {
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
-                            <p v-if="formErrors.gender" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.gender }}
-                            </p>
+                            <p v-if="formErrors.gender" class="text-red-500 text-sm mt-1">{{ formErrors.gender }}</p>
                         </div>
 
                         <!-- Address -->
                         <div class="md:col-span-2">
                             <label class="text-sm font-semibold text-gray-700">Address</label>
-                            <input type="text"
-                                placeholder="Block & Lot no. / Street / Subdivision / Barangay / City / Province"
-                                v-model="residentDataForm.address" :class="{ 'border-red-500': formErrors.address }"
+                            <input type="text" placeholder="Complete Address" v-model="residentDataForm.address"
+                                :class="{ 'border-red-500': formErrors.address }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            <p v-if="formErrors.address" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.address }}
-                            </p>
+                            <p v-if="formErrors.address" class="text-red-500 text-sm mt-1">{{ formErrors.address }}</p>
                         </div>
 
                         <!-- Email -->
                         <div>
                             <label class="text-sm font-semibold text-gray-700">Email</label>
-                            <input type="text" placeholder="Email" v-model="residentDataForm.email"
+                            <input type="email" placeholder="Email" v-model="residentDataForm.email"
                                 :class="{ 'border-red-500': formErrors.email }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            <p v-if="formErrors.email" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.email }}
-                            </p>
+                            <p v-if="formErrors.email" class="text-red-500 text-sm mt-1">{{ formErrors.email }}</p>
                         </div>
 
                         <!-- Contact Number -->
@@ -231,16 +206,15 @@ const createResident = async () => {
                                 @input="restrictPhoneInput('contact_number')"
                                 :class="{ 'border-red-500': formErrors.contact_number }"
                                 class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            <p v-if="formErrors.contact_number" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.contact_number }}
-                            </p>
+                            <p v-if="formErrors.contact_number" class="text-red-500 text-sm mt-1">{{
+                                formErrors.contact_number }}</p>
                         </div>
 
                         <!-- Family Member -->
                         <div>
                             <label class="text-sm font-semibold text-gray-700">Family Member</label>
                             <input type="text" placeholder="Family Member" v-model="residentDataForm.family_member"
-                                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
 
                         <!-- Emergency Contact -->
@@ -250,17 +224,16 @@ const createResident = async () => {
                                 v-model="residentDataForm.emergency_contact"
                                 @input="restrictPhoneInput('emergency_contact')"
                                 :class="{ 'border-red-500': formErrors.emergency_contact }"
-                                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            <p v-if="formErrors.emergency_contact" class="text-red-500 text-sm mt-1">
-                                {{ formErrors.emergency_contact }}
-                            </p>
+                                class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            <p v-if="formErrors.emergency_contact" class="text-red-500 text-sm mt-1">{{
+                                formErrors.emergency_contact }}</p>
                         </div>
 
                         <!-- Contact Person -->
                         <div>
                             <label class="text-sm font-semibold text-gray-700">Contact Person</label>
                             <input type="text" placeholder="Contact Person" v-model="residentDataForm.contact_person"
-                                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                class="border rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
                     </div>
 

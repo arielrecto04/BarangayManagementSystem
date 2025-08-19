@@ -3,7 +3,7 @@ import { Table, Paginate } from '@/Components';
 import Modal from '../../Components/Modal.vue';
 import { useAnnouncementEventStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
-import { onMounted, onUnmounted, ref, nextTick } from "vue";
+import { ref, onMounted } from "vue";
 import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -16,16 +16,21 @@ const route = useRoute();
 const router = useRouter();
 
 // State
-const currentPage = ref(route.query.page || 1);
-const menuPosition = ref({ top: 0, left: 0 });
-const teleportMenuRowId = ref(null);
+const currentPage = ref(parseInt(route.query.page) || 1);
 const showModal = ref(false);
 const selectedEvent = ref(null);
 
 // Helpers
 const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    };
     return new Date(dateString).toLocaleDateString('en-US', options);
 };
 
@@ -36,53 +41,9 @@ const handlePageChange = (page) => {
     router.replace({ query: { page } });
 };
 
-const toggleMenu = async (event, eventId) => {
-    if (teleportMenuRowId.value === eventId) {
-        teleportMenuRowId.value = null;
-        return;
-    }
-    if (teleportMenuRowId.value !== null) {
-        teleportMenuRowId.value = null;
-        await nextTick();
-    }
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    const dropdownWidth = 192;
-    const viewportWidth = window.innerWidth;
-    const scrollX = window.scrollX;
-
-    let leftPosition = rect.left + scrollX;
-    if (rect.left + dropdownWidth > viewportWidth) {
-        leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
-    }
-    leftPosition = Math.max(leftPosition, 0);
-
-    menuPosition.value = {
-        top: rect.bottom + window.scrollY,
-        left: leftPosition,
-    };
-
-    await nextTick();
-    teleportMenuRowId.value = eventId;
-};
-
-const closeMenu = () => {
-    teleportMenuRowId.value = null;
-};
-
-const handleClickOutside = (event) => {
-    const target = event.target;
-    if (!target.closest('.burger-menu-container') &&
-        !target.closest('[data-teleport-menu]') &&
-        teleportMenuRowId.value !== null) {
-        teleportMenuRowId.value = null;
-    }
-};
-
 const openModal = (eventData) => {
     selectedEvent.value = eventData;
     showModal.value = true;
-    closeMenu();
 };
 
 const closeModal = () => {
@@ -92,7 +53,6 @@ const closeModal = () => {
 
 const editEvent = (eventId) => {
     router.push(`/announcement-events/edit-announcement-event/${eventId}`);
-    closeMenu();
 };
 
 const deleteEvent = async (eventId) => {
@@ -101,7 +61,6 @@ const deleteEvent = async (eventId) => {
             await announcementEventStore.deleteEvent(eventId);
             showToast({ icon: 'success', title: 'Event deleted successfully' });
             announcementEventStore.getEvents(currentPage.value);
-            closeMenu();
         } catch (error) {
             showToast({ icon: 'error', title: error.message });
         }
@@ -114,19 +73,22 @@ const columns = [
     { key: "title", label: "Title" },
     { key: "author", label: "Author" },
     { key: "location", label: "Location" },
-    { key: "formatted_start_date", label: "Start Date" },
-    { key: "formatted_end_date", label: "End Date" },
+    {
+        key: "start_date",
+        label: "Start Date",
+        formatter: formatDate
+    },
+    {
+        key: "end_date",
+        label: "End Date",
+        formatter: formatDate
+    },
     { key: "status", label: "Status" }
 ];
 
 onMounted(() => {
     const page = currentPage.value;
     announcementEventStore.getEvents(page);
-    document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -154,16 +116,6 @@ onUnmounted(() => {
                 </div>
                 <h3 class="mt-4 text-xl font-medium text-gray-900">No announcements or events yet</h3>
                 <p class="mt-2 text-gray-500">Get started by creating your first announcement or event</p>
-                <div class="mt-6">
-                    <router-link to="/announcements-events/add"
-                        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Create New
-                    </router-link>
-                </div>
             </div>
 
             <!-- Card Grid -->
@@ -187,15 +139,24 @@ onUnmounted(() => {
                             </div>
                         </div>
 
-                        <!-- Action Menu Button -->
-                        <div class="absolute top-3 right-3 burger-menu-container z-20">
-                            <button @click="(e) => toggleMenu(e, event.id)"
-                                class="w-9 h-9 bg-white/90 hover:bg-white border border-white/50 shadow rounded-full flex items-center justify-center transition-all duration-300 group-hover:shadow-md"
-                                :class="{ 'bg-white shadow-md': teleportMenuRowId === event.id }">
-                                <svg class="w-4.5 h-4.5 text-slate-700" fill="currentColor" viewBox="0 0 20 20">
-                                    <circle cx="4" cy="10" r="2" />
-                                    <circle cx="10" cy="10" r="2" />
-                                    <circle cx="16" cy="10" r="2" />
+                        <!-- Action Buttons -->
+                        <div class="absolute top-3 right-3 z-20 flex gap-2">
+                            <!-- Edit Button -->
+                            <button @click="editEvent(event.id)" title="Edit"
+                                class="w-9 h-9 bg-white/90 hover:bg-white border border-white/50 shadow rounded-full flex items-center justify-center transition-all duration-300 group-hover:shadow-md">
+                                <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+
+                            <!-- Delete Button -->
+                            <button @click="deleteEvent(event.id)" title="Delete"
+                                class="w-9 h-9 bg-white/90 hover:bg-white border border-white/50 shadow rounded-full flex items-center justify-center transition-all duration-300 group-hover:shadow-md">
+                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                             </button>
                         </div>
@@ -206,8 +167,7 @@ onUnmounted(() => {
                                 'bg-emerald-500/90 text-white': event.status === 'Ongoing',
                                 'bg-amber-500/90 text-white': event.status === 'Upcoming',
                                 'bg-slate-500/90 text-white': event.status === 'Past'
-                            }"
-                                class="backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow">
+                            }" class="backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow">
                                 {{ event.status }}
                             </span>
                         </div>
@@ -275,29 +235,6 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Dropdown Menu (Teleport) -->
-            <Teleport to="body">
-                <div v-if="teleportMenuRowId !== null" data-teleport-menu :style="{
-                    position: 'absolute',
-                    top: menuPosition.top + 'px',
-                    left: menuPosition.left + 'px',
-                    zIndex: 9999
-                }"
-                    class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/50 py-2 w-48 animate-in fade-in duration-200">
-                    <button @click="editEvent(teleportMenuRowId)"
-                        class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-indigo-50 flex items-center gap-3 font-medium transition-colors duration-200 rounded-xl mx-2">
-                        <span class="text-lg">✏️</span>
-                        Edit Event
-                    </button>
-                    <hr class="my-2 border-slate-200">
-                    <button @click="deleteEvent(teleportMenuRowId)"
-                        class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 font-medium transition-colors duration-200 rounded-xl mx-2">
-                        <span class="text-lg">🗑️</span>
-                        Delete Event
-                    </button>
-                </div>
-            </Teleport>
-
             <!-- Pagination -->
             <div v-if="paginate && !isLoading" class="mt-8 sm:mt-10 flex justify-center">
                 <div class="bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-2">
@@ -328,22 +265,6 @@ onUnmounted(() => {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-@keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-in.fade-in {
-    animation: fade-in 0.2s ease-out;
 }
 
 .min-w-0 {

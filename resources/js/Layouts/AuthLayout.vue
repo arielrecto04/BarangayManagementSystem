@@ -1,22 +1,29 @@
 <script setup>
-    import { Sidebar, NavBar, Header } from "@/Components";
-    import { defineEmits } from "vue";
+import { defineEmits } from "vue";
+import Sidebar from "@/Components/Sidebar.vue";
+import Header from "@/Components/Header.vue";
+// import NavBar from "@/Components/NavBar.vue"; // optional
 
-
-    const emit = defineEmits([
-        'search'
-    ])
-
+const emit = defineEmits(["search"]);
 </script>
 
 <template>
     <div class="flex min-h-screen bg-gray-50">
+        <!-- Sidebar -->
         <Sidebar />
-        <div class="flex flex-col gap-2 grow p-5">
+
+        <!-- Main Content Area -->
+        <div class="flex flex-col flex-1 gap-2 p-5">
+            <!-- Optional Navbar -->
             <!-- <NavBar /> -->
+
+            <!-- Header -->
             <Header @search="emit('search', $event)" />
-            <slot />
+
+            <!-- Page Content -->
+            <div class="flex-1">
+                <slot />
+            </div>
         </div>
     </div>
-
 </template>
