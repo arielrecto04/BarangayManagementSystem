@@ -4,10 +4,11 @@
     import { ref } from 'vue';
     import { storeToRefs } from 'pinia';
     import useToast from '@/Utils/useToast';
+    import{ useRouter } from 'vue-router';
     const { showToast } = useToast();
 
     const auth = useAuthenticationStore();
-
+    const router = useRouter();
     const { isLoading, error } = storeToRefs(auth);
 
     const loginForm = ref();
@@ -16,9 +17,13 @@
         try {
 
             const formData = new FormData(loginForm.value);
+
+
+            console.log(formData);
             await auth.login(formData);
             if (!error.value) {
                 showToast({ icon: 'success', title: 'Login successful' });
+                router.push({ name: "Dashboard" });
             }
         } catch (error) {
             showToast({ icon: 'error', title: error.message });
@@ -54,7 +59,7 @@
                     class="bg-green-800 text-white border border-green-800 p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-800 flex-1">
                     Register
                     </button>
-           
+
         </form>
     </BaseLayout>
 </template>

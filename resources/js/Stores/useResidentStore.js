@@ -1,4 +1,4 @@
-import { axios } from "@/utils";
+import { axios } from "@/Utils";
 import { defineStore } from "pinia";
 import useToast from "@/Utils/useToast";
 const { showToast } = useToast();

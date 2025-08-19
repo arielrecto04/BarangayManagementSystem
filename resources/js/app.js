@@ -2,7 +2,7 @@ import "./bootstrap";
 
 import { createApp } from "vue";
 import App from "@/App.vue";
-import router from "@/router";
+import router from "@/Router";
 import { createPinia } from "pinia";
 
 // ✅ Assign to variable so you can access `config`

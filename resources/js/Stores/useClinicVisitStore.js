@@ -1,4 +1,4 @@
-import { axios } from '@/utils'
+import { axios } from '@/Utils'
 import {defineStore} from 'pinia'
 
 export const useClinicVisitStore = defineStore('clinicVisit', {
@@ -41,7 +41,7 @@ export const useClinicVisitStore = defineStore('clinicVisit', {
                     to: response.data.to,
                 };
             } catch (error){
-                
+
                 console.error("Error fetching clinic visits:", error);
                 throw error;
 
@@ -103,6 +103,6 @@ export const useClinicVisitStore = defineStore('clinicVisit', {
 
             }
         },
-        
+
     },
 });
