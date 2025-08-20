@@ -1,339 +1,281 @@
 <script setup>
-import { AuthLayout } from "@/Layouts";
-import { Table, Paginate } from '@/Components'
-import { useResidentStore } from '@/Stores'
+import { Table, Paginate } from '@/Components';
+import Modal from '@/Components/Modal.vue'; // Import the modal component
+import { useResidentStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
-import { onMounted, onUnmounted, ref, watch, nextTick } from "vue";
+import { onMounted, ref, nextTick, watch } from "vue";
 import useToast from '@/Utils/useToast';
-import { useRouter, useRoute } from 'vue-router';
-import Modal from '../../Components/Modal.vue'
+import { useRoute, useRouter } from 'vue-router';
 
 const { showToast } = useToast();
-const router = useRouter();
 const route = useRoute();
+const router = useRouter();
+
 const residentStore = useResidentStore();
 const { residents, isLoading, paginate } = storeToRefs(residentStore);
 
-// For Viewing of Resident Information in Modal
+const currentPage = ref(parseInt(route.query.page) || 1);
 const showModal = ref(false);
 const selectedResident = ref(null);
-const viewResident = (resident) => {
-    selectedResident.value = resident;
-    showModal.value = true;
+
+const handlePageChange = async (page) => {
+    try {
+        currentPage.value = page;
+        await residentStore.getResidents(page);
+        router.replace({ query: { page: page } });
+    } catch (error) {
+        console.error('Error changing page:', error);
+        showToast({ icon: 'error', title: 'Error loading page' });
+    }
 };
-const closeModal = () => {
-    showModal.value = false;
-    selectedResident.value = null;
+
+const openModal = async (resident) => {
+    try {
+        selectedResident.value = { ...resident }; // Create a copy to avoid reactivity issues
+        showModal.value = true;
+    } catch (error) {
+        console.error('Error opening modal:', error);
+    }
 };
 
+const closeModal = async () => {
+    try {
+        showModal.value = false;
+        selectedResident.value = null;
+    } catch (error) {
+        console.error('Error closing modal:', error);
+    }
+};
 
-
-const currentPage = ref(parseInt(route.query.page) || 1);
-
-
-// Burger menu state (track which row’s menu is open)
-const teleportMenuRowId = ref(null);
-const menuPosition = ref({ top: 0, left: 0 });
-
-
-const toggleMenu = async (event, residentId) => {
-    if (teleportMenuRowId.value === residentId) {
-        teleportMenuRowId.value = null;
+const deleteResident = async (residentId) => {
+    if (!confirm('Are you sure you want to delete this resident?')) {
         return;
     }
 
-    if (teleportMenuRowId.value !== null) {
-        teleportMenuRowId.value = null;
-        await nextTick();
-    }
+    try {
+        await residentStore.deleteResident(residentId);
+        showToast({ icon: 'success', title: 'Resident deleted successfully' });
 
-    const rect = event.currentTarget.getBoundingClientRect();
-    const dropdownWidth = 192; // Approx width (w-48)
-    const viewportWidth = window.innerWidth;
-    const scrollX = window.scrollX;
+        // Close modal after deletion
+        closeModal();
 
-    let leftPosition = rect.left + scrollX;
-
-    if (rect.left + dropdownWidth > viewportWidth) {
-        leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
-    }
-
-    leftPosition = Math.max(leftPosition, 0);
-
-    menuPosition.value = {
-        top: rect.bottom + window.scrollY,
-        left: leftPosition
-    };
-
-    await nextTick();
-    teleportMenuRowId.value = residentId;
-};
-
-const closeMenu = () => {
-    teleportMenuRowId.value = null;
-};
-
-
-// Delete resident handler
-const deleteResident = async (residentId) => {
-    if (confirm('Are you sure you want to delete this resident?')) {
-        try {
-            await residentStore.deleteResident(residentId);
-            showToast({ icon: 'success', title: 'Resident deleted successfully' });
-
-            if (residents.value.length === 0 && currentPage.value > 1) {
-                handlePageChange(currentPage.value - 1);
-            }
-            closeMenu();
-        } catch (error) {
-            showToast({ icon: 'error', title: error.message });
-        }
+        // Reload current page
+        await residentStore.getResidents(currentPage.value);
+    } catch (error) {
+        console.error('Error deleting resident:', error);
+        showToast({ icon: 'error', title: error.message || 'Error deleting resident' });
     }
 };
-
-// Navigate to edit resident page
-const editResident = (residentId) => {
-    router.push(`/residents/edit-resident/${residentId}`);
-    closeMenu();
-};
-
-const handlePageChange = (page) => {
-    currentPage.value = page;
-
-    const filters = {
-        search: route.query.search,
-        age_range: route.query.age_range,
-        gender: route.query.gender
-    };
-
-    residentStore.getResidents(currentPage.value, filters);
-
-    router.replace({
-        query: {
-            ...route.query,
-            page: currentPage.value
-        }
-    });
-};
-
-watch(() => route.query, (newQuery) => {
-    const page = parseInt(newQuery.page) || 1;
-    const filters = {
-        search: newQuery.search,
-        age_range: newQuery.age_range,
-        gender: newQuery.gender
-    };
-
-    if (page !== currentPage.value) {
-        currentPage.value = page;
-    }
-
-    residentStore.getResidents(currentPage.value, filters);
-}, { deep: true });
-
-onMounted(() => {
-    const filters = {
-        search: route.query.search,
-        age_range: route.query.age_range,
-        gender: route.query.gender
-    };
-    residentStore.getResidents(currentPage.value, filters);
-
-    // Close menu on click outside
-    const handleClickOutside = (event) => {
-        if (!event.target.closest('.burger-menu-container') &&
-            !event.target.closest('[data-teleport-menu]') &&
-            teleportMenuRowId.value !== null) {
-            teleportMenuRowId.value = null;
-        }
-    };
-    document.addEventListener('click', handleClickOutside);
-
-    onUnmounted(() => {
-        document.removeEventListener('click', handleClickOutside);
-    });
-});
-
 
 const columns = [
-    { key: "avatar", label: "Image" },
-    { key: "resident_number", label: "Resident Number" },
-    { key: "last_name", label: "Last Name" },
-    { key: "first_name", label: "First Name" },
-    { key: "middle_name", label: "Middle Name" },
+    { key: "resident_number", label: "Resident Number", class: "hidden sm:table-cell" },
+    { key: "household_number", label: "Household ID", class: "hidden sm:table-cell" },
+    { key: "first_name", label: "First Name", class: "hidden sm:table-cell" },
+    { key: "middle_name", label: "Middle Name", class: "hidden sm:table-cell" },
+    { key: "last_name", label: "Last Name", class: "hidden sm:table-cell" },
+    { key: "actions", label: "Actions" } // Always visible
 ];
+
+onMounted(async () => {
+    try {
+        const page = currentPage.value;
+        await residentStore.getResidents(page);
+    } catch (error) {
+        console.error('Error loading residents:', error);
+        showToast({ icon: 'error', title: 'Error loading residents' });
+    }
+});
+
+// Watch for route changes
+watch(() => route.query.page, (newPage) => {
+    if (newPage && parseInt(newPage) !== currentPage.value) {
+        currentPage.value = parseInt(newPage);
+    }
+});
 </script>
 
-
 <template>
-    <div class="flex flex-col gap-2">
-        <h1 class="text-xl font-bold text-gray-600">List of Residents</h1>
+    <div class="flex flex-col gap-4">
 
-        <div v-if="isLoading" class="flex justify-center items-center">
-            <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+        <!-- Header -->
+        <div
+            class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 md:p-6 rounded-lg shadow gap-4">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-600">List of Residents</h1>
         </div>
 
-        <Table :columns="columns" :rows="residents" :searchable="false" :selectable="false" v-else>
-            <template #cell(avatar)="{ row }">
-                <img :src="row.avatar" alt="image" class="w-10 h-10 rounded-full" />
-            </template>
-            <template #cell(middle_name)="{ row }">
-                {{ row.middle_name }}
-            </template>
-            <template #cell(contact_person)="{ row }">
-                {{ row.contact_person }}
-            </template>
-            <template #actions="{ row }">
-                <div class="relative burger-menu-container">
-                    <!-- Burger Menu Button -->
-                    <button @click="(e) => toggleMenu(e, row.id)"
-                        class="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        :class="{ 'bg-gray-100': teleportMenuRowId === row.id }" aria-label="More actions">
-                        <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                            <path d="M10 4a2 2 0 100-4 2 2 0 000 4z" />
-                            <path d="M10 20a2 2 0 100-4 2 2 0 000 4z" />
-                        </svg>
+        <!-- Loading State -->
+        <div v-if="isLoading" class="flex justify-center items-center min-h-[200px] md:min-h-[400px]">
+            <div class="animate-spin rounded-full h-12 w-12 md:h-16 md:w-16 border-b-2 border-blue-500"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!residents || residents.length === 0" class="text-center py-12">
+            <div class="text-gray-400 text-6xl mb-4">👥</div>
+            <h3 class="text-lg md:text-xl font-medium text-gray-600 mb-2">No residents found</h3>
+            <p class="text-gray-500 mb-4">Get started by adding your first resident.</p>
+            <router-link to="/residents/add-resident"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg inline-block">
+                Add First Resident
+            </router-link>
+        </div>
+
+        <!-- Table Content -->
+        <div v-else class="bg-white rounded-lg shadow overflow-x-auto">
+            <Table :columns="columns" :rows="residents">
+                <template #cell="{ column, row }">
+                    <div :class="column.class">
+                        {{ row[column.key] }}
+                    </div>
+                </template>
+
+                <template #actions="{ row }">
+                    <div class="flex flex-wrap gap-2">
+                        <button @click="openModal(row)"
+                            class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125"
+                            title="View">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </template>
+            </Table>
+
+
+            <!-- Pagination -->
+            <div v-if="paginate" class="px-4 md:px-6 py-4 border-t">
+                <Paginate @page-changed="handlePageChange" :maxVisibleButtons="5" :totalPages="paginate.last_page"
+                    :totalItems="paginate.total" :currentPage="paginate.current_page"
+                    :itemsPerPage="paginate.per_page" />
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <Modal :show="showModal" title="Resident Details" max-width="2xl" @close="closeModal">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <!-- Profile -->
+                <div class="md:col-span-2 flex justify-center mb-4">
+                    <div class="w-24 h-24 md:w-32 md:h-32 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-4xl text-gray-400">👤</span>
+                    </div>
+                </div>
+
+                <!-- Resident Info -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Resident ID</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.id || 'N/A' }}</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Resident Number</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.resident_number || 'N/A' }}
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">First Name</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.first_name || 'N/A' }}</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Last Name</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.last_name || 'N/A' }}</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Age</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.age || 'N/A' }}</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Gender</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.gender || 'N/A' }}</div>
+                </div>
+
+                <!-- Contact & Additional Info -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Birthday</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.birthday || 'N/A' }}</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Contact Number</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.contact_number || 'N/A' }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Family Member</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.family_member || 'N/A' }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Emergency Contact</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.emergency_contact || 'N/A'
+                        }}</div>
+                </div>
+
+                <!-- Address -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-600">Address</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md min-h-[60px]">{{ selectedResident?.address ||
+                        'N/A' }}
+                    </div>
+                </div>
+
+                <!-- Timestamps -->
+                <div v-if="selectedResident?.created_at">
+                    <label class="block text-sm font-medium text-gray-600">Created At</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md text-sm">{{ new
+                        Date(selectedResident.created_at).toLocaleString() }}</div>
+                </div>
+
+                <div v-if="selectedResident?.updated_at">
+                    <label class="block text-sm font-medium text-gray-600">Updated At</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md text-sm">{{ new
+                        Date(selectedResident.updated_at).toLocaleString() }}</div>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <template #footer>
+                <div class="flex flex-col md:flex-row justify-end gap-3 mt-4">
+                    <button @click="deleteResident(selectedResident?.id)"
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg w-full md:w-auto">
+                        Delete
+                    </button>
+                    <router-link :to="`/residents/edit-resident/${selectedResident?.id}`" @click="closeModal"
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg w-full md:w-auto">
+                        Edit Resident
+                    </router-link>
+                    <button @click="closeModal"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg w-full md:w-auto">
+                        Close
                     </button>
                 </div>
             </template>
-        </Table>
-
-        <!-- Teleport menu for burger dropdown -->
-        <Teleport to="body">
-            <div v-if="teleportMenuRowId !== null" data-teleport-menu :style="{
-                position: 'absolute',
-                top: menuPosition.top + 'px',
-                left: menuPosition.left + 'px',
-                zIndex: 9999
-            }" class="bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-48">
-                <button @click="editResident(teleportMenuRowId)"
-                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                </button>
-
-                <button @click="deleteResident(teleportMenuRowId)"
-                    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                </button>
-
-                <button
-                    @click="() => { viewResident(residentStore.residents.find(r => r.id === teleportMenuRowId)); closeMenu(); }"
-                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-                        <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-                    </svg>
-                    View
-                </button>
-
-            </div>
-        </Teleport>
-
-        <Paginate @page-changed="handlePageChange" :maxVisibleButtons="5" :totalPages="paginate.last_page"
-            :totalItems="paginate.total" :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
+        </Modal>
     </div>
-
-    <!-- Modal Template -->
-    <Modal :show="showModal" title="Resident Profile" maxWidth="6xl" @close="closeModal">
-        <div class="flex flex-col md:flex-row max-h-[90vh] overflow-auto">
-            <!-- Left Column -->
-            <div
-                class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
-                <!-- Avatar or Placeholder -->
-                <div class="w-40 h-40 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-default"
-                    :class="{ 'border-gray-300': !selectedResident?.avatar, 'border-transparent': selectedResident?.avatar }">
-                    <img v-if="selectedResident?.avatar" :src="selectedResident.avatar" alt="Resident Avatar"
-                        class="w-40 h-40 rounded-xl object-cover" />
-                    <div v-else class="text-center text-4xl text-gray-400 select-none">📸</div>
-                </div>
-            </div>
-
-            <!-- Right Column -->
-            <div class="p-8 md:w-2/3 overflow-auto">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Resident Number</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.resident_number || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Full Name</label>
-                        <p class="mt-1 text-gray-900">
-                            {{ selectedResident?.first_name || '-' }}
-                            {{ selectedResident?.middle_name || '' }}
-                            {{ selectedResident?.last_name || '-' }}
-                        </p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Birthday</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.birthday || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Age</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.age || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Gender</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.gender || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Address</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.address || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Contact Number</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.contact_number || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Contact Person</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.contact_person || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Family Member</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.family_member || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Emergency Contact</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.emergency_contact || '-' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700">Email</label>
-                        <p class="mt-1 text-gray-900">{{ selectedResident?.email || '-' }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </Modal>
-
 </template>
 
-<style>
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.2s ease;
+
+<style scoped>
+/* Custom styles for better visual presentation */
+.table-container {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
+/* Button hover effects */
+.btn-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 </style>

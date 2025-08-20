@@ -1,6 +1,5 @@
-<!-- AddAnnouncementEvent.vue -->
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAnnouncementEventStore } from "@/Stores";
 import { storeToRefs } from "pinia";
@@ -23,22 +22,123 @@ const form = ref({
     image: null,
 });
 
+// Form errors
+const formErrors = ref({});
+
 // Image preview
 const previewImage = ref(null);
-const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    form.value.image = file;
-    previewImage.value = file ? URL.createObjectURL(file) : null;
+
+// Helper function to format datetime for datetime-local input
+const formatDateTimeLocal = (date) => {
+    if (!date) return '';
+
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Watch for start_date changes to ensure end_date is after start_date
+watch(() => form.value.start_date, (newStartDate) => {
+    if (newStartDate && form.value.end_date) {
+        const startTime = new Date(newStartDate).getTime();
+        const endTime = new Date(form.value.end_date).getTime();
+
+        // If end date is before start date, adjust end date
+        if (endTime <= startTime) {
+            const newEndDate = new Date(startTime + 60 * 60 * 1000); // Add 1 hour
+            form.value.end_date = formatDateTimeLocal(newEndDate);
+        }
+    }
+});
+
+const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        form.value.image = file;
+        previewImage.value = URL.createObjectURL(file);
+    }
+};
+
+const removeImage = () => {
+    form.value.image = null;
+    previewImage.value = null;
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) fileInput.value = '';
+};
+
+// Validation function
+const validateForm = () => {
+    formErrors.value = {};
+    let isValid = true;
+
+    const fields = {
+        title: 'Title',
+        start_date: 'Start Date',
+        end_date: 'End Date',
+        author: 'Author',
+        description: 'Description',
+        location: 'Location',
+
+    };
+
+    for (const [field, label] of Object.entries(fields)) {
+        if (!form.value[field]) {
+            formErrors.value[field] = `${label} is required.`;
+            isValid = false;
+        }
+    }
+
+    // Check if end date is after start date
+    if (form.value.start_date && form.value.end_date) {
+        const startTime = new Date(form.value.start_date).getTime();
+        const endTime = new Date(form.value.end_date).getTime();
+
+        if (endTime <= startTime) {
+            formErrors.value.end_date = 'End date must be after start date.';
+            isValid = false;
+        }
+    }
+
+    return isValid;
 };
 
 // Submit handler
 const handleSubmit = async () => {
+    // Validate form before submission
+    if (!validateForm()) {
+        showToast({ icon: "error", title: "Please fill in all required fields correctly." });
+        return;
+    }
+
     try {
         const formData = new FormData();
+
+        // Add all form fields to FormData
         Object.keys(form.value).forEach((key) => {
-            if (form.value[key] !== null && form.value[key] !== "")
-                formData.append(key, form.value[key]);
+            if (form.value[key] !== null && form.value[key] !== "") {
+                let value = form.value[key];
+
+                // Handle datetime fields - ensure they're in the correct format
+                if ((key === 'start_date' || key === 'end_date') && value) {
+                    // Convert datetime-local input to ISO string
+                    const date = new Date(value);
+                    value = date.toISOString();
+                }
+
+                formData.append(key, value);
+            }
         });
+
+        // Debug: Log what's being sent
+        console.log('Submitting form data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
 
         await announcementEventStore.addEvent(formData);
 
@@ -53,18 +153,30 @@ const handleSubmit = async () => {
         });
     }
 };
+
+// Set default times if needed
+const setDefaultStartTime = () => {
+    const now = new Date();
+    form.value.start_date = formatDateTimeLocal(now);
+};
+
+const setDefaultEndTime = () => {
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    form.value.end_date = formatDateTimeLocal(oneHourLater);
+};
 </script>
 
 <template>
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow p-6 mt-6">
-        <h2 class="text-xl font-bold mb-6">Add Announcement / Event</h2>
+    <div class="max-w-4xl mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-6">Add Announcement / Event</h1>
 
-        <form @submit.prevent="handleSubmit" class="space-y-5">
+        <!-- Form -->
+        <form @submit.prevent="handleSubmit" class="space-y-5 bg-white shadow rounded-2xl p-6">
             <!-- Type -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">Type</label>
-                <select v-model="form.type"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label class="block text-sm font-medium mb-1">Type</label>
+                <select v-model="form.type" class="w-full border rounded-lg px-3 py-2">
                     <option value="announcement">Announcement</option>
                     <option value="event">Event</option>
                 </select>
@@ -72,64 +184,95 @@ const handleSubmit = async () => {
 
             <!-- Title -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">Title</label>
-                <input type="text" v-model="form.title" required
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                <label class="block text-sm font-medium mb-1">Title</label>
+                <input v-model="form.title" type="text" class="w-full border rounded-lg px-3 py-2" />
+                <p v-if="formErrors.title" class="text-red-500 text-sm mt-1">{{ formErrors.title }}</p>
             </div>
 
             <!-- Description -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">Description</label>
-                <textarea v-model="form.description" rows="4"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                <label class="block text-sm font-medium mb-1">Description</label>
+                <textarea v-model="form.description" rows="4" class="w-full border rounded-lg px-3 py-2"></textarea>
+                <p v-if="formErrors.description" class="text-red-500 text-sm mt-1">{{ formErrors.description }}</p>
             </div>
 
             <!-- Dates -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Start Date</label>
-                    <input type="date" v-model="form.start_date"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <label class="block text-sm font-medium mb-1">Start Date & Time</label>
+                    <div class="flex gap-2">
+                        <button type="button" @click="setDefaultStartTime"
+                            class="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg border">
+                            Now
+                        </button>
+                        <input v-model="form.start_date" type="datetime-local"
+                            class="flex-1 border rounded-lg px-3 py-2" :step="60" />
+                    </div>
+                    <p v-if="formErrors.start_date" class="text-red-500 text-sm mt-1">{{ formErrors.start_date }}</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" v-model="form.end_date"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <label class="block text-sm font-medium mb-1">End Date & Time</label>
+                    <div class="flex gap-2">
+                        <input v-model="form.end_date" type="datetime-local" class="flex-1 border rounded-lg px-3 py-2"
+                            :step="60" :min="form.start_date" />
+                        <button type="button" @click="setDefaultEndTime"
+                            class="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg border">
+                            +1h
+                        </button>
+                    </div>
+                    <p v-if="formErrors.end_date" class="text-red-500 text-sm mt-1">{{ formErrors.end_date }}</p>
                 </div>
             </div>
 
             <!-- Location -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">Location</label>
-                <input type="text" v-model="form.location"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                <label class="block text-sm font-medium mb-1">Location</label>
+                <input v-model="form.location" type="text" class="w-full border rounded-lg px-3 py-2" />
+                <p v-if="formErrors.location" class="text-red-500 text-sm mt-1">{{ formErrors.location }}</p>
             </div>
 
             <!-- Author -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">Author</label>
-                <input type="text" v-model="form.author"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                <label class="block text-sm font-medium mb-1">Author</label>
+                <input v-model="form.author" type="text" class="w-full border rounded-lg px-3 py-2" />
+                <p v-if="formErrors.author" class="text-red-500 text-sm mt-1">{{ formErrors.author }}</p>
             </div>
 
             <!-- Image -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Image</label>
-                <input type="file" accept="image/*" @change="handleFileChange"
-                    class="mt-1 block w-full text-sm text-gray-500" />
-                <div v-if="previewImage" class="mt-3">
-                    <img :src="previewImage" alt="Preview" class="h-40 object-cover rounded-lg shadow" />
+            <div class="flex flex-col">
+                <label class="font-semibold text-sm mb-1">Image</label>
+
+                <!-- Hidden file input -->
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileChange" />
+
+                <!-- Custom upload button -->
+                <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit"
+                    @click="$refs.fileInput.click()">
+                    Select Image
+                </button>
+
+                <!-- Preview -->
+                <div v-if="previewImage" class="mt-3 flex flex-col gap-2">
+                    <div class="relative w-fit">
+                        <img :src="previewImage" alt="Preview" class="h-40 object-cover rounded-lg shadow-md" />
+                        <!-- Remove button -->
+                        <button type="button"
+                            class="absolute top-1 right-1 transition-transform duration-300 hover:rotate-180"
+                            @click="removeImage">
+                            ✖
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Buttons -->
-            <div class="flex justify-end gap-3 pt-4">
+            <!-- Actions -->
+            <div class="flex justify-end gap-3">
                 <router-link to="/announcement-events/list-announcements-events"
-                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">
+                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100">
                     Cancel
                 </router-link>
                 <button type="submit" :disabled="isLoading"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 disabled:opacity-50">
+                    class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">
                     <span v-if="isLoading">Saving...</span>
                     <span v-else>Save</span>
                 </button>

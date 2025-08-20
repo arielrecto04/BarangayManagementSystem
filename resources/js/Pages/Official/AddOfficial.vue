@@ -226,7 +226,7 @@ const createOfficial = async () => {
 
             <!-- Number of Terms -->
             <div>
-              <label class="text-sm font-semibold text-gray-700">Number of Terms</label>
+              <label class="text-sm font-semibold text-gray-700">Term Count</label>
               <input type="number" v-model="officialDataForm.no_of_per_term" min="1" placeholder="1"
                 class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>

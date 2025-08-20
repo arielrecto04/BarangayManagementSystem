@@ -17,8 +17,6 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-
-
 Route::post('/login', [AuthenticationController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -30,7 +28,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
 
-
     Route::prefix('document-requests')->group(function () {
         Route::get('/statistic', [DocumentRequestController::class, 'statistic']);
         Route::get('/search', [DocumentRequestController::class, 'search']);
@@ -41,7 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get-resident-by-number/{number}', [ResidentController::class, 'getResidentByNumber']);
     });
 
-
+    // API Resources
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);
     Route::apiResource('blotters', BlotterController::class);
@@ -51,4 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('document-requests', DocumentRequestController::class);
     Route::apiResource('clinic-visits', ClinicVisitController::class);
     Route::apiResource('announcement-events', AnnouncementEventController::class);
+
+    // ✅ Refresh statuses route for Announcement Events
+    Route::post('/announcement-events/refresh-statuses', [AnnouncementEventController::class, 'refreshStatuses']);
 });
