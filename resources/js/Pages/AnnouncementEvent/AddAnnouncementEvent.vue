@@ -218,7 +218,7 @@ const setDefaultEndTime = () => {
                         <img :src="previewImage" alt="Preview" class="h-40 object-cover rounded-lg shadow-md" />
                         <!-- Remove button -->
                         <button type="button"
-                            class="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm transition-all duration-300 hover:scale-110"
+                            class="absolute top-1 right-1 transition-transform duration-300 hover:rotate-180"
                             @click="removeImage">
                             ✖
                         </button>

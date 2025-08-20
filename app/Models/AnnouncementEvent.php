@@ -31,15 +31,20 @@ class AnnouncementEvent extends Model
 
     /**
      * Automatically calculate and set the status before saving
+     * Only update status if dates are being changed or it's a new record
      */
     protected static function booted()
     {
         static::saving(function ($event) {
-            // Calculate status if dates are available
-            if ($event->start_date && $event->end_date) {
-                $event->status = $event->calculateStatus();
-            } else {
-                $event->status = 'Upcoming';
+            // Only auto-calculate status if:
+            // 1. It's a new record (creating), OR
+            // 2. The dates are being changed
+            if (!$event->exists || $event->isDirty(['start_date', 'end_date'])) {
+                if ($event->start_date && $event->end_date) {
+                    $event->status = $event->calculateStatus();
+                } else {
+                    $event->status = 'Upcoming';
+                }
             }
         });
     }
@@ -55,7 +60,7 @@ class AnnouncementEvent extends Model
             return 'Upcoming';
         }
 
-        $now = Carbon::now(); // precise current time
+        $now = Carbon::now();
         $start = Carbon::parse($this->start_date);
         $end = Carbon::parse($this->end_date);
 

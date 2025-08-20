@@ -217,23 +217,34 @@ onMounted(() => {
 
                         <!-- Author & Location -->
                         <div class="flex flex-wrap items-center gap-3 text-sm">
+                            <!-- Author -->
                             <div v-if="event.author" class="flex items-center gap-2 min-w-0">
                                 <div
-                                    class="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
-                                    {{ event.author.charAt(0).toUpperCase() }}
+                                    class="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                                    <!-- User Icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 md:w-5 md:h-5 text-white"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M5.121 17.804A9.969 9.969 0 0112 15c2.21 0 4.21.714 5.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
                                 </div>
                                 <span class="font-semibold text-slate-700 truncate min-w-0">{{ event.author }}</span>
                             </div>
+
+                            <!-- Location -->
                             <div v-if="event.location" class="flex items-center gap-1 text-slate-500 min-w-0">
-                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1113.314 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <!-- Classic Map Pin -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5s-3 1.343-3 3 1.343 3 3 3z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 8c0 7.5-7.5 13.5-7.5 13.5S4.5 15.5 4.5 8a7.5 7.5 0 1115 0z" />
                                 </svg>
                                 <span class="truncate min-w-0">{{ event.location }}</span>
                             </div>
                         </div>
+
 
                         <!-- Dates -->
                         <div class="space-y-2 text-sm">
@@ -315,24 +326,33 @@ onMounted(() => {
 
                         <!-- Author & Location -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Author -->
                             <div v-if="selectedEvent.author" class="flex items-center gap-3">
                                 <div
-                                    class="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                                    {{ selectedEvent.author.charAt(0).toUpperCase() }}
+                                    class="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                                    <!-- User Icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M5.121 17.804A9.969 9.969 0 0112 15c2.21 0 4.21.714 5.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
                                 </div>
                                 <div>
                                     <p class="text-sm text-slate-500 font-medium">Author</p>
                                     <p class="text-slate-900 font-semibold">{{ selectedEvent.author }}</p>
                                 </div>
                             </div>
+
+                            <!-- Location -->
                             <div v-if="selectedEvent.location" class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1113.314 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <!-- Classic Map Pin -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-slate-600" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5s-3 1.343-3 3 1.343 3 3 3z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M19.5 8c0 7.5-7.5 13.5-7.5 13.5S4.5 15.5 4.5 8a7.5 7.5 0 1115 0z" />
                                     </svg>
                                 </div>
                                 <div>
@@ -341,6 +361,7 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
+
 
                         <!-- Dates -->
                         <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl p-6">
@@ -351,7 +372,7 @@ onMounted(() => {
                                     <div>
                                         <p class="text-sm text-slate-500 font-medium">Start Date & Time</p>
                                         <p class="text-slate-900 font-semibold">{{ formatDate(selectedEvent.start_date)
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3">

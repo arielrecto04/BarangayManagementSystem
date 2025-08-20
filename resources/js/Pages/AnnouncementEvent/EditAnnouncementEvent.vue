@@ -51,6 +51,7 @@ watch(() => form.value.start_date, (newStartDate) => {
     }
 });
 
+const originalForm = ref({});
 // Fetch existing event
 onMounted(async () => {
     const id = route.params.id;
@@ -67,6 +68,9 @@ onMounted(async () => {
             author: event.value.author || "",
             image: null,
         };
+
+        // Store original values for comparison
+        originalForm.value = { ...form.value };
         previewImage.value = event.value.image ? `/${event.value.image}` : null;
     }
 });
@@ -101,27 +105,97 @@ const setDefaultEndTime = () => {
 };
 
 // Submit update
+// Fixed handleSubmit function with proper date handling
+// Alternative handleSubmit that sends ALL fields instead of just changed ones
+// Alternative handleSubmit method in EditAnnouncementEvent.vue
 const handleSubmit = async () => {
+    console.log('Form values before processing:', form.value);
+
     try {
         const id = route.params.id;
-        const formData = new FormData();
 
-        Object.keys(form.value).forEach((key) => {
-            if (form.value[key] !== null && form.value[key] !== "") {
-                let value = form.value[key];
-                if ((key === "start_date" || key === "end_date") && value) {
-                    value = new Date(value).toISOString();
+        // Separate image upload from other data
+        const hasNewImage = form.value.image instanceof File;
+
+        if (hasNewImage) {
+            // If there's a new image, use FormData with POST + _method override
+            const formData = new FormData();
+
+            Object.keys(form.value).forEach((key) => {
+                const value = form.value[key];
+
+                if (key === "image" && value instanceof File) {
+                    formData.append(key, value);
+                } else if (key === "start_date" || key === "end_date") {
+                    if (value !== "") {
+                        const dateWithSeconds = value + ':00';
+                        const date = new Date(dateWithSeconds);
+                        if (!isNaN(date.getTime())) {
+                            formData.append(key, date.toISOString());
+                        }
+                    } else {
+                        formData.append(key, "");
+                    }
+                } else if (key !== "image") {
+                    formData.append(key, value || "");
                 }
-                formData.append(key, value);
-            }
-        });
+            });
 
-        await announcementEventStore.updateEvent(id, formData);
+            // Add method override for Laravel
+            formData.append('_method', 'PUT');
+
+            console.log('Sending FormData with new image');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
+            }
+
+            await announcementEventStore.updateEvent(id, formData);
+        } else {
+            // No new image, send JSON data with regular PUT
+            const jsonData = {};
+
+            Object.keys(form.value).forEach((key) => {
+                const value = form.value[key];
+
+                if (key === "start_date" || key === "end_date") {
+                    if (value !== "") {
+                        const dateWithSeconds = value + ':00';
+                        const date = new Date(dateWithSeconds);
+                        if (!isNaN(date.getTime())) {
+                            jsonData[key] = date.toISOString();
+                        }
+                    } else {
+                        jsonData[key] = "";
+                    }
+                } else if (key !== "image") {
+                    jsonData[key] = value || "";
+                }
+            });
+
+            console.log('Sending JSON data without image:', jsonData);
+            await announcementEventStore.updateEvent(id, jsonData);
+        }
+
         showToast({ icon: "success", title: "Event updated successfully" });
         router.push("/announcement-events/list-announcements-events");
     } catch (err) {
-        console.error(err);
-        showToast({ icon: "error", title: "Failed to update event", text: err.response?.data?.message || err.message });
+        console.error('Update error:', err);
+
+        let errorMessage = "Failed to update event";
+        if (err.response?.data?.message) {
+            errorMessage = err.response.data.message;
+        } else if (err.response?.data?.errors) {
+            const errors = Object.values(err.response.data.errors).flat();
+            errorMessage = errors.join(', ');
+        } else if (err.message) {
+            errorMessage = err.message;
+        }
+
+        showToast({
+            icon: "error",
+            title: "Update Failed",
+            text: errorMessage
+        });
     }
 };
 </script>
@@ -213,7 +287,7 @@ const handleSubmit = async () => {
                     <div class="relative w-fit">
                         <img :src="previewImage" alt="Preview" class="h-40 object-cover rounded-lg shadow-md" />
                         <button type="button"
-                            class="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm transition-all duration-300 hover:scale-110"
+                            class="absolute top-1 right-1 w-6 h-6 transition-transform duration-300 hover:rotate-180"
                             @click="removeImage">
                             ✖
                         </button>
@@ -234,8 +308,10 @@ const handleSubmit = async () => {
                 </button>
             </div>
 
-            <div v-if="error" class="mt-4 text-sm text-red-600">
-                {{ error.message || 'An error occurred' }}
+            <div v-if="error" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="text-sm text-red-600">
+                    {{ error.message || 'An error occurred while updating the event' }}
+                </div>
             </div>
         </form>
     </div>
