@@ -5,12 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\AnnouncementEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class AnnouncementEventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return AnnouncementEvent::all();
+        // Get all events and update their status in real-time
+        $events = AnnouncementEvent::all();
+
+        // Update statuses for all events before returning
+        foreach ($events as $event) {
+            $currentStatus = $event->calculateStatus();
+            if ($event->status !== $currentStatus) {
+                $event->update(['status' => $currentStatus]);
+            }
+        }
+
+        // Refresh the collection to get updated statuses
+        $events = AnnouncementEvent::all();
+
+        // Apply status filter if provided
+        if ($request->has('status')) {
+            $events = $events->where('status', $request->status);
+        }
+
+        return response()->json($events);
     }
 
     public function store(Request $request)
@@ -29,7 +49,7 @@ class AnnouncementEventController extends Controller
         // Handle file upload if present
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('announcement_events', 'public');
-            $validated['image'] = 'storage/' . $path; // store public path
+            $validated['image'] = 'storage/' . $path;
         }
 
         $record = AnnouncementEvent::create($validated);
@@ -39,7 +59,16 @@ class AnnouncementEventController extends Controller
 
     public function show($id)
     {
-        return AnnouncementEvent::findOrFail($id);
+        $event = AnnouncementEvent::findOrFail($id);
+
+        // Update status before returning
+        $currentStatus = $event->calculateStatus();
+        if ($event->status !== $currentStatus) {
+            $event->update(['status' => $currentStatus]);
+            $event->refresh();
+        }
+
+        return response()->json($event);
     }
 
     public function update(Request $request, $id)
@@ -59,7 +88,6 @@ class AnnouncementEventController extends Controller
 
         // Handle file upload if present
         if ($request->hasFile('image')) {
-            // Delete old image if exists
             if ($record->image && Storage::disk('public')->exists(str_replace('storage/', '', $record->image))) {
                 Storage::disk('public')->delete(str_replace('storage/', '', $record->image));
             }
@@ -77,7 +105,6 @@ class AnnouncementEventController extends Controller
     {
         $record = AnnouncementEvent::findOrFail($id);
 
-        // Delete stored image if exists
         if ($record->image && Storage::disk('public')->exists(str_replace('storage/', '', $record->image))) {
             Storage::disk('public')->delete(str_replace('storage/', '', $record->image));
         }
@@ -85,5 +112,25 @@ class AnnouncementEventController extends Controller
         $record->delete();
 
         return response()->json(null, 204);
+    }
+
+    // Add a dedicated endpoint to refresh all statuses
+    public function refreshStatuses()
+    {
+        $events = AnnouncementEvent::all();
+        $updated = 0;
+
+        foreach ($events as $event) {
+            $currentStatus = $event->calculateStatus();
+            if ($event->status !== $currentStatus) {
+                $event->update(['status' => $currentStatus]);
+                $updated++;
+            }
+        }
+
+        return response()->json([
+            'message' => "Updated {$updated} event statuses",
+            'updated_count' => $updated
+        ]);
     }
 }

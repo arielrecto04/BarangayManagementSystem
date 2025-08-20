@@ -13,17 +13,17 @@ return new class extends Migration
     {
         Schema::create('announcement_events', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['announcement', 'event']); // To distinguish the type
+            $table->enum('type', ['announcement', 'event']);
             $table->string('title');
             $table->text('description')->nullable();
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
+            $table->dateTime('start_date')->nullable();
+            $table->dateTime('end_date')->nullable();
             $table->string('location')->nullable();
             $table->string('author')->nullable();
             $table->string('image')->nullable();
             $table->enum('status', ['Upcoming', 'Ongoing', 'Past'])
                 ->default('Upcoming')
-                ->after('author'); // Adjust position if needed
+                ->after('author');
             $table->timestamps();
         });
     }

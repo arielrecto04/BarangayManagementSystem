@@ -23,15 +23,41 @@ const selectedEvent = ref(null);
 // Helpers
 const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const options = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid Date';
+
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+            // Browser local timezone is used by default
+        };
+
+        return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+        console.error('Date formatting error:', error);
+        return 'Invalid Date';
+    }
+};
+
+
+
+const getStatusColor = (status) => {
+    switch (status) {
+        case 'Ongoing':
+            return 'bg-emerald-500/90 text-white';
+        case 'Upcoming':
+            return 'bg-amber-500/90 text-white';
+        case 'Past':
+            return 'bg-slate-500/90 text-white';
+        default:
+            return 'bg-slate-500/90 text-white';
+    }
 };
 
 // Actions
@@ -51,6 +77,8 @@ const closeModal = () => {
     selectedEvent.value = null;
 };
 
+
+
 const editEvent = (eventId) => {
     router.push(`/announcement-events/edit-announcement-event/${eventId}`);
 };
@@ -60,12 +88,18 @@ const deleteEvent = async (eventId) => {
         try {
             await announcementEventStore.deleteEvent(eventId);
             showToast({ icon: 'success', title: 'Event deleted successfully' });
+
+            // Refresh the list
             announcementEventStore.getEvents(currentPage.value);
+
+            // Close the modal
+            closeModal();
         } catch (error) {
             showToast({ icon: 'error', title: error.message });
         }
     }
 };
+
 
 // Table Columns
 const columns = [
@@ -139,36 +173,26 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <!-- Action Buttons -->
-                        <div class="absolute top-3 right-3 z-20 flex gap-2">
-                            <!-- Edit Button -->
-                            <button @click="editEvent(event.id)" title="Edit"
-                                class="w-9 h-9 bg-white/90 hover:bg-white border border-white/50 shadow rounded-full flex items-center justify-center transition-all duration-300 group-hover:shadow-md">
-                                <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor"
+                        <!-- Center View Button (appears on hover) -->
+                        <div
+                            class="absolute inset-0 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            <button @click="openModal(event)"
+                                class="w-14 h-14 bg-white/95 hover:bg-white backdrop-blur-sm border border-white/70 shadow-lg rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105">
+                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                            </button>
-
-                            <!-- Delete Button -->
-                            <button @click="deleteEvent(event.id)" title="Delete"
-                                class="w-9 h-9 bg-white/90 hover:bg-white border border-white/50 shadow rounded-full flex items-center justify-center transition-all duration-300 group-hover:shadow-md">
-                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </button>
                         </div>
 
                         <!-- Status Badge -->
                         <div class="absolute top-3 left-3 z-20">
-                            <span :class="{
-                                'bg-emerald-500/90 text-white': event.status === 'Ongoing',
-                                'bg-amber-500/90 text-white': event.status === 'Upcoming',
-                                'bg-slate-500/90 text-white': event.status === 'Past'
-                            }" class="backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow">
-                                {{ event.status }}
+                            <span :class="getStatusColor(event.status || 'Upcoming')"
+                                class="backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow">
+                                {{ event.status || 'Upcoming' }}
                             </span>
                         </div>
 
@@ -244,9 +268,138 @@ onMounted(() => {
                 </div>
             </div>
 
-            <!-- Modal -->
-            <Modal :show="showModal" title="Announcement / Event Details" max-width="3xl" @close="closeModal">
-                <!-- Your detailed modal content goes here -->
+            <!-- Detailed Modal -->
+            <Modal :show="showModal" title="Event Details" max-width="4xl" @close="closeModal">
+                <div v-if="selectedEvent" class="max-h-[80vh] overflow-y-auto">
+                    <!-- Image Section -->
+                    <div class="relative mb-6 rounded-xl overflow-hidden">
+                        <img v-if="selectedEvent.image" :src="`/${selectedEvent.image}`" :alt="selectedEvent.title"
+                            class="w-full h-auto max-h-[70vh] object-contain bg-slate-50" />
+                        <div v-else
+                            class="w-full h-64 sm:h-80 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                            <div class="text-white text-8xl opacity-30">
+                                <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Badges Overlay -->
+                        <div class="absolute top-4 left-4 flex gap-2">
+                            <span :class="{
+                                'bg-emerald-500 text-white': selectedEvent.status === 'Ongoing',
+                                'bg-amber-500 text-white': selectedEvent.status === 'Upcoming',
+                                'bg-slate-500 text-white': selectedEvent.status === 'Past'
+                            }" class="px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg">
+                                {{ selectedEvent.status }}
+                            </span>
+                            <span :class="[
+                                selectedEvent.type === 'announcement' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white',
+                                'px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg'
+                            ]">
+                                {{ selectedEvent.type }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Content Section -->
+                    <div class="space-y-6">
+                        <!-- Title -->
+                        <div>
+                            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+                                {{ selectedEvent.title }}
+                            </h2>
+                        </div>
+
+                        <!-- Author & Location -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div v-if="selectedEvent.author" class="flex items-center gap-3">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                                    {{ selectedEvent.author.charAt(0).toUpperCase() }}
+                                </div>
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium">Author</p>
+                                    <p class="text-slate-900 font-semibold">{{ selectedEvent.author }}</p>
+                                </div>
+                            </div>
+                            <div v-if="selectedEvent.location" class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1113.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium">Location</p>
+                                    <p class="text-slate-900 font-semibold">{{ selectedEvent.location }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dates -->
+                        <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl p-6">
+                            <h3 class="text-lg font-semibold text-slate-900 mb-4">Event Schedule</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                    <div>
+                                        <p class="text-sm text-slate-500 font-medium">Start Date & Time</p>
+                                        <p class="text-slate-900 font-semibold">{{ formatDate(selectedEvent.start_date)
+                                        }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                                    <div>
+                                        <p class="text-sm text-slate-500 font-medium">End Date & Time</p>
+                                        <p class="text-slate-900 font-semibold">{{ formatDate(selectedEvent.end_date) }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-3">Description</h3>
+                            <div class="prose prose-slate max-w-none">
+                                <p class="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                    {{ selectedEvent.description || 'No description available for this event.' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap gap-3 pt-4 border-t border-slate-200">
+                            <button @click="editEvent(selectedEvent.id)"
+                                class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit Event
+                            </button>
+                            <button @click="deleteEvent(selectedEvent.id)"
+                                class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete Event
+                            </button>
+                            <button @click="closeModal"
+                                class="flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors duration-200 font-medium">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </Modal>
         </div>
     </div>
@@ -275,5 +428,13 @@ onMounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.prose {
+    color: inherit;
+}
+
+.prose p {
+    margin: 0;
 }
 </style>

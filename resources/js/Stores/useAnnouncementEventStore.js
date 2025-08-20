@@ -20,6 +20,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
     },
 
     actions: {
+        // Fetch list of events with pagination
         async getEvents(page = 1, perPage = 10) {
             this._isLoading = true;
             this._error = null;
@@ -38,7 +39,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                         total: response.data.total,
                     };
                 } else {
-                    // Non-paginated (fallback)
+                    // Non-paginated fallback
                     this._events = response.data;
                     this._paginate = null;
                 }
@@ -50,6 +51,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
+        // Fetch single event by ID
         async fetchEvent(id) {
             this._isLoading = true;
             this._error = null;
@@ -64,6 +66,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
+        // Add new event
         async addEvent(data) {
             this._isLoading = true;
             this._error = null;
@@ -77,7 +80,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                     response = await axios.post("/announcement-events", data);
                 }
 
-                // If paginated, re-fetch first page instead of pushing
                 if (this._paginate) {
                     await this.getEvents(1, this._paginate.per_page);
                 } else {
@@ -94,6 +96,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
+        // Update existing event
         async updateEvent(id, data) {
             this._isLoading = true;
             this._error = null;
@@ -104,11 +107,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                     response = await axios.post(
                         `/announcement-events/${id}`,
                         data,
-                        {
-                            headers: {
-                                "Content-Type": "multipart/form-data",
-                            },
-                        }
+                        { headers: { "Content-Type": "multipart/form-data" } }
                     );
                 } else {
                     response = await axios.put(
@@ -132,6 +131,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
+        // Delete event by ID
         async deleteEvent(id) {
             this._isLoading = true;
             this._error = null;
@@ -140,6 +140,22 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                 this._events = this._events.filter((e) => e.id !== id);
             } catch (error) {
                 console.error(`Error deleting event ID ${id}:`, error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        // Refresh statuses using backend endpoint
+        async refreshStatuses() {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                await axios.post("/announcement-events/refresh-statuses");
+                // Reload events to get updated statuses
+                await this.getEvents();
+            } catch (error) {
+                console.error("Failed to refresh statuses:", error);
                 this._error = error;
             } finally {
                 this._isLoading = false;
