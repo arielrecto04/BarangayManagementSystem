@@ -9,22 +9,27 @@ const router = useRouter();
 
 <template>
   <AuthLayout>
-    <!-- Official Info Card -->
-    <div class="bg-white p-6 shadow-md rounded-lg w-full max-w-xs">
-      <h1 class="uppercase font-bold text-xl mb-1">Official Manager</h1>
-      <p class="text-gray-600">Manage and View Official Information</p>
+    <!-- Header Row -->
+    <div class="m-4 flex items-center justify-between bg-white p-6 shadow-md rounded-lg">
+      <!-- Official Manager Info (LEFT) -->
+      <div>
+        <h1 class="uppercase font-bold text-xl mb-1">Official Manager</h1>
+        <p class="text-gray-600">Manage and View Official Information</p>
+      </div>
+
+      <!-- Add Official Button (RIGHT) -->
+      <div>
+        <router-link to="/officials/add-official">
+          <button
+            class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-5 rounded-lg shadow transition-colors flex items-center gap-2">
+            <PlusIcon class="w-6 h-6" />
+            Add Official
+          </button>
+        </router-link>
+      </div>
     </div>
 
-    <div class="m-4 flex flex-col items-end max-w-xs">
-      <router-link to="/officials/add-official" class="block w-full">
-        <button
-          class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg shadow transition-colors flex items-center justify-center gap-2">
-          <PlusIcon class="w-5 h-5" />
-          Add Official
-        </button>
-      </router-link>
-    </div>
-
+    <!-- Page Content -->
     <router-view></router-view>
   </AuthLayout>
 </template>

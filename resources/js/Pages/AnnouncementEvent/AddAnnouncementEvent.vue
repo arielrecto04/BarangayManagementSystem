@@ -1,4 +1,3 @@
-<!-- AddAnnouncementEvent.vue - Fixed Version -->
 <script setup>
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
@@ -23,6 +22,9 @@ const form = ref({
     image: null,
 });
 
+// Form errors
+const formErrors = ref({});
+
 // Image preview
 const previewImage = ref(null);
 
@@ -38,17 +40,6 @@ const formatDateTimeLocal = (date) => {
     const minutes = String(d.getMinutes()).padStart(2, '0');
 
     return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
-// Helper function to parse datetime-local input to ISO string
-const parseDateTimeLocal = (dateTimeLocalString) => {
-    if (!dateTimeLocalString) return '';
-
-    // Create date object treating the input as local time
-    const date = new Date(dateTimeLocalString);
-
-    // Return ISO string (this will be in local timezone)
-    return date.toISOString();
 };
 
 // Watch for start_date changes to ensure end_date is after start_date
@@ -80,8 +71,50 @@ const removeImage = () => {
     if (fileInput) fileInput.value = '';
 };
 
+// Validation function
+const validateForm = () => {
+    formErrors.value = {};
+    let isValid = true;
+
+    const fields = {
+        title: 'Title',
+        start_date: 'Start Date',
+        end_date: 'End Date',
+        author: 'Author',
+        description: 'Description',
+        location: 'Location',
+
+    };
+
+    for (const [field, label] of Object.entries(fields)) {
+        if (!form.value[field]) {
+            formErrors.value[field] = `${label} is required.`;
+            isValid = false;
+        }
+    }
+
+    // Check if end date is after start date
+    if (form.value.start_date && form.value.end_date) {
+        const startTime = new Date(form.value.start_date).getTime();
+        const endTime = new Date(form.value.end_date).getTime();
+
+        if (endTime <= startTime) {
+            formErrors.value.end_date = 'End date must be after start date.';
+            isValid = false;
+        }
+    }
+
+    return isValid;
+};
+
 // Submit handler
 const handleSubmit = async () => {
+    // Validate form before submission
+    if (!validateForm()) {
+        showToast({ icon: "error", title: "Please fill in all required fields correctly." });
+        return;
+    }
+
     try {
         const formData = new FormData();
 
@@ -152,13 +185,15 @@ const setDefaultEndTime = () => {
             <!-- Title -->
             <div>
                 <label class="block text-sm font-medium mb-1">Title</label>
-                <input v-model="form.title" type="text" class="w-full border rounded-lg px-3 py-2" required />
+                <input v-model="form.title" type="text" class="w-full border rounded-lg px-3 py-2" />
+                <p v-if="formErrors.title" class="text-red-500 text-sm mt-1">{{ formErrors.title }}</p>
             </div>
 
             <!-- Description -->
             <div>
                 <label class="block text-sm font-medium mb-1">Description</label>
                 <textarea v-model="form.description" rows="4" class="w-full border rounded-lg px-3 py-2"></textarea>
+                <p v-if="formErrors.description" class="text-red-500 text-sm mt-1">{{ formErrors.description }}</p>
             </div>
 
             <!-- Dates -->
@@ -173,6 +208,7 @@ const setDefaultEndTime = () => {
                         <input v-model="form.start_date" type="datetime-local"
                             class="flex-1 border rounded-lg px-3 py-2" :step="60" />
                     </div>
+                    <p v-if="formErrors.start_date" class="text-red-500 text-sm mt-1">{{ formErrors.start_date }}</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">End Date & Time</label>
@@ -184,6 +220,7 @@ const setDefaultEndTime = () => {
                             +1h
                         </button>
                     </div>
+                    <p v-if="formErrors.end_date" class="text-red-500 text-sm mt-1">{{ formErrors.end_date }}</p>
                 </div>
             </div>
 
@@ -191,12 +228,14 @@ const setDefaultEndTime = () => {
             <div>
                 <label class="block text-sm font-medium mb-1">Location</label>
                 <input v-model="form.location" type="text" class="w-full border rounded-lg px-3 py-2" />
+                <p v-if="formErrors.location" class="text-red-500 text-sm mt-1">{{ formErrors.location }}</p>
             </div>
 
             <!-- Author -->
             <div>
                 <label class="block text-sm font-medium mb-1">Author</label>
                 <input v-model="form.author" type="text" class="w-full border rounded-lg px-3 py-2" />
+                <p v-if="formErrors.author" class="text-red-500 text-sm mt-1">{{ formErrors.author }}</p>
             </div>
 
             <!-- Image -->

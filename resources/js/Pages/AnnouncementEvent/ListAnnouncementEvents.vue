@@ -131,13 +131,8 @@ onMounted(() => {
         <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 lg:py-8 overflow-x-hidden">
 
             <!-- Loader -->
-            <div v-if="isLoading" class="flex justify-center items-center py-20">
-                <div class="relative">
-                    <div class="w-16 h-16 border-4 border-indigo-200 rounded-full animate-spin"></div>
-                    <div
-                        class="w-16 h-16 border-4 border-indigo-600 rounded-full animate-spin absolute top-0 left-0 border-t-transparent border-r-transparent">
-                    </div>
-                </div>
+            <div v-if="isLoading" class="flex justify-center items-center">
+                <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
             </div>
 
             <!-- Empty State -->
