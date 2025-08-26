@@ -1,7 +1,6 @@
-<!-- ParentAnnouncementEventView.vue -->
 <script setup>
 import { AuthLayout } from "@/Layouts";
-import { useAnnouncementEventStore } from "@/Stores"; // API store
+import { useAnnouncementEventStore } from "@/Stores";
 import { storeToRefs } from "pinia";
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
@@ -22,11 +21,11 @@ const totalEvents = computed(() => events.value.length);
 
 // Navigate to list view with status filter
 const filterByStatus = async (status) => {
-    await announcementEventStore.getEvents(); // Refresh events
+    await announcementEventStore.getEvents();
     router.push({ path: "/announcement-events/list", query: { status } });
 };
 
-// Statistics using backend status directly
+// Statistics
 const upcoming = computed(() =>
     events.value.filter((e) => e.status === "Upcoming").length
 );
@@ -37,11 +36,9 @@ const past = computed(() =>
     events.value.filter((e) => e.status === "Past").length
 );
 
-// Auto-refresh events and statuses
+// Auto-refresh events
 onMounted(async () => {
     await announcementEventStore.getEvents();
-
-    // Refresh statuses every 5 minutes to keep dashboard counts current
     setInterval(async () => {
         await announcementEventStore.refreshStatuses();
     }, 300000); // 5 minutes
@@ -52,7 +49,6 @@ function handleStatusUpdated() {
     announcementEventStore.getEvents();
 }
 </script>
-
 
 <template>
     <AuthLayout>
@@ -68,9 +64,9 @@ function handleStatusUpdated() {
             </div>
 
             <!-- Cards -->
-            <div class="bg-gray-100 p-5 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6 mb-4 sm:mb-8">
                 <!-- Total -->
-                <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
+                <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm group flex flex-col gap-2">
                     <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
                         Total
                         <MegaphoneIcon class="w-5 h-5 text-gray-500" />
@@ -79,32 +75,33 @@ function handleStatusUpdated() {
                 </div>
 
                 <!-- Upcoming -->
-                <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
+                <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm group flex flex-col gap-2">
                     <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
                         Upcoming
-                        <CalendarDaysIcon class="w-5 h-5 text-gray-500" />
+                        <CalendarDaysIcon class="w-5 h-5 text-blue-500" />
                     </div>
                     <div class="text-3xl font-bold">{{ upcoming }}</div>
                 </div>
 
                 <!-- Ongoing -->
-                <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
+                <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm group flex flex-col gap-2">
                     <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
                         Ongoing
-                        <ClockIcon class="w-5 h-5 text-gray-500 animate-pulse" />
+                        <ClockIcon class="w-5 h-5 text-yellow-500 animate-spin" />
                     </div>
                     <div class="text-3xl font-bold">{{ ongoing }}</div>
                 </div>
 
                 <!-- Past -->
-                <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
+                <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm group flex flex-col gap-2">
                     <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
                         Past
-                        <CheckCircleIcon class="w-5 h-5 text-gray-500" />
+                        <CheckCircleIcon class="w-5 h-5 text-green-500" />
                     </div>
                     <div class="text-3xl font-bold">{{ past }}</div>
                 </div>
             </div>
+
 
             <!-- Nested List View -->
             <router-view />

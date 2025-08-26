@@ -119,8 +119,13 @@ const editComplaint = (complaintId) => {
   router.push(`/complaints/edit-complaint/${complaintId}`);
 };
 
-// Table columns
-const columns = [
+// Responsive table columns
+const mobileColumns = [
+  { key: "complainant_name", label: "Complainant" },
+  { key: "respondent_name", label: "Respondent" }
+];
+
+const desktopColumns = [
   { key: "complainant_name", label: "Complainant" },
   { key: "respondent_name", label: "Respondent" },
   { key: "case_no", label: "Case No" },
@@ -135,38 +140,107 @@ residentStore.getResidents();
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
-    <h1 class="text-xl font-bold text-gray-600">List of Complaints</h1>
-
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex justify-center items-center">
-      <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+  <div class="flex flex-col gap-3 sm:gap-4 p-2 sm:p-0">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <h1 class="text-lg sm:text-xl font-bold text-gray-900">List of Complaints</h1>
+      <div class="text-xs sm:text-sm text-gray-600" v-if="paginate">
+        {{ paginate.from }}-{{ paginate.to }} of {{ paginate.total }} complaints
+      </div>
     </div>
 
-    <!-- Complaint Table -->
-    <Table v-else :columns="columns" :rows="complaints.map(c => ({
-      ...c,
-      formatted_filing_date: formatDateTime(c.filing_date)
-    }))">
-      <template #actions="{ row }">
-        <div class="flex gap-2">
-          <!-- View Button -->
-          <button @click="openModal(row)" title="View"
-            class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-          </button>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-gray-900"></div>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div v-else class="block sm:hidden">
+      <div class="space-y-3">
+        <div v-for="complaint in complaints" :key="complaint.id"
+          class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+          <div class="flex justify-between items-start mb-2">
+            <div class="flex-1 min-w-0">
+              <div class="text-xs font-medium text-gray-500 mb-1">Complainant</div>
+              <div class="text-sm font-semibold text-gray-900 truncate">
+                {{ getResidentName(complaint.complainant_id) }}
+              </div>
+            </div>
+            <button @click="openModal(complaint)"
+              class="ml-2 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="mb-2">
+            <div class="text-xs font-medium text-gray-500 mb-1">Respondent</div>
+            <div class="text-sm text-gray-700 truncate">
+              {{ getResidentName(complaint.respondent_id) }}
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 text-xs">
+            <div class="bg-gray-100 px-2 py-1 rounded">
+              <span class="text-gray-600">Case:</span>
+              <span class="font-medium">{{ complaint.case_no }}</span>
+            </div>
+            <div class="bg-gray-100 px-2 py-1 rounded">
+              <span :class="{
+                'text-green-600 font-semibold': complaint.status === 'Resolved',
+                'text-yellow-600 font-semibold': complaint.status === 'In Progress',
+                'text-red-600 font-semibold': complaint.status === 'Open'
+              }">
+                {{ complaint.status }}
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-2 pt-2 border-t border-gray-100">
+            <div class="text-xs text-gray-600 truncate" :title="complaint.title">
+              {{ complaint.title }}
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+              {{ formatDateTime(complaint.filing_date) }}
+            </div>
+          </div>
         </div>
-      </template>
-    </Table>
+      </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="hidden sm:block">
+      <Table :columns="desktopColumns" :rows="complaints.map(c => ({
+        ...c,
+        formatted_filing_date: formatDateTime(c.filing_date),
+        complainant_name: getResidentName(c.complainant_id),
+        respondent_name: getResidentName(c.respondent_id)
+      }))">
+        <template #actions="{ row }">
+          <div class="flex gap-2">
+            <!-- View Button -->
+            <button @click="openModal(row)" title="View"
+              class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+        </template>
+      </Table>
+    </div>
 
     <!-- Pagination -->
-    <Paginate v-if="paginate" @page-changed="handlePageChange" :maxVisibleButtons="5" :totalPages="paginate.last_page"
-      :totalItems="paginate.total" :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
+    <div v-if="paginate" class="mt-4">
+      <Paginate @page-changed="handlePageChange" :maxVisibleButtons="3" :totalPages="paginate.last_page"
+        :totalItems="paginate.total" :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
+    </div>
 
     <!-- Print Template Modal -->
     <ComplaintPrintTemplate v-if="showPrintModal" :complaint="selectedPrintComplaint" @close="closePrintModal"
@@ -174,153 +248,174 @@ residentStore.getResidents();
 
     <!-- Modal for Complaint Details -->
     <Modal :show="showModal" title="Complaint Details" max-width="4xl" @close="closeModal">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-gray-800 text-sm">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 text-gray-800 text-sm">
         <!-- Complainant Section -->
-        <div>
-          <h3 class="font-semibold mb-3 text-blue-800">Complainant Information</h3>
-          <div class="mb-3">
-            <h4 class="font-medium mb-1 text-gray-600">Name:</h4>
-            <p class="text-gray-900">{{ getResidentName(selectedComplaint?.complainant_id) || 'N/A' }}</p>
-          </div>
-          <div class="mb-3">
-            <h4 class="font-medium mb-1 text-gray-600">Resident Number:</h4>
-            <div class="bg-blue-50 inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono select-all">
-              {{ getResidentNumber(selectedComplaint?.complainant_id) || 'N/A' }}
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <h3 class="font-semibold mb-3 text-blue-800 flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+            Complainant Information
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <h4 class="font-medium text-gray-600 text-xs mb-1">Name:</h4>
+              <p class="text-gray-900 font-medium">{{ getResidentName(selectedComplaint?.complainant_id) || 'N/A' }}</p>
+            </div>
+            <div>
+              <h4 class="font-medium text-gray-600 text-xs mb-1">Resident Number:</h4>
+              <div class="bg-white inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono">
+                {{ getResidentNumber(selectedComplaint?.complainant_id) || 'N/A' }}
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Respondent Section -->
-        <div>
-          <h3 class="font-semibold mb-3 text-red-800">Respondent Information</h3>
-          <div class="mb-3">
-            <h4 class="font-medium mb-1 text-gray-600">Name:</h4>
-            <p class="text-gray-900">{{ getResidentName(selectedComplaint?.respondent_id) || 'N/A' }}</p>
-          </div>
-          <div class="mb-3">
-            <h4 class="font-medium mb-1 text-gray-600">Resident Number:</h4>
-            <div class="bg-blue-50 inline-block rounded px-2 py-1 text-blue-700 text-xs font-mono select-all">
-              {{ getResidentNumber(selectedComplaint?.respondent_id) || 'N/A' }}
+        <div class="bg-red-50 p-4 rounded-lg">
+          <h3 class="font-semibold mb-3 text-red-800 flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+            Respondent Information
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <h4 class="font-medium text-gray-600 text-xs mb-1">Name:</h4>
+              <p class="text-gray-900 font-medium">{{ getResidentName(selectedComplaint?.respondent_id) || 'N/A' }}</p>
+            </div>
+            <div>
+              <h4 class="font-medium text-gray-600 text-xs mb-1">Resident Number:</h4>
+              <div class="bg-white inline-block rounded px-2 py-1 text-red-700 text-xs font-mono">
+                {{ getResidentNumber(selectedComplaint?.respondent_id) || 'N/A' }}
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Case Details -->
-        <div>
-          <h3 class="font-semibold mb-1">Case Number:</h3>
-          <p>{{ selectedComplaint?.case_no || 'N/A' }}</p>
+        <!-- Case Details Grid -->
+        <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <h3 class="font-semibold mb-1 text-xs text-gray-600">Case Number:</h3>
+            <p class="text-gray-900">{{ selectedComplaint?.case_no || 'N/A' }}</p>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-1 text-xs text-gray-600">Title:</h3>
+            <p class="text-gray-900">{{ selectedComplaint?.title || 'N/A' }}</p>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-1 text-xs text-gray-600">Nature of Complaint:</h3>
+            <p class="text-gray-900">{{ selectedComplaint?.nature_of_complaint || 'N/A' }}</p>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-1 text-xs text-gray-600">Status:</h3>
+            <span :class="{
+              'text-green-600 font-semibold bg-green-100 px-2 py-1 rounded-full text-xs': selectedComplaint?.status === 'Resolved',
+              'text-yellow-600 font-semibold bg-yellow-100 px-2 py-1 rounded-full text-xs': selectedComplaint?.status === 'In Progress',
+              'text-red-600 font-semibold bg-red-100 px-2 py-1 rounded-full text-xs': selectedComplaint?.status === 'Open'
+            }">
+              {{ selectedComplaint?.status || 'N/A' }}
+            </span>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-1 text-xs text-gray-600">Filing Date:</h3>
+            <p class="text-gray-900">{{ formatDateTime(selectedComplaint?.filing_date) || 'N/A' }}</p>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-1 text-xs text-gray-600">Date & Time of Incident:</h3>
+            <p class="text-gray-900">{{ formatDateTime(selectedComplaint?.incident_datetime) || 'N/A' }}</p>
+          </div>
         </div>
-        <div>
-          <h3 class="font-semibold mb-1">Title:</h3>
-          <p>{{ selectedComplaint?.title || 'N/A' }}</p>
-        </div>
-        <div>
-          <h3 class="font-semibold mb-1">Nature of Complaint:</h3>
-          <p>{{ selectedComplaint?.nature_of_complaint || 'N/A' }}</p>
-        </div>
-        <div>
-          <h3 class="font-semibold mb-1">Status:</h3>
-          <p :class="{
-            'text-green-600 font-semibold': selectedComplaint?.status === 'Resolved',
-            'text-yellow-600 font-semibold': selectedComplaint?.status === 'In Progress',
-            'text-red-600 font-semibold': selectedComplaint?.status === 'Open'
-          }">
-            {{ selectedComplaint?.status || 'N/A' }}
-          </p>
-        </div>
-        <div>
-          <h3 class="font-semibold mb-1">Filing Date:</h3>
-          <p>{{ formatDateTime(selectedComplaint?.filing_date) || 'N/A' }}</p>
-        </div>
-        <div>
-          <h3 class="font-semibold mb-1">Date & Time of Incident:</h3>
-          <p>{{ formatDateTime(selectedComplaint?.incident_datetime) || 'N/A' }}</p>
-        </div>
-        <div>
-          <h3 class="font-semibold mb-1">Location of Incident:</h3>
-          <p>{{ selectedComplaint?.incident_location || 'N/A' }}</p>
+
+        <div class="lg:col-span-2">
+          <h3 class="font-semibold mb-1 text-xs text-gray-600">Location of Incident:</h3>
+          <p class="text-gray-900">{{ selectedComplaint?.incident_location || 'N/A' }}</p>
         </div>
 
         <!-- Witnesses -->
-        <div class="md:col-span-2">
-          <h3 class="font-semibold mb-2">Witness/es:</h3>
+        <div class="lg:col-span-2">
+          <h3 class="font-semibold mb-2 text-xs text-gray-600">Witness/es:</h3>
           <div v-if="selectedComplaint?.witness"
-            class="pl-4 max-h-32 overflow-y-auto bg-gray-50 border border-gray-300 rounded p-2 text-gray-700">
-            <ul class="list-disc list-inside space-y-1">
+            class="pl-4 max-h-24 sm:max-h-32 overflow-y-auto bg-gray-50 border border-gray-300 rounded p-3 text-gray-700">
+            <ul class="list-disc list-inside space-y-1 text-sm">
               <li v-for="(witness, index) in selectedComplaint.witness.split('\n').filter(name => name.trim())"
                 :key="index">
                 {{ witness.trim() }}
               </li>
             </ul>
           </div>
-          <p v-else class="italic text-gray-400">No witnesses listed</p>
+          <p v-else class="italic text-gray-400 text-sm">No witnesses listed</p>
         </div>
 
         <!-- Description -->
-        <div class="md:col-span-2">
-          <h3 class="font-semibold mb-1">Description:</h3>
-          <textarea readonly
-            class="w-full h-40 p-3 border border-gray-300 rounded resize-none bg-gray-50 text-gray-800 text-sm leading-relaxed focus:outline-none"
-            :value="selectedComplaint?.description || 'N/A'"></textarea>
+        <div class="lg:col-span-2">
+          <h3 class="font-semibold mb-2 text-xs text-gray-600">Description:</h3>
+          <div class="bg-gray-50 border border-gray-300 rounded p-3 max-h-32 sm:max-h-40 overflow-y-auto">
+            <p class="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+              {{ selectedComplaint?.description || 'N/A' }}
+            </p>
+          </div>
         </div>
 
         <!-- Resolution -->
-        <div class="md:col-span-2">
-          <h3 class="font-semibold mb-1">Resolution:</h3>
-          <textarea readonly
-            class="w-full h-40 p-3 border border-gray-300 rounded resize-none bg-gray-50 text-gray-800 text-sm leading-relaxed focus:outline-none"
-            :value="selectedComplaint?.resolution || 'N/A'"></textarea>
+        <div class="lg:col-span-2">
+          <h3 class="font-semibold mb-2 text-xs text-gray-600">Resolution:</h3>
+          <div class="bg-gray-50 border border-gray-300 rounded p-3 max-h-32 sm:max-h-40 overflow-y-auto">
+            <p class="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+              {{ selectedComplaint?.resolution || 'N/A' }}
+            </p>
+          </div>
         </div>
 
         <!-- Supporting Documents -->
-        <div class="md:col-span-2">
-          <h3 class="font-semibold mb-1">Supporting Documents:</h3>
-          <div v-if="getSupportingDocuments(selectedComplaint).length > 0">
-            <ul class="list-disc list-inside space-y-1">
-              <li v-for="(doc, index) in getSupportingDocuments(selectedComplaint)" :key="index">
+        <div class="lg:col-span-2">
+          <h3 class="font-semibold mb-2 text-xs text-gray-600">Supporting Documents:</h3>
+          <div v-if="getSupportingDocuments(selectedComplaint).length > 0"
+            class="bg-gray-50 border border-gray-300 rounded p-3">
+            <ul class="space-y-2">
+              <li v-for="(doc, index) in getSupportingDocuments(selectedComplaint)" :key="index"
+                class="flex items-center">
+                <svg class="w-4 h-4 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                    clip-rule="evenodd" />
+                </svg>
                 <a :href="`/storage/${getFilePath(doc)}`" target="_blank"
-                  class="text-blue-600 hover:underline font-medium">
+                  class="text-blue-600 hover:underline font-medium text-sm truncate">
                   {{ getFileName(doc) }}
                 </a>
               </li>
             </ul>
           </div>
-          <p v-else class="italic text-gray-400">No supporting documents available</p>
+          <p v-else class="italic text-gray-400 text-sm">No supporting documents available</p>
         </div>
 
-        <div class="flex justify-end gap-2 mb-4 md:col-span-2">
+        <!-- Action Buttons -->
+        <div class="lg:col-span-2 flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-gray-200">
           <button @click="editComplaint(selectedComplaint.id)"
-            class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors">
-            Edit
+            class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            Edit Complaint
           </button>
           <button @click="openPrintModal(selectedComplaint)"
-            class="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700 transition-colors">
-            Print
+            class="px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+            Print Document
           </button>
           <button @click="deleteComplaint(selectedComplaint.id)"
-            class="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700 transition-colors">
+            class="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
             Delete
           </button>
         </div>
-
       </div>
     </Modal>
   </div>
 </template>
 
 <style scoped>
-.action-button {
-  padding: 0.5rem;
-  border-radius: 9999px;
-  transition: background-color 0.2s;
-}
-
-.action-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.action-button svg {
-  width: 1.25rem;
-  height: 1.25rem;
+@media (max-width: 640px) {
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

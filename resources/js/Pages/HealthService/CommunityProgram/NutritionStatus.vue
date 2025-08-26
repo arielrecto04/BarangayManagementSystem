@@ -18,45 +18,60 @@ const getStatusClass = (status) => {
 </script>
 
 <template>
-    <div>
-        <div class="flex justify-end mb-4">
+    <div class="space-y-4">
+        <!-- Action Button -->
+        <div class="flex justify-end">
             <button
                 class="bg-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 flex items-center gap-2">
                 <PlusIcon class="w-5 h-5" />
                 Log New Assessment
             </button>
         </div>
-        <table class="w-full text-left">
-            <thead class="text-sm text-gray-600 uppercase">
-                <tr>
-                    <th class="p-3">Resident Name</th>
-                    <th class="p-3">Age</th>
-                    <th class="p-3">Last Assessed</th>
-                    <th class="p-3">Nutritional Status</th>
-                    <th class="p-3 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="rec in records" :key="rec.id" class="border-t hover:bg-gray-50">
-                    <td class="p-3 font-semibold">{{ rec.name }}</td>
-                    <td class="p-3">{{ rec.age }}</td>
-                    <td class="p-3">{{ rec.last_assessed }}</td>
-                    <td class="p-3">
-                        <span class="px-2 py-1 text-xs font-bold rounded-full" :class="getStatusClass(rec.status)">
-                            {{ rec.status }}
-                        </span>
-                    </td>
-                    <td class="p-3 text-right">
-                        <button class="text-green-700 font-semibold hover:underline">View History</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+
+        <!-- Mobile Cards -->
+        <div class="flex flex-col space-y-3 sm:hidden">
+            <div v-for="rec in records" :key="rec.id" class="bg-white p-4 shadow-lg rounded-lg border">
+                <p class="font-semibold text-gray-800">{{ rec.name }}</p>
+                <p class="text-gray-600 text-sm">Age: {{ rec.age }}</p>
+                <p class="text-gray-600 text-sm">Last Assessed: {{ rec.last_assessed }}</p>
+                <p class="text-gray-600 text-sm">
+                    Status:
+                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="getStatusClass(rec.status)">
+                        {{ rec.status }}
+                    </span>
+                </p>
+                <button class="mt-2 text-green-700 font-semibold hover:underline">View History</button>
+            </div>
+        </div>
+
+        <!-- Desktop Table -->
+        <div class="hidden sm:block">
+            <table class="w-full text-left border-collapse">
+                <thead class="text-sm text-gray-600 uppercase border-b">
+                    <tr>
+                        <th class="p-3">Resident Name</th>
+                        <th class="p-3">Age</th>
+                        <th class="p-3">Last Assessed</th>
+                        <th class="p-3">Nutritional Status</th>
+                        <th class="p-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="rec in records" :key="rec.id" class="border-t hover:bg-gray-50">
+                        <td class="p-3 font-semibold">{{ rec.name }}</td>
+                        <td class="p-3">{{ rec.age }}</td>
+                        <td class="p-3">{{ rec.last_assessed }}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 text-xs font-bold rounded-full" :class="getStatusClass(rec.status)">
+                                {{ rec.status }}
+                            </span>
+                        </td>
+                        <td class="p-3 text-right">
+                            <button class="text-green-700 font-semibold hover:underline">View History</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </template>
-
-<!-- <style scoped>
-.action-button-green {
-    @apply bg-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 flex items-center gap-2;
-}
-</style> -->

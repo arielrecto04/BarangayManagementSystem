@@ -194,7 +194,7 @@ const filteredResidents = computed(() => {
                     </div>
                 </div>
 
-                <!-- Info fields (always 2 columns) -->
+                <!-- Info fields (2 columns) -->
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Resident ID</label>
                     <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.id || 'N/A' }}</div>
@@ -204,10 +204,17 @@ const filteredResidents = computed(() => {
                     <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.resident_number || 'N/A' }}
                     </div>
                 </div>
+
                 <div>
                     <label class="block text-xs font-medium text-gray-600">First Name</label>
                     <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.first_name || 'N/A' }}</div>
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600">Middle Name</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.middle_name || 'N/A' }}
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Last Name</label>
                     <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.last_name || 'N/A' }}</div>
@@ -216,9 +223,14 @@ const filteredResidents = computed(() => {
                     <label class="block text-xs font-medium text-gray-600">Age</label>
                     <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.age || 'N/A' }}</div>
                 </div>
+
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Gender</label>
                     <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.gender || 'N/A' }}</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600">Birthday</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.birthday || 'N/A' }}</div>
                 </div>
 
                 <!-- Address (full width) -->
@@ -226,6 +238,28 @@ const filteredResidents = computed(() => {
                     <label class="block text-xs font-medium text-gray-600">Address</label>
                     <div class="mt-1 p-2 bg-gray-50 border rounded-md min-h-[60px]">
                         {{ selectedResident?.address || 'N/A' }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-600">Contact Number</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.contact_number || 'N/A' }}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600">Emergency Contact</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.emergency_contact || 'N/A'
+                        }}</div>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-xs font-medium text-gray-600">Email</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.email || 'N/A' }}</div>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-xs font-medium text-gray-600">Family Member</label>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.family_member || 'N/A' }}
                     </div>
                 </div>
 
@@ -263,12 +297,7 @@ const filteredResidents = computed(() => {
                     </button>
                 </div>
             </template>
-
-
         </Modal>
-
-
-
     </div>
 </template>
 

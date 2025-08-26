@@ -35,7 +35,6 @@ const formatDate = (dateString) => {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true,
-            // Browser local timezone is used by default
         };
 
         return date.toLocaleDateString('en-US', options);
@@ -44,8 +43,6 @@ const formatDate = (dateString) => {
         return 'Invalid Date';
     }
 };
-
-
 
 const getStatusColor = (status) => {
     switch (status) {
@@ -77,8 +74,6 @@ const closeModal = () => {
     selectedEvent.value = null;
 };
 
-
-
 const editEvent = (eventId) => {
     router.push(`/announcement-events/edit-announcement-event/${eventId}`);
 };
@@ -99,7 +94,6 @@ const deleteEvent = async (eventId) => {
         }
     }
 };
-
 
 // Table Columns
 const columns = [
@@ -182,24 +176,20 @@ onMounted(() => {
                                 </svg>
                             </button>
                         </div>
+                    </div>
 
-                        <!-- Status Badge -->
-                        <div class="absolute top-3 left-3 z-20">
-                            <span :class="getStatusColor(event.status || 'Upcoming')"
-                                class="backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow">
-                                {{ event.status || 'Upcoming' }}
-                            </span>
-                        </div>
-
-                        <!-- Type Badge -->
-                        <div class="absolute bottom-3 left-3 z-20">
-                            <span :class="[
-                                event.type === 'announcement' ? 'bg-blue-500/90 text-white' : 'bg-purple-500/90 text-white',
-                                'backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow'
-                            ]">
-                                {{ event.type }}
-                            </span>
-                        </div>
+                    <!-- Badges Section (moved below image) -->
+                    <div class="px-4 pt-3 pb-2 flex gap-2">
+                        <span :class="getStatusColor(event.status || 'Upcoming')"
+                            class="backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow">
+                            {{ event.status || 'Upcoming' }}
+                        </span>
+                        <span :class="[
+                            event.type === 'announcement' ? 'bg-blue-500/90 text-white' : 'bg-purple-500/90 text-white',
+                            'backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow'
+                        ]">
+                            {{ event.type }}
+                        </span>
                     </div>
 
                     <!-- Content Section -->
@@ -216,7 +206,6 @@ onMounted(() => {
                             <div v-if="event.author" class="flex items-center gap-2 min-w-0">
                                 <div
                                     class="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                                    <!-- User Icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 md:w-5 md:h-5 text-white"
                                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -228,7 +217,6 @@ onMounted(() => {
 
                             <!-- Location -->
                             <div v-if="event.location" class="flex items-center gap-1 text-slate-500 min-w-0">
-                                <!-- Classic Map Pin -->
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -239,7 +227,6 @@ onMounted(() => {
                                 <span class="truncate min-w-0">{{ event.location }}</span>
                             </div>
                         </div>
-
 
                         <!-- Dates -->
                         <div class="space-y-2 text-sm">
@@ -278,7 +265,7 @@ onMounted(() => {
             <Modal :show="showModal" title="Event Details" max-width="4xl" @close="closeModal">
                 <div v-if="selectedEvent" class="max-h-[80vh] overflow-y-auto">
                     <!-- Image Section -->
-                    <div class="relative mb-6 rounded-xl overflow-hidden">
+                    <div class="relative mb-4 rounded-xl overflow-hidden">
                         <img v-if="selectedEvent.image" :src="`/${selectedEvent.image}`" :alt="selectedEvent.title"
                             class="w-full h-auto max-h-[70vh] object-contain bg-slate-50" />
                         <div v-else
@@ -291,23 +278,23 @@ onMounted(() => {
                                 </svg>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Badges Overlay -->
-                        <div class="absolute top-4 left-4 flex gap-2">
-                            <span :class="{
-                                'bg-emerald-500 text-white': selectedEvent.status === 'Ongoing',
-                                'bg-amber-500 text-white': selectedEvent.status === 'Upcoming',
-                                'bg-slate-500 text-white': selectedEvent.status === 'Past'
-                            }" class="px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg">
-                                {{ selectedEvent.status }}
-                            </span>
-                            <span :class="[
-                                selectedEvent.type === 'announcement' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white',
-                                'px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg'
-                            ]">
-                                {{ selectedEvent.type }}
-                            </span>
-                        </div>
+                    <!-- Badges Section (moved below image in modal) -->
+                    <div class="flex gap-2 mb-6">
+                        <span :class="{
+                            'bg-emerald-500 text-white': selectedEvent.status === 'Ongoing',
+                            'bg-amber-500 text-white': selectedEvent.status === 'Upcoming',
+                            'bg-slate-500 text-white': selectedEvent.status === 'Past'
+                        }" class="px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg">
+                            {{ selectedEvent.status }}
+                        </span>
+                        <span :class="[
+                            selectedEvent.type === 'announcement' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white',
+                            'px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg'
+                        ]">
+                            {{ selectedEvent.type }}
+                        </span>
                     </div>
 
                     <!-- Content Section -->
@@ -325,7 +312,6 @@ onMounted(() => {
                             <div v-if="selectedEvent.author" class="flex items-center gap-3">
                                 <div
                                     class="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                                    <!-- User Icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -341,7 +327,6 @@ onMounted(() => {
                             <!-- Location -->
                             <div v-if="selectedEvent.location" class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                                    <!-- Classic Map Pin -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-slate-600" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -357,7 +342,6 @@ onMounted(() => {
                             </div>
                         </div>
 
-
                         <!-- Dates -->
                         <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl p-6">
                             <h3 class="text-lg font-semibold text-slate-900 mb-4">Event Schedule</h3>
@@ -367,7 +351,7 @@ onMounted(() => {
                                     <div>
                                         <p class="text-sm text-slate-500 font-medium">Start Date & Time</p>
                                         <p class="text-slate-900 font-semibold">{{ formatDate(selectedEvent.start_date)
-                                            }}</p>
+                                        }}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3">

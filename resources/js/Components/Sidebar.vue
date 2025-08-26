@@ -52,17 +52,13 @@ const toggleMobileSidebar = () => {
             </template>
         </button>
 
-        <!-- Mobile Overlay -->
-        <div v-if="mobileOpen" @click="mobileOpen = false" class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30">
-        </div>
-
         <!-- Sidebar -->
         <aside @mouseenter="collapsed = false" @mouseleave="collapsed = true" :class="[
-            'bg-white text-gray-500 flex flex-col p-4 shadow-sm duration-300 h-screen overflow-y-auto',
+            'bg-white text-gray-500 flex flex-col p-4 shadow-lg duration-300 h-screen overflow-y-auto',
             collapsed ? 'w-20' : 'w-64',
             // Desktop: sticky positioning to follow scroll
             'md:sticky md:top-0',
-            // Mobile styles
+            // Mobile styles - higher z-index to overlap content, remove overlay
             mobileOpen ? 'fixed left-0 top-0 z-40 translate-x-0' : 'md:block hidden'
         ]">
             <!-- Logo -->
@@ -85,7 +81,8 @@ const toggleMobileSidebar = () => {
                             :class="route.path.startsWith(menuLink.href)
                                 ? 'text-white bg-green-700 scale-105'
                                 : 'text-gray-700 hover:bg-green-700 hover:text-white hover:scale-105'">
-                            <router-link :to="menuLink.href" class="flex items-center flex-1 min-w-0">
+                            <router-link :to="menuLink.href" class="flex items-center flex-1 min-w-0"
+                                @click="mobileOpen = false">
                                 <i :class="[menuLink.icon, 'flex-shrink-0']"></i>
                                 <span v-if="!collapsed" class="ml-3 uppercase truncate">{{ menuLink.name }}</span>
                             </router-link>
@@ -104,7 +101,8 @@ const toggleMobileSidebar = () => {
                                 class="flex items-center p-2 text-base font-normal mt-2 rounded-lg duration-700 ml-4"
                                 :class="route.path.startsWith(subMenuLink.href)
                                     ? 'text-white bg-green-700 scale-105'
-                                    : 'text-gray-700 hover:bg-green-700 hover:text-white hover:scale-105'">
+                                    : 'text-gray-700 hover:bg-green-700 hover:text-white hover:scale-105'"
+                                @click="mobileOpen = false">
                                 <i :class="[subMenuLink.icon, 'flex-shrink-0']"></i>
                                 <span class="ml-3 uppercase truncate">{{ subMenuLink.name }}</span>
                             </router-link>

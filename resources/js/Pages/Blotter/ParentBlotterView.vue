@@ -16,12 +16,6 @@ const router = useRouter();
 const blotterStore = useBlotterStore();
 const { blotters } = storeToRefs(blotterStore);
 
-// Navigate to list view with filter
-const filterByStatus = async (status) => {
-  await blotterStore.getBlotters(); // Refresh blotters
-  router.push({ path: "/blotter/list-blotter", query: { status } });
-};
-
 onMounted(() => {
   blotterStore.getBlotters();
 });
@@ -35,62 +29,64 @@ const resolved = computed(() => blotters.value.filter(b => b.status === 'Resolve
 
 <template>
   <AuthLayout>
-    <div class="m-5">
+    <div class="p-2 sm:p-5 lg:p-6">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-semibold">Blotter & Crime Management</h1>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-6 gap-2 sm:gap-0">
+        <h1 class="text-base sm:text-xl lg:text-2xl font-semibold text-gray-900">
+          Blotter & Crime Management
+        </h1>
         <router-link to="/blotter/add-blotter"
-          class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 flex items-center gap-2">
-          <PlusIcon class="w-5 h-5" />
+          class="bg-black text-white px-3 py-1.5 sm:py-2 rounded-md hover:bg-gray-800 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm font-medium">
+          <PlusIcon class="w-3 h-3 sm:w-4 sm:h-4" />
           <span>New</span>
         </router-link>
       </div>
 
-      <!-- Cards -->
-      <div class="bg-gray-100 p-5 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Cards Grid -->
+      <div class="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6 mb-4 sm:mb-8">
         <!-- Total Cases -->
-        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
-          <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
-            Total Cases
-            <FolderIcon class="w-5 h-5 text-gray-500" />
+        <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
+          <div class="flex justify-between items-start mb-1 sm:mb-3">
+            <div class="text-xs font-medium text-gray-600 leading-tight">Total</div>
+            <FolderIcon class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-blue-500" />
           </div>
-          <div class="text-3xl font-bold">{{ totalCases }}</div>
-        </div>
-
-        <!-- In Progress -->
-        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
-          <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
-            In Progress
-            <ArrowPathIcon class="w-5 h-5 text-gray-500 animate-spin" />
-          </div>
-          <div class="text-3xl font-bold">{{ inProgress }}</div>
+          <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ totalCases }}</div>
+          <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">All blotters</div>
         </div>
 
         <!-- Open Cases -->
-        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
-          <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
-            Open Cases
-            <ChartPieIcon class="w-5 h-5 text-gray-500" />
+        <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
+          <div class="flex justify-between items-start mb-1 sm:mb-3">
+            <div class="text-xs font-medium text-gray-600 leading-tight">Open</div>
+            <ChartPieIcon class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-orange-500" />
           </div>
-          <div class="text-3xl font-bold">{{ openCases }}</div>
+          <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ openCases }}</div>
+          <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Pending review</div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
+          <div class="flex justify-between items-start mb-1 sm:mb-3">
+            <div class="text-xs font-medium text-gray-600 leading-tight">Progress</div>
+            <ArrowPathIcon class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-yellow-500 animate-spin" />
+          </div>
+          <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ inProgress }}</div>
+          <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Processing</div>
         </div>
 
         <!-- Resolved -->
-        <div class="bg-white rounded-xl p-5 shadow flex flex-col gap-2">
-          <div class="text-sm text-gray-600 font-semibold flex justify-between items-center">
-            Resolved
-            <CheckCircleIcon class="w-5 h-5 text-gray-500" />
+        <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
+          <div class="flex justify-between items-start mb-1 sm:mb-3">
+            <div class="text-xs font-medium text-gray-600 leading-tight">Resolved</div>
+            <CheckCircleIcon class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-green-500" />
           </div>
-          <div class="text-3xl font-bold">{{ resolved }}</div>
+          <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ resolved }}</div>
+          <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Completed</div>
         </div>
       </div>
 
-
-
-
-
       <!-- Nested ListBlotterView.vue goes here -->
-      <router-view :key="$route.fullPath" class="mt-5" />
+      <router-view :key="$route.fullPath" />
     </div>
   </AuthLayout>
 </template>
