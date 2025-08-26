@@ -20,6 +20,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
     },
 
     actions: {
+        // Fetch list of events with pagination
         async getEvents(page = 1, perPage = 10) {
             this._isLoading = true;
             this._error = null;
@@ -38,7 +39,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                         total: response.data.total,
                     };
                 } else {
-                    // Non-paginated (fallback)
+                    // Non-paginated fallback
                     this._events = response.data;
                     this._paginate = null;
                 }
@@ -50,6 +51,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
+        // Fetch single event by ID
         async fetchEvent(id) {
             this._isLoading = true;
             this._error = null;
@@ -64,6 +66,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
+        // Add new event
         async addEvent(data) {
             this._isLoading = true;
             this._error = null;
@@ -77,7 +80,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                     response = await axios.post("/announcement-events", data);
                 }
 
-                // If paginated, re-fetch first page instead of pushing
                 if (this._paginate) {
                     await this.getEvents(1, this._paginate.per_page);
                 } else {
@@ -94,13 +96,24 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
+        // Update existing event
+        // Flexible updateEvent method in useAnnouncementEventStore.js
         async updateEvent(id, data) {
             this._isLoading = true;
             this._error = null;
+
             try {
+                console.log(`Updating event ${id} with data:`, data);
+
                 let response;
 
                 if (data instanceof FormData) {
+                    console.log("Sending FormData (with image):");
+                    for (let [key, value] of data.entries()) {
+                        console.log(`${key}:`, value);
+                    }
+
+                    // Use POST with _method override for FormData
                     response = await axios.post(
                         `/announcement-events/${id}`,
                         data,
@@ -111,27 +124,74 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                         }
                     );
                 } else {
+                    // Use regular PUT for JSON data
+                    console.log("Sending JSON data (no new image):", data);
                     response = await axios.put(
                         `/announcement-events/${id}`,
-                        data
+                        data,
+                        {
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                        }
                     );
                 }
 
-                const index = this._events.findIndex((e) => e.id === id);
+                // Update the event in the local state
+                const index = this._events.findIndex(
+                    (e) => e.id === parseInt(id)
+                );
                 if (index !== -1) {
                     this._events[index] = response.data;
+                }
+
+                // Also update the single event if it matches
+                if (this._event && this._event.id === parseInt(id)) {
+                    this._event = response.data;
                 }
 
                 return response.data;
             } catch (error) {
                 console.error(`Error updating event ID ${id}:`, error);
-                this._error = error;
+
+                // Enhanced error logging
+                if (error.response) {
+                    console.error("Response status:", error.response.status);
+                    console.error("Response data:", error.response.data);
+                    console.error("Response headers:", error.response.headers);
+
+                    // Store detailed error information
+                    this._error = {
+                        message: error.response.data?.message || error.message,
+                        status: error.response.status,
+                        errors: error.response.data?.errors || null,
+                        data: error.response.data,
+                    };
+                } else if (error.request) {
+                    console.error("Request error:", error.request);
+                    this._error = {
+                        message: "Network error - no response received",
+                        status: null,
+                        errors: null,
+                        data: null,
+                    };
+                } else {
+                    console.error("Error:", error.message);
+                    this._error = {
+                        message: error.message,
+                        status: null,
+                        errors: null,
+                        data: null,
+                    };
+                }
+
                 throw error;
             } finally {
                 this._isLoading = false;
             }
         },
 
+        // Delete event by ID
         async deleteEvent(id) {
             this._isLoading = true;
             this._error = null;
@@ -141,9 +201,31 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             } catch (error) {
                 console.error(`Error deleting event ID ${id}:`, error);
                 this._error = error;
+                throw error;
             } finally {
                 this._isLoading = false;
             }
+        },
+
+        // Refresh statuses using backend endpoint
+        async refreshStatuses() {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                await axios.post("/announcement-events/refresh-statuses");
+                // Reload events to get updated statuses
+                await this.getEvents();
+            } catch (error) {
+                console.error("Failed to refresh statuses:", error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        // Clear error state
+        clearError() {
+            this._error = null;
         },
     },
 });

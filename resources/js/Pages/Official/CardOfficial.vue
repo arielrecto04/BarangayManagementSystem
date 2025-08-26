@@ -916,11 +916,11 @@ onMounted(() => {
               <p class="text-gray-900">{{ selectedOfficial.position || 'N/A' }}</p>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-500">Terms:</label>
+              <label class="text-sm font-medium text-gray-500">Length of Term:</label>
               <p class="text-gray-900">{{ selectedOfficial.terms || 'N/A' }}</p>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-500">Number of Terms:</label>
+              <label class="text-sm font-medium text-gray-500">Term Count:</label>
               <p class="text-gray-900">
                 {{ selectedOfficial.no_of_per_term || 'N/A' }}
               </p>

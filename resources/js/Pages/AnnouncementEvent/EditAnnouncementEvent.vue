@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAnnouncementEventStore } from "@/Stores";
 import { storeToRefs } from "pinia";
@@ -7,7 +7,7 @@ import useToast from "@/Utils/useToast";
 
 // Stores
 const announcementEventStore = useAnnouncementEventStore();
-const { event, isLoading } = storeToRefs(announcementEventStore);
+const { event, isLoading, error } = storeToRefs(announcementEventStore);
 
 // Utils
 const route = useRoute();
@@ -27,6 +27,31 @@ const form = ref({
 });
 const previewImage = ref(null);
 
+// Helper to format datetime-local
+const formatDateTimeLocal = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Watch start_date to adjust end_date if needed
+watch(() => form.value.start_date, (newStartDate) => {
+    if (newStartDate && form.value.end_date) {
+        const startTime = new Date(newStartDate).getTime();
+        const endTime = new Date(form.value.end_date).getTime();
+        if (endTime <= startTime) {
+            const newEndDate = new Date(startTime + 60 * 60 * 1000); // +1h
+            form.value.end_date = formatDateTimeLocal(newEndDate);
+        }
+    }
+});
+
+const originalForm = ref({});
 // Fetch existing event
 onMounted(async () => {
     const id = route.params.id;
@@ -37,41 +62,140 @@ onMounted(async () => {
             type: event.value.type || "announcement",
             title: event.value.title || "",
             description: event.value.description || "",
-            start_date: event.value.start_date || "",
-            end_date: event.value.end_date || "",
+            start_date: event.value.start_date ? formatDateTimeLocal(event.value.start_date) : "",
+            end_date: event.value.end_date ? formatDateTimeLocal(event.value.end_date) : "",
             location: event.value.location || "",
             author: event.value.author || "",
-            image: null, // reset for new upload
+            image: null,
         };
+
+        // Store original values for comparison
+        originalForm.value = { ...form.value };
         previewImage.value = event.value.image ? `/${event.value.image}` : null;
     }
 });
 
 // Handle file input
-const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    form.value.image = file;
+const handleFileChange = (event) => {
+    const file = event.target.files[0];
     if (file) {
+        form.value.image = file;
         previewImage.value = URL.createObjectURL(file);
     }
 };
 
+// Remove image
+const removeImage = () => {
+    form.value.image = null;
+    previewImage.value = null;
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) fileInput.value = '';
+};
+
+// Default times
+const setDefaultStartTime = () => {
+    const now = new Date();
+    form.value.start_date = formatDateTimeLocal(now);
+};
+
+const setDefaultEndTime = () => {
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    form.value.end_date = formatDateTimeLocal(oneHourLater);
+};
+
 // Submit update
+// Fixed handleSubmit function with proper date handling
+// Alternative handleSubmit that sends ALL fields instead of just changed ones
+// Alternative handleSubmit method in EditAnnouncementEvent.vue
 const handleSubmit = async () => {
+    console.log('Form values before processing:', form.value);
+
     try {
         const id = route.params.id;
-        const formData = new FormData();
-        Object.keys(form.value).forEach((key) => {
-            if (form.value[key] !== null) {
-                formData.append(key, form.value[key]);
-            }
-        });
 
-        await announcementEventStore.updateEvent(id, formData);
+        // Separate image upload from other data
+        const hasNewImage = form.value.image instanceof File;
+
+        if (hasNewImage) {
+            // If there's a new image, use FormData with POST + _method override
+            const formData = new FormData();
+
+            Object.keys(form.value).forEach((key) => {
+                const value = form.value[key];
+
+                if (key === "image" && value instanceof File) {
+                    formData.append(key, value);
+                } else if (key === "start_date" || key === "end_date") {
+                    if (value !== "") {
+                        const dateWithSeconds = value + ':00';
+                        const date = new Date(dateWithSeconds);
+                        if (!isNaN(date.getTime())) {
+                            formData.append(key, date.toISOString());
+                        }
+                    } else {
+                        formData.append(key, "");
+                    }
+                } else if (key !== "image") {
+                    formData.append(key, value || "");
+                }
+            });
+
+            // Add method override for Laravel
+            formData.append('_method', 'PUT');
+
+            console.log('Sending FormData with new image');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
+            }
+
+            await announcementEventStore.updateEvent(id, formData);
+        } else {
+            // No new image, send JSON data with regular PUT
+            const jsonData = {};
+
+            Object.keys(form.value).forEach((key) => {
+                const value = form.value[key];
+
+                if (key === "start_date" || key === "end_date") {
+                    if (value !== "") {
+                        const dateWithSeconds = value + ':00';
+                        const date = new Date(dateWithSeconds);
+                        if (!isNaN(date.getTime())) {
+                            jsonData[key] = date.toISOString();
+                        }
+                    } else {
+                        jsonData[key] = "";
+                    }
+                } else if (key !== "image") {
+                    jsonData[key] = value || "";
+                }
+            });
+
+            console.log('Sending JSON data without image:', jsonData);
+            await announcementEventStore.updateEvent(id, jsonData);
+        }
+
         showToast({ icon: "success", title: "Event updated successfully" });
-        router.push("/announcement-events/list");
-    } catch (error) {
-        showToast({ icon: "error", title: error.message || "Failed to update event" });
+        router.push("/announcement-events/list-announcements-events");
+    } catch (err) {
+        console.error('Update error:', err);
+
+        let errorMessage = "Failed to update event";
+        if (err.response?.data?.message) {
+            errorMessage = err.response.data.message;
+        } else if (err.response?.data?.errors) {
+            const errors = Object.values(err.response.data.errors).flat();
+            errorMessage = errors.join(', ');
+        } else if (err.message) {
+            errorMessage = err.message;
+        }
+
+        showToast({
+            icon: "error",
+            title: "Update Failed",
+            text: errorMessage
+        });
     }
 };
 </script>
@@ -116,12 +240,26 @@ const handleSubmit = async () => {
             <!-- Dates -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium mb-1">Start Date</label>
-                    <input v-model="form.start_date" type="date" class="w-full border rounded-lg px-3 py-2" />
+                    <label class="block text-sm font-medium mb-1">Start Date & Time</label>
+                    <div class="flex gap-2">
+                        <button type="button" @click="setDefaultStartTime"
+                            class="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg border">
+                            Now
+                        </button>
+                        <input v-model="form.start_date" type="datetime-local"
+                            class="flex-1 border rounded-lg px-3 py-2" :step="60" />
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">End Date</label>
-                    <input v-model="form.end_date" type="date" class="w-full border rounded-lg px-3 py-2" />
+                    <label class="block text-sm font-medium mb-1">End Date & Time</label>
+                    <div class="flex gap-2">
+                        <input v-model="form.end_date" type="datetime-local" class="flex-1 border rounded-lg px-3 py-2"
+                            :step="60" :min="form.start_date" />
+                        <button type="button" @click="setDefaultEndTime"
+                            class="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg border">
+                            +1h
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -138,12 +276,22 @@ const handleSubmit = async () => {
             </div>
 
             <!-- Image -->
-            <div>
-                <label class="block text-sm font-medium mb-1">Image</label>
-                <input type="file" accept="image/*" @change="handleFileChange" class="w-full" />
-                <div v-if="previewImage" class="mt-3">
-                    <p class="text-sm text-gray-500">Preview:</p>
-                    <img :src="previewImage" alt="Preview" class="h-40 object-cover rounded-lg mt-1" />
+            <div class="flex flex-col">
+                <label class="font-semibold text-sm mb-1">Image</label>
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileChange" />
+                <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit"
+                    @click="$refs.fileInput.click()">
+                    Select Image
+                </button>
+                <div v-if="previewImage" class="mt-3 flex flex-col gap-2">
+                    <div class="relative w-fit">
+                        <img :src="previewImage" alt="Preview" class="h-40 object-cover rounded-lg shadow-md" />
+                        <button type="button"
+                            class="absolute top-1 right-1 w-6 h-6 transition-transform duration-300 hover:rotate-180"
+                            @click="removeImage">
+                            ✖
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -153,9 +301,17 @@ const handleSubmit = async () => {
                     class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100">
                     Cancel
                 </router-link>
-                <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-                    Save Changes
+                <button type="submit" :disabled="isLoading"
+                    class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">
+                    <span v-if="isLoading">Saving...</span>
+                    <span v-else>Save Changes</span>
                 </button>
+            </div>
+
+            <div v-if="error" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="text-sm text-red-600">
+                    {{ error.message || 'An error occurred while updating the event' }}
+                </div>
             </div>
         </form>
     </div>

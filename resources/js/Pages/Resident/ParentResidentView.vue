@@ -72,36 +72,32 @@ watch(() => route.query, (newQuery) => {
 
 <template>
     <AuthLayout>
-        <div class="m-4 flex flex-col items-start space-y-6">
-            <!-- Resident Manager Info Card -->
-            <div class="bg-white p-6 shadow-md rounded-lg w-full max-w-xs">
-                <h1 class="uppercase font-bold text-xl mb-1">Resident Manager</h1>
-                <p class="text-gray-600">Manage and View Resident Information</p>
+        <!-- Header Row -->
+        <div
+            class="m-4 flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 md:p-6 shadow-md rounded-lg gap-4">
+            <!-- Resident Manager Info (LEFT) -->
+            <div class="flex-1">
+                <h1 class="uppercase font-bold text-xl md:text-2xl mb-1">Resident Manager</h1>
+                <p class="text-gray-600 text-sm md:text-base">Manage and View Resident Information</p>
             </div>
 
-            <!-- Action Button (Add Resident or Cancel) -->
-            <div class="w-full max-w-xs">
+            <!-- Add Resident Button (RIGHT) -->
+            <div class="flex-shrink-0">
                 <template v-if="router.currentRoute.value.path === '/residents/list-residents'">
-                    <router-link to="/residents/add-resident" class="block">
+                    <router-link to="/residents/add-resident">
                         <button
-                            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg shadow transition-colors flex items-center justify-center gap-2">
-                            <PlusIcon class="w-6 h-6" />
-                            Add Resident
-                        </button>
-                    </router-link>
-                </template>
-                <template v-else>
-                    <router-link to="/residents" class="block">
-                        <button
-                            class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-lg shadow transition-colors flex items-center justify-center gap-2">
-                            <XMarkIcon class="w-6 h-6" />
-                            Cancel
+                            class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 md:py-3 px-3 md:px-5 rounded-lg shadow transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                            <PlusIcon class="w-5 h-5 md:w-6 md:h-6" />
+                            <span class="hidden md:inline">Add Resident</span>
                         </button>
                     </router-link>
                 </template>
             </div>
         </div>
 
-        <router-view></router-view>
+        <!-- Page Content -->
+        <div class="m-4">
+            <router-view></router-view>
+        </div>
     </AuthLayout>
 </template>

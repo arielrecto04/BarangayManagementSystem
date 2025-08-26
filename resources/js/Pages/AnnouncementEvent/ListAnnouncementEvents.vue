@@ -3,7 +3,7 @@ import { Table, Paginate } from '@/Components';
 import Modal from '../../Components/Modal.vue';
 import { useAnnouncementEventStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
-import { onMounted, onUnmounted, ref, nextTick } from "vue";
+import { ref, onMounted } from "vue";
 import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -16,17 +16,48 @@ const route = useRoute();
 const router = useRouter();
 
 // State
-const currentPage = ref(route.query.page || 1);
-const menuPosition = ref({ top: 0, left: 0 });
-const teleportMenuRowId = ref(null);
+const currentPage = ref(parseInt(route.query.page) || 1);
 const showModal = ref(false);
 const selectedEvent = ref(null);
 
 // Helpers
 const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid Date';
+
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+            // Browser local timezone is used by default
+        };
+
+        return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+        console.error('Date formatting error:', error);
+        return 'Invalid Date';
+    }
+};
+
+
+
+const getStatusColor = (status) => {
+    switch (status) {
+        case 'Ongoing':
+            return 'bg-emerald-500/90 text-white';
+        case 'Upcoming':
+            return 'bg-amber-500/90 text-white';
+        case 'Past':
+            return 'bg-slate-500/90 text-white';
+        default:
+            return 'bg-slate-500/90 text-white';
+    }
 };
 
 // Actions
@@ -36,53 +67,9 @@ const handlePageChange = (page) => {
     router.replace({ query: { page } });
 };
 
-const toggleMenu = async (event, eventId) => {
-    if (teleportMenuRowId.value === eventId) {
-        teleportMenuRowId.value = null;
-        return;
-    }
-    if (teleportMenuRowId.value !== null) {
-        teleportMenuRowId.value = null;
-        await nextTick();
-    }
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    const dropdownWidth = 192;
-    const viewportWidth = window.innerWidth;
-    const scrollX = window.scrollX;
-
-    let leftPosition = rect.left + scrollX;
-    if (rect.left + dropdownWidth > viewportWidth) {
-        leftPosition = rect.left + scrollX - dropdownWidth + rect.width;
-    }
-    leftPosition = Math.max(leftPosition, 0);
-
-    menuPosition.value = {
-        top: rect.bottom + window.scrollY,
-        left: leftPosition,
-    };
-
-    await nextTick();
-    teleportMenuRowId.value = eventId;
-};
-
-const closeMenu = () => {
-    teleportMenuRowId.value = null;
-};
-
-const handleClickOutside = (event) => {
-    const target = event.target;
-    if (!target.closest('.burger-menu-container') &&
-        !target.closest('[data-teleport-menu]') &&
-        teleportMenuRowId.value !== null) {
-        teleportMenuRowId.value = null;
-    }
-};
-
 const openModal = (eventData) => {
     selectedEvent.value = eventData;
     showModal.value = true;
-    closeMenu();
 };
 
 const closeModal = () => {
@@ -90,9 +77,10 @@ const closeModal = () => {
     selectedEvent.value = null;
 };
 
+
+
 const editEvent = (eventId) => {
     router.push(`/announcement-events/edit-announcement-event/${eventId}`);
-    closeMenu();
 };
 
 const deleteEvent = async (eventId) => {
@@ -100,13 +88,18 @@ const deleteEvent = async (eventId) => {
         try {
             await announcementEventStore.deleteEvent(eventId);
             showToast({ icon: 'success', title: 'Event deleted successfully' });
+
+            // Refresh the list
             announcementEventStore.getEvents(currentPage.value);
-            closeMenu();
+
+            // Close the modal
+            closeModal();
         } catch (error) {
             showToast({ icon: 'error', title: error.message });
         }
     }
 };
+
 
 // Table Columns
 const columns = [
@@ -114,19 +107,22 @@ const columns = [
     { key: "title", label: "Title" },
     { key: "author", label: "Author" },
     { key: "location", label: "Location" },
-    { key: "formatted_start_date", label: "Start Date" },
-    { key: "formatted_end_date", label: "End Date" },
+    {
+        key: "start_date",
+        label: "Start Date",
+        formatter: formatDate
+    },
+    {
+        key: "end_date",
+        label: "End Date",
+        formatter: formatDate
+    },
     { key: "status", label: "Status" }
 ];
 
 onMounted(() => {
     const page = currentPage.value;
     announcementEventStore.getEvents(page);
-    document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -135,13 +131,8 @@ onUnmounted(() => {
         <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 lg:py-8 overflow-x-hidden">
 
             <!-- Loader -->
-            <div v-if="isLoading" class="flex justify-center items-center py-20">
-                <div class="relative">
-                    <div class="w-16 h-16 border-4 border-indigo-200 rounded-full animate-spin"></div>
-                    <div
-                        class="w-16 h-16 border-4 border-indigo-600 rounded-full animate-spin absolute top-0 left-0 border-t-transparent border-r-transparent">
-                    </div>
-                </div>
+            <div v-if="isLoading" class="flex justify-center items-center">
+                <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
             </div>
 
             <!-- Empty State -->
@@ -154,16 +145,6 @@ onUnmounted(() => {
                 </div>
                 <h3 class="mt-4 text-xl font-medium text-gray-900">No announcements or events yet</h3>
                 <p class="mt-2 text-gray-500">Get started by creating your first announcement or event</p>
-                <div class="mt-6">
-                    <router-link to="/announcements-events/add"
-                        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Create New
-                    </router-link>
-                </div>
             </div>
 
             <!-- Card Grid -->
@@ -187,28 +168,26 @@ onUnmounted(() => {
                             </div>
                         </div>
 
-                        <!-- Action Menu Button -->
-                        <div class="absolute top-3 right-3 burger-menu-container z-20">
-                            <button @click="(e) => toggleMenu(e, event.id)"
-                                class="w-9 h-9 bg-white/90 hover:bg-white border border-white/50 shadow rounded-full flex items-center justify-center transition-all duration-300 group-hover:shadow-md"
-                                :class="{ 'bg-white shadow-md': teleportMenuRowId === event.id }">
-                                <svg class="w-4.5 h-4.5 text-slate-700" fill="currentColor" viewBox="0 0 20 20">
-                                    <circle cx="4" cy="10" r="2" />
-                                    <circle cx="10" cy="10" r="2" />
-                                    <circle cx="16" cy="10" r="2" />
+                        <!-- Center View Button (appears on hover) -->
+                        <div
+                            class="absolute inset-0 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            <button @click="openModal(event)"
+                                class="w-14 h-14 bg-white/95 hover:bg-white backdrop-blur-sm border border-white/70 shadow-lg rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105">
+                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </button>
                         </div>
 
                         <!-- Status Badge -->
                         <div class="absolute top-3 left-3 z-20">
-                            <span :class="{
-                                'bg-emerald-500/90 text-white': event.status === 'Ongoing',
-                                'bg-amber-500/90 text-white': event.status === 'Upcoming',
-                                'bg-slate-500/90 text-white': event.status === 'Past'
-                            }"
+                            <span :class="getStatusColor(event.status || 'Upcoming')"
                                 class="backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow">
-                                {{ event.status }}
+                                {{ event.status || 'Upcoming' }}
                             </span>
                         </div>
 
@@ -233,23 +212,34 @@ onUnmounted(() => {
 
                         <!-- Author & Location -->
                         <div class="flex flex-wrap items-center gap-3 text-sm">
+                            <!-- Author -->
                             <div v-if="event.author" class="flex items-center gap-2 min-w-0">
                                 <div
-                                    class="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
-                                    {{ event.author.charAt(0).toUpperCase() }}
+                                    class="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                                    <!-- User Icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 md:w-5 md:h-5 text-white"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M5.121 17.804A9.969 9.969 0 0112 15c2.21 0 4.21.714 5.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
                                 </div>
                                 <span class="font-semibold text-slate-700 truncate min-w-0">{{ event.author }}</span>
                             </div>
+
+                            <!-- Location -->
                             <div v-if="event.location" class="flex items-center gap-1 text-slate-500 min-w-0">
-                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1113.314 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <!-- Classic Map Pin -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5s-3 1.343-3 3 1.343 3 3 3z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 8c0 7.5-7.5 13.5-7.5 13.5S4.5 15.5 4.5 8a7.5 7.5 0 1115 0z" />
                                 </svg>
                                 <span class="truncate min-w-0">{{ event.location }}</span>
                             </div>
                         </div>
+
 
                         <!-- Dates -->
                         <div class="space-y-2 text-sm">
@@ -275,29 +265,6 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Dropdown Menu (Teleport) -->
-            <Teleport to="body">
-                <div v-if="teleportMenuRowId !== null" data-teleport-menu :style="{
-                    position: 'absolute',
-                    top: menuPosition.top + 'px',
-                    left: menuPosition.left + 'px',
-                    zIndex: 9999
-                }"
-                    class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/50 py-2 w-48 animate-in fade-in duration-200">
-                    <button @click="editEvent(teleportMenuRowId)"
-                        class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-indigo-50 flex items-center gap-3 font-medium transition-colors duration-200 rounded-xl mx-2">
-                        <span class="text-lg">✏️</span>
-                        Edit Event
-                    </button>
-                    <hr class="my-2 border-slate-200">
-                    <button @click="deleteEvent(teleportMenuRowId)"
-                        class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 font-medium transition-colors duration-200 rounded-xl mx-2">
-                        <span class="text-lg">🗑️</span>
-                        Delete Event
-                    </button>
-                </div>
-            </Teleport>
-
             <!-- Pagination -->
             <div v-if="paginate && !isLoading" class="mt-8 sm:mt-10 flex justify-center">
                 <div class="bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl p-2">
@@ -307,9 +274,148 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Modal -->
-            <Modal :show="showModal" title="Announcement / Event Details" max-width="3xl" @close="closeModal">
-                <!-- Your detailed modal content goes here -->
+            <!-- Detailed Modal -->
+            <Modal :show="showModal" title="Event Details" max-width="4xl" @close="closeModal">
+                <div v-if="selectedEvent" class="max-h-[80vh] overflow-y-auto">
+                    <!-- Image Section -->
+                    <div class="relative mb-6 rounded-xl overflow-hidden">
+                        <img v-if="selectedEvent.image" :src="`/${selectedEvent.image}`" :alt="selectedEvent.title"
+                            class="w-full h-auto max-h-[70vh] object-contain bg-slate-50" />
+                        <div v-else
+                            class="w-full h-64 sm:h-80 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                            <div class="text-white text-8xl opacity-30">
+                                <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Badges Overlay -->
+                        <div class="absolute top-4 left-4 flex gap-2">
+                            <span :class="{
+                                'bg-emerald-500 text-white': selectedEvent.status === 'Ongoing',
+                                'bg-amber-500 text-white': selectedEvent.status === 'Upcoming',
+                                'bg-slate-500 text-white': selectedEvent.status === 'Past'
+                            }" class="px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg">
+                                {{ selectedEvent.status }}
+                            </span>
+                            <span :class="[
+                                selectedEvent.type === 'announcement' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white',
+                                'px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg'
+                            ]">
+                                {{ selectedEvent.type }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Content Section -->
+                    <div class="space-y-6">
+                        <!-- Title -->
+                        <div>
+                            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+                                {{ selectedEvent.title }}
+                            </h2>
+                        </div>
+
+                        <!-- Author & Location -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Author -->
+                            <div v-if="selectedEvent.author" class="flex items-center gap-3">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                                    <!-- User Icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M5.121 17.804A9.969 9.969 0 0112 15c2.21 0 4.21.714 5.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium">Author</p>
+                                    <p class="text-slate-900 font-semibold">{{ selectedEvent.author }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Location -->
+                            <div v-if="selectedEvent.location" class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                    <!-- Classic Map Pin -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-slate-600" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5s-3 1.343-3 3 1.343 3 3 3z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M19.5 8c0 7.5-7.5 13.5-7.5 13.5S4.5 15.5 4.5 8a7.5 7.5 0 1115 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium">Location</p>
+                                    <p class="text-slate-900 font-semibold">{{ selectedEvent.location }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Dates -->
+                        <div class="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl p-6">
+                            <h3 class="text-lg font-semibold text-slate-900 mb-4">Event Schedule</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                    <div>
+                                        <p class="text-sm text-slate-500 font-medium">Start Date & Time</p>
+                                        <p class="text-slate-900 font-semibold">{{ formatDate(selectedEvent.start_date)
+                                            }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                                    <div>
+                                        <p class="text-sm text-slate-500 font-medium">End Date & Time</p>
+                                        <p class="text-slate-900 font-semibold">{{ formatDate(selectedEvent.end_date) }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-3">Description</h3>
+                            <div class="prose prose-slate max-w-none">
+                                <p class="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                    {{ selectedEvent.description || 'No description available for this event.' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap gap-3 pt-4 border-t border-slate-200">
+                            <button @click="editEvent(selectedEvent.id)"
+                                class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit Event
+                            </button>
+                            <button @click="deleteEvent(selectedEvent.id)"
+                                class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete Event
+                            </button>
+                            <button @click="closeModal"
+                                class="flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors duration-200 font-medium">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </Modal>
         </div>
     </div>
@@ -330,22 +436,6 @@ onUnmounted(() => {
     overflow: hidden;
 }
 
-@keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-in.fade-in {
-    animation: fade-in 0.2s ease-out;
-}
-
 .min-w-0 {
     min-width: 0;
 }
@@ -354,5 +444,13 @@ onUnmounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.prose {
+    color: inherit;
+}
+
+.prose p {
+    margin: 0;
 }
 </style>

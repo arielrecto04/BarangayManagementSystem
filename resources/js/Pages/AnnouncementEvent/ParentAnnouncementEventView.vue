@@ -1,7 +1,7 @@
 <!-- ParentAnnouncementEventView.vue -->
 <script setup>
 import { AuthLayout } from "@/Layouts";
-import { useAnnouncementEventStore } from "@/Stores"; // Create this store for API handling
+import { useAnnouncementEventStore } from "@/Stores"; // API store
 import { storeToRefs } from "pinia";
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
@@ -17,24 +17,16 @@ const router = useRouter();
 const announcementEventStore = useAnnouncementEventStore();
 const { events } = storeToRefs(announcementEventStore);
 
+// Total events
 const totalEvents = computed(() => events.value.length);
 
-// Navigate to list view with filter
+// Navigate to list view with status filter
 const filterByStatus = async (status) => {
     await announcementEventStore.getEvents(); // Refresh events
     router.push({ path: "/announcement-events/list", query: { status } });
 };
 
-onMounted(() => {
-    announcementEventStore.getEvents();
-});
-
-// 📦 Handle status update event
-function handleStatusUpdated() {
-    announcementEventStore.getEvents(); // Refresh dashboard stats
-}
-
-// Statistics
+// Statistics using backend status directly
 const upcoming = computed(() =>
     events.value.filter((e) => e.status === "Upcoming").length
 );
@@ -44,7 +36,23 @@ const ongoing = computed(() =>
 const past = computed(() =>
     events.value.filter((e) => e.status === "Past").length
 );
+
+// Auto-refresh events and statuses
+onMounted(async () => {
+    await announcementEventStore.getEvents();
+
+    // Refresh statuses every 5 minutes to keep dashboard counts current
+    setInterval(async () => {
+        await announcementEventStore.refreshStatuses();
+    }, 300000); // 5 minutes
+});
+
+// Optional: handler to manually refresh stats
+function handleStatusUpdated() {
+    announcementEventStore.getEvents();
+}
 </script>
+
 
 <template>
     <AuthLayout>

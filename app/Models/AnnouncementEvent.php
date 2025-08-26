@@ -9,6 +9,8 @@ use Carbon\Carbon;
 class AnnouncementEvent extends Model
 {
     use HasFactory;
+
+    // Fillable fields for mass assignment
     protected $fillable = [
         'type',
         'title',
@@ -21,27 +23,63 @@ class AnnouncementEvent extends Model
         'status',
     ];
 
-    // Automatically set status when creating or updating
+    // Automatically cast date fields to Carbon instances
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+    ];
+
+    /**
+     * Automatically calculate and set the status before saving
+     * Only update status if dates are being changed or it's a new record
+     */
     protected static function booted()
     {
         static::saving(function ($event) {
-            $today = Carbon::today();
-
-            if ($event->start_date && $event->end_date) {
-                $start = Carbon::parse($event->start_date);
-                $end = Carbon::parse($event->end_date);
-
-                if ($today->lt($start)) {
-                    $event->status = 'Upcoming';
-                } elseif ($today->between($start, $end)) {
-                    $event->status = 'Ongoing';
+            // Only auto-calculate status if:
+            // 1. It's a new record (creating), OR
+            // 2. The dates are being changed
+            if (!$event->exists || $event->isDirty(['start_date', 'end_date'])) {
+                if ($event->start_date && $event->end_date) {
+                    $event->status = $event->calculateStatus();
                 } else {
-                    $event->status = 'Past';
+                    $event->status = 'Upcoming';
                 }
-            } else {
-                // If dates are missing, default to Upcoming
-                $event->status = 'Upcoming';
             }
         });
+    }
+
+    /**
+     * Calculate the current status based on start and end dates
+     *
+     * @return string
+     */
+    public function calculateStatus(): string
+    {
+        if (!$this->start_date || !$this->end_date) {
+            return 'Upcoming';
+        }
+
+        $now = Carbon::now();
+        $start = Carbon::parse($this->start_date);
+        $end = Carbon::parse($this->end_date);
+
+        if ($now->lt($start)) {
+            return 'Upcoming';
+        } elseif ($now->between($start, $end)) {
+            return 'Ongoing';
+        } else {
+            return 'Past';
+        }
+    }
+
+    /**
+     * Accessor to get real-time status even if stored status is outdated
+     *
+     * @return string
+     */
+    public function getCurrentStatusAttribute(): string
+    {
+        return $this->calculateStatus();
     }
 }
