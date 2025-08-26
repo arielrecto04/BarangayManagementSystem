@@ -1,5 +1,5 @@
 // useAnnouncementEventStore.js
-import { axios } from "@/utils";
+import { axios } from "@/Utils";
 import { defineStore } from "pinia";
 
 export const useAnnouncementEventStore = defineStore("announcementEvent", {
