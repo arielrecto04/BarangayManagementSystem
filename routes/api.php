@@ -38,6 +38,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get-resident-by-number/{number}', [ResidentController::class, 'getResidentByNumber']);
     });
 
+    // ✅ Refresh statuses route for Announcement Events
+    Route::post('/announcement-events/refresh-statuses', [AnnouncementEventController::class, 'refreshStatuses']);
+    // ✅ Count route for Announcement Events
+    Route::get('/announcement-events/count', [AnnouncementEventController::class, 'count']);
+
     // API Resources
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);
@@ -48,7 +53,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('document-requests', DocumentRequestController::class);
     Route::apiResource('clinic-visits', ClinicVisitController::class);
     Route::apiResource('announcement-events', AnnouncementEventController::class);
-
-    // ✅ Refresh statuses route for Announcement Events
-    Route::post('/announcement-events/refresh-statuses', [AnnouncementEventController::class, 'refreshStatuses']);
 });

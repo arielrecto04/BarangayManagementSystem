@@ -51,6 +51,43 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
+        // ✅ NEW METHOD: Direct API call to get count
+        async getEventsCount() {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                const response = await axios.get("/announcement-events/count");
+                return response.data.count;
+            } catch (error) {
+                console.error("Error fetching events count:", error);
+                this._error = error;
+                throw error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        // Alternative method: Get count from existing data or fetch if needed
+        async getEventsCountFromStore() {
+            // If we already have paginate data, use it
+            if (this._paginate && this._paginate.total !== undefined) {
+                return this._paginate.total;
+            }
+
+            // If we have events loaded but no pagination data, return array length
+            if (
+                this._events &&
+                Array.isArray(this._events) &&
+                this._events.length > 0
+            ) {
+                // This might not be the total if we have pagination, so it's better to fetch
+                return this.getEventsCount();
+            }
+
+            // Otherwise, fetch the count
+            return this.getEventsCount();
+        },
+
         // Fetch single event by ID
         async fetchEvent(id) {
             this._isLoading = true;
@@ -97,7 +134,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
         },
 
         // Update existing event
-        // Flexible updateEvent method in useAnnouncementEventStore.js
         async updateEvent(id, data) {
             this._isLoading = true;
             this._error = null;

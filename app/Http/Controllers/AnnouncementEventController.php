@@ -169,6 +169,7 @@ class AnnouncementEventController extends Controller
 
         return response()->json($record, 200);
     }
+
     public function destroy($id)
     {
         $record = AnnouncementEvent::findOrFail($id);
@@ -200,5 +201,16 @@ class AnnouncementEventController extends Controller
             'message' => "Updated {$updated} event statuses",
             'updated_count' => $updated
         ]);
+    }
+
+    // ✅ New count() method added
+    public function count()
+    {
+        try {
+            $count = AnnouncementEvent::count();
+            return response()->json(['count' => $count]);
+        } catch (\Exception $e) {
+            return response()->json(['count' => 0, 'error' => $e->getMessage()], 500);
+        }
     }
 }
