@@ -19,6 +19,9 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [AuthenticationController::class, 'login']);
 
+// ✅ Public routes for home page
+Route::get('/announcement-events/home', [AnnouncementEventController::class, 'home']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',  [AuthenticationController::class, 'logout']);
 

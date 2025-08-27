@@ -51,7 +51,22 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             }
         },
 
-        // ✅ NEW METHOD: Direct API call to get count
+        // ✅ NEW METHOD: Get events specifically for the Home page
+        async getHomeEvents() {
+            this._isLoading = true;
+            this._error = null;
+            try {
+                const response = await axios.get(`/announcement-events/home`);
+                this._events = response.data;
+            } catch (error) {
+                console.error("Error fetching home events:", error);
+                this._error = error;
+            } finally {
+                this._isLoading = false;
+            }
+        },
+
+        // ✅ Direct API call to get count
         async getEventsCount() {
             this._isLoading = true;
             this._error = null;
@@ -69,22 +84,18 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
 
         // Alternative method: Get count from existing data or fetch if needed
         async getEventsCountFromStore() {
-            // If we already have paginate data, use it
             if (this._paginate && this._paginate.total !== undefined) {
                 return this._paginate.total;
             }
 
-            // If we have events loaded but no pagination data, return array length
             if (
                 this._events &&
                 Array.isArray(this._events) &&
                 this._events.length > 0
             ) {
-                // This might not be the total if we have pagination, so it's better to fetch
                 return this.getEventsCount();
             }
 
-            // Otherwise, fetch the count
             return this.getEventsCount();
         },
 
@@ -149,7 +160,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                         console.log(`${key}:`, value);
                     }
 
-                    // Use POST with _method override for FormData
                     response = await axios.post(
                         `/announcement-events/${id}`,
                         data,
@@ -160,8 +170,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                         }
                     );
                 } else {
-                    // Use regular PUT for JSON data
-                    console.log("Sending JSON data (no new image):", data);
                     response = await axios.put(
                         `/announcement-events/${id}`,
                         data,
@@ -173,7 +181,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                     );
                 }
 
-                // Update the event in the local state
                 const index = this._events.findIndex(
                     (e) => e.id === parseInt(id)
                 );
@@ -181,7 +188,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                     this._events[index] = response.data;
                 }
 
-                // Also update the single event if it matches
                 if (this._event && this._event.id === parseInt(id)) {
                     this._event = response.data;
                 }
@@ -190,13 +196,7 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             } catch (error) {
                 console.error(`Error updating event ID ${id}:`, error);
 
-                // Enhanced error logging
                 if (error.response) {
-                    console.error("Response status:", error.response.status);
-                    console.error("Response data:", error.response.data);
-                    console.error("Response headers:", error.response.headers);
-
-                    // Store detailed error information
                     this._error = {
                         message: error.response.data?.message || error.message,
                         status: error.response.status,
@@ -204,7 +204,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                         data: error.response.data,
                     };
                 } else if (error.request) {
-                    console.error("Request error:", error.request);
                     this._error = {
                         message: "Network error - no response received",
                         status: null,
@@ -212,7 +211,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
                         data: null,
                     };
                 } else {
-                    console.error("Error:", error.message);
                     this._error = {
                         message: error.message,
                         status: null,
@@ -249,7 +247,6 @@ export const useAnnouncementEventStore = defineStore("announcementEvent", {
             this._error = null;
             try {
                 await axios.post("/announcement-events/refresh-statuses");
-                // Reload events to get updated statuses
                 await this.getEvents();
             } catch (error) {
                 console.error("Failed to refresh statuses:", error);
