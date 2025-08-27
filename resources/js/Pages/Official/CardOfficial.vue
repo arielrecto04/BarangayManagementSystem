@@ -15,6 +15,22 @@ const { showToast } = useToast();
 const showModal = ref(false);
 const selectedOfficial = ref(null);
 
+// Helper function to format name properly
+const formatName = (name) => {
+  if (!name) return 'Unknown Official';
+
+  // If the name contains "null", clean it up
+  if (name.includes('null')) {
+    return name
+      .replace(/\s+null\s+/gi, ' ')  // Replace " null " with space
+      .replace(/^null\s+/gi, '')     // Remove "null " at the beginning
+      .replace(/\s+null$/gi, '')     // Remove " null" at the end
+      .trim();
+  }
+
+  return name;
+};
+
 // Position limits configuration
 const positionLimits = {
   'barangay captain': 1,
@@ -154,7 +170,7 @@ onMounted(() => {
               <div v-for="official in barangayOfficials.captain" :key="official.id"
                 class="bg-white rounded-xl shadow-lg px-6 py-4 text-center w-80 relative group mx-2">
                 <div class="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full mx-auto mb-4"></div>
-                <h2 class="text-xl font-bold truncate text-gray-800">{{ official.name }}</h2>
+                <h2 class="text-xl font-bold truncate text-gray-800">{{ formatName(official.name) }}</h2>
                 <p class="text-base text-blue-600 font-semibold truncate">{{ official.position }}</p>
                 <p class="text-sm text-gray-500 mt-3 line-clamp-3 break-words">{{ official.description }}</p>
                 <p class="text-sm text-gray-600 break-words mt-2">Term: {{ official.terms }}</p>
@@ -194,7 +210,7 @@ onMounted(() => {
               <div v-for="official in barangayOfficials.secretary" :key="official.id"
                 class="bg-white rounded-xl shadow-lg px-6 py-4 text-center relative group">
                 <div class="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-full mx-auto mb-4"></div>
-                <h2 class="text-lg font-bold truncate">{{ official.name }}</h2>
+                <h2 class="text-lg font-bold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-sm text-green-600 font-semibold truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 mt-2 line-clamp-3 break-words">{{ official.description }}</p>
                 <p class="text-xs text-gray-600 break-words">Term: {{ official.terms }}</p>
@@ -227,7 +243,7 @@ onMounted(() => {
               <div v-for="official in barangayOfficials.treasurer" :key="official.id"
                 class="bg-white rounded-xl shadow-lg px-6 py-4 text-center relative group">
                 <div class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full mx-auto mb-4"></div>
-                <h2 class="text-lg font-bold truncate">{{ official.name }}</h2>
+                <h2 class="text-lg font-bold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-sm text-purple-600 font-semibold truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 mt-2 line-clamp-3 break-words">{{ official.description }}</p>
                 <p class="text-xs text-gray-600 break-words">Term: {{ official.terms }}</p>
@@ -267,7 +283,7 @@ onMounted(() => {
               <div v-for="official in barangayOfficials.councilors.slice(0, 7)" :key="official.id"
                 class="bg-white rounded-xl shadow-md px-4 py-3 text-center relative group">
                 <div class="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full mx-auto mb-3"></div>
-                <h2 class="text-base font-bold truncate">{{ official.name }}</h2>
+                <h2 class="text-base font-bold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-orange-600 font-semibold truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 mt-1 line-clamp-2 break-words">{{ official.description }}</p>
                 <p class="text-xs text-gray-600 break-words">{{ official.terms }}</p>
@@ -305,7 +321,7 @@ onMounted(() => {
               <div v-for="official in skOfficials.chairman" :key="official.id"
                 class="bg-white rounded-xl shadow-lg px-6 py-4 text-center w-80 relative group mx-2">
                 <div class="w-24 h-24 bg-gradient-to-br from-red-100 to-red-200 rounded-full mx-auto mb-4"></div>
-                <h2 class="text-xl font-bold truncate text-gray-800">{{ official.name }}</h2>
+                <h2 class="text-xl font-bold truncate text-gray-800">{{ formatName(official.name) }}</h2>
                 <p class="text-base text-red-600 font-semibold truncate">{{ official.position }}</p>
                 <p class="text-sm text-gray-500 mt-3 line-clamp-3 break-words">{{ official.description }}</p>
                 <p class="text-sm text-gray-600 break-words mt-2">Term: {{ official.terms }}</p>
@@ -343,7 +359,7 @@ onMounted(() => {
               <div v-for="official in skOfficials.secretary" :key="official.id"
                 class="bg-white rounded-xl shadow-lg px-6 py-4 text-center relative group">
                 <div class="w-20 h-20 bg-gradient-to-br from-teal-100 to-teal-200 rounded-full mx-auto mb-4"></div>
-                <h2 class="text-lg font-bold truncate">{{ official.name }}</h2>
+                <h2 class="text-lg font-bold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-sm text-teal-600 font-semibold truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 mt-2 line-clamp-3 break-words">{{ official.description }}</p>
                 <p class="text-xs text-gray-600 break-words">Term: {{ official.terms }}</p>
@@ -376,7 +392,7 @@ onMounted(() => {
               <div v-for="official in skOfficials.treasurer" :key="official.id"
                 class="bg-white rounded-xl shadow-lg px-6 py-4 text-center relative group">
                 <div class="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-full mx-auto mb-4"></div>
-                <h2 class="text-lg font-bold truncate">{{ official.name }}</h2>
+                <h2 class="text-lg font-bold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-sm text-indigo-600 font-semibold truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 mt-2 line-clamp-3 break-words">{{ official.description }}</p>
                 <p class="text-xs text-gray-600 break-words">Term: {{ official.terms }}</p>
@@ -416,7 +432,7 @@ onMounted(() => {
               <div v-for="official in skOfficials.councilors.slice(0, 7)" :key="official.id"
                 class="bg-white rounded-xl shadow-md px-4 py-3 text-center relative group">
                 <div class="w-16 h-16 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full mx-auto mb-3"></div>
-                <h2 class="text-base font-bold truncate">{{ official.name }}</h2>
+                <h2 class="text-base font-bold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-pink-600 font-semibold truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 mt-1 line-clamp-2 break-words">{{ official.description }}</p>
                 <p class="text-xs text-gray-600 break-words">{{ official.terms }}</p>
@@ -462,7 +478,7 @@ onMounted(() => {
               <div v-for="official in volunteerPersonnel.tanod.slice(0, 20)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-yellow-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
 
@@ -501,7 +517,7 @@ onMounted(() => {
               <div v-for="official in volunteerPersonnel.healthWorkers.slice(0, 10)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-green-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
 
@@ -537,7 +553,7 @@ onMounted(() => {
               <div v-for="official in volunteerPersonnel.nutritionScholars.slice(0, 3)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-rose-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -572,7 +588,7 @@ onMounted(() => {
               <div v-for="official in volunteerPersonnel.lupon.slice(0, 10)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-indigo-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -607,7 +623,7 @@ onMounted(() => {
               <div v-for="official in volunteerPersonnel.badac" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-lime-100 to-lime-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-lime-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -642,7 +658,7 @@ onMounted(() => {
               <div v-for="official in volunteerPersonnel.bcpc" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-purple-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -683,7 +699,7 @@ onMounted(() => {
               <div v-for="official in programCommittees.bdrrmc.slice(0, 15)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -718,7 +734,7 @@ onMounted(() => {
               <div v-for="official in programCommittees.bpoc.slice(0, 15)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -753,7 +769,7 @@ onMounted(() => {
               <div v-for="official in programCommittees.environment.slice(0, 15)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -788,7 +804,7 @@ onMounted(() => {
               <div v-for="official in programCommittees.gad.slice(0, 15)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -823,7 +839,7 @@ onMounted(() => {
               <div v-for="official in programCommittees.vawc.slice(0, 15)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -858,7 +874,7 @@ onMounted(() => {
               <div v-for="official in programCommittees.bplo.slice(0, 15)" :key="official.id"
                 class="bg-white rounded-lg shadow-md px-3 py-2 text-center relative group">
                 <div class="w-12 h-12 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full mx-auto mb-2"></div>
-                <h2 class="text-sm font-semibold truncate">{{ official.name }}</h2>
+                <h2 class="text-sm font-semibold truncate">{{ formatName(official.name) }}</h2>
                 <p class="text-xs text-sky-600 font-medium truncate">{{ official.position }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ official.terms }}</p>
                 <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -899,7 +915,7 @@ onMounted(() => {
         <div class="flex flex-col items-center mb-6 text-center">
           <div class="w-32 h-32 bg-gradient-to-tr from-gray-200 to-gray-300 rounded-full mb-4 shadow-inner"></div>
           <h3 class="text-3xl font-bold text-gray-900">
-            {{ selectedOfficial.name }}
+            {{ formatName(selectedOfficial.name) }}
           </h3>
           <p class="text-lg text-blue-600 font-semibold">
             {{ selectedOfficial.position }}
@@ -915,7 +931,7 @@ onMounted(() => {
             </h4>
             <div>
               <label class="text-sm font-medium text-gray-500">Full Name:</label>
-              <p class="text-gray-900">{{ selectedOfficial.name || 'N/A' }}</p>
+              <p class="text-gray-900">{{ formatName(selectedOfficial.name) }}</p>
             </div>
             <div>
               <label class="text-sm font-medium text-gray-500">Position:</label>

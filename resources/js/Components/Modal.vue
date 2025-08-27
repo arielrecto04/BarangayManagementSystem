@@ -37,7 +37,6 @@ const close = () => {
 
 // Handle backdrop click - prevent event bubbling
 const handleBackdropClick = (e) => {
-    // Only close if the click target is the backdrop itself, not a child element
     if (e.target === e.currentTarget) {
         close();
     }
@@ -58,14 +57,15 @@ onBeforeUnmount(() => {
     <teleport to="body">
         <transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100"
             leave-active-class="ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
+
             <div v-show="show" class="fixed inset-0 overflow-y-auto z-50" scroll-region>
-                <!-- Overlay with proper background and click handling -->
+
+                <!-- Overlay with blur effect -->
                 <transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0"
                     enter-to-class="opacity-100" leave-active-class="ease-in duration-200"
                     leave-from-class="opacity-100" leave-to-class="opacity-0">
-                    <div v-show="show" class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-                        @click="handleBackdropClick">
-                    </div>
+                    <div v-show="show" class="fixed inset-0 bg-white/30 backdrop-blur-sm transition-opacity"
+                        @click="handleBackdropClick"></div>
                 </transition>
 
                 <!-- Modal -->
@@ -76,6 +76,7 @@ onBeforeUnmount(() => {
                         leave-active-class="ease-in duration-200"
                         leave-from-class="opacity-100 translate-y-0 sm:scale-100"
                         leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+
                         <div v-show="show"
                             class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-full"
                             :class="{
@@ -88,9 +89,10 @@ onBeforeUnmount(() => {
                                 'sm:max-w-4xl': maxWidth === '4xl',
                                 'sm:max-w-5xl': maxWidth === '5xl',
                                 'sm:max-w-6xl': maxWidth === '6xl',
-                                'sm:max-w-7xl': maxWidth === '7xl',
+                                'sm-max-w-7xl': maxWidth === '7xl',
                                 'sm:w-full': !maxWidth
                             }" @click.stop>
+
                             <!-- Header -->
                             <div v-if="title || closeable"
                                 class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">

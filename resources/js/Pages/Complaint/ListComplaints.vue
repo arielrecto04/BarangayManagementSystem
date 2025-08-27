@@ -45,8 +45,13 @@ const getResidentNumber = (id) => {
 
 const getResidentName = (id) => {
   const resident = residents.value.find(r => Number(r.id) === Number(id));
-  return resident ? `${resident.first_name} ${resident.last_name}` : 'N/A';
+  if (!resident) return 'N/A';
+
+  // Safely include middle name if it exists
+  const middle = resident.middle_name ? ` ${resident.middle_name}` : '';
+  return `${resident.first_name}${middle} ${resident.last_name}`;
 };
+
 
 const getSupportingDocuments = (complaint) => {
   if (!complaint?.supporting_documents) return [];
@@ -102,10 +107,19 @@ const handlePrint = () => {
 const deleteComplaint = async (complaintId) => {
   if (!confirm('Are you sure you want to delete this complaint?')) return;
 
-  await complaintStore.deleteComplaint(complaintId);
-  showToast({ icon: 'success', title: 'Complaint deleted successfully' });
-  complaintStore.getComplaints(currentPage.value);
+  try {
+    await complaintStore.deleteComplaint(complaintId);
+    showToast({ icon: 'success', title: 'Complaint deleted successfully' });
+    complaintStore.getComplaints(currentPage.value);
+
+    // 🔑 Close the modal here
+    closeModal();
+  } catch (error) {
+    showToast({ icon: 'error', title: 'Failed to delete complaint' });
+    console.error(error);
+  }
 };
+
 
 // Edit complaint
 const editComplaint = (complaintId) => {

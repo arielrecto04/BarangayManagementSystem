@@ -44,9 +44,13 @@ const getResidentNumber = (id) => {
 }
 
 const getResidentName = (id) => {
-    const resident = residents.value.find(r => Number(r.id) === Number(id))
-    return resident ? `${resident.first_name} ${resident.last_name}` : 'N/A'
-}
+    const resident = residents.value.find(r => Number(r.id) === Number(id));
+    if (!resident) return 'N/A';
+
+    // Safely include middle name if it exists
+    const middle = resident.middle_name ? ` ${resident.middle_name}` : '';
+    return `${resident.first_name}${middle} ${resident.last_name}`;
+};
 
 const getSupportingDocuments = (blotter) => {
     if (!blotter?.supporting_documents) return []
@@ -102,9 +106,17 @@ const handlePrint = () => {
 const deleteBlotter = async (blotterId) => {
     if (!confirm('Are you sure you want to delete this blotter?')) return
 
-    await blotterStore.deleteBlotter(blotterId)
-    showToast({ icon: 'success', title: 'Blotter deleted successfully' })
-    blotterStore.getBlotters(currentPage.value)
+    try {
+        await blotterStore.deleteBlotter(blotterId)
+        showToast({ icon: 'success', title: 'Blotter deleted successfully' })
+        blotterStore.getBlotters(currentPage.value)
+
+        // 🔑 Close the modal
+        closeModal()
+    } catch (error) {
+        showToast({ icon: 'error', title: 'Failed to delete blotter' })
+        console.error(error)
+    }
 }
 
 // Edit blotter

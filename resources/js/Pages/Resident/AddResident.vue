@@ -24,6 +24,23 @@ const residentDataForm = ref({
     email: '',
 })
 
+const isDuplicateResident = () => {
+    const allResidents = residentStore.residents || []
+
+    return allResidents.some(r => {
+        const first = (r.first_name || '').trim().toLowerCase()
+        const middle = (r.middle_name || '').trim().toLowerCase()
+        const last = (r.last_name || '').trim().toLowerCase()
+
+        return (
+            first === residentDataForm.value.first_name.trim().toLowerCase() &&
+            middle === residentDataForm.value.middle_name.trim().toLowerCase() &&
+            last === residentDataForm.value.last_name.trim().toLowerCase()
+        )
+    })
+}
+
+
 const formErrors = ref({})
 
 const restrictPhoneInput = (field) => {
@@ -75,6 +92,10 @@ const validateForm = () => {
 const createResident = async () => {
     if (!validateForm()) {
         showToast({ icon: 'error', title: 'Please fill in all required fields.' })
+        return
+    }
+    if (isDuplicateResident()) {
+        showToast({ icon: 'error', title: 'Resident with the same full name already exists.' })
         return
     }
 
@@ -132,7 +153,7 @@ onBeforeUnmount(() => {
                                 :class="{ 'border-red-500': formErrors.first_name }"
                                 class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
                             <p v-if="formErrors.first_name" class="text-red-500 text-xs mt-1">{{ formErrors.first_name
-                                }}</p>
+                            }}</p>
                         </div>
 
                         <!-- Middle Name -->
