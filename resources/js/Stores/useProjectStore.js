@@ -16,6 +16,7 @@ export const useProjectStore = defineStore("project", {
             to: 0,
         },
     }),
+
     getters: {
         projects: (state) => state._projects,
         isLoading: (state) => state._isLoading,
@@ -25,6 +26,10 @@ export const useProjectStore = defineStore("project", {
     },
 
     actions: {
+        clearError() {
+            this._error = null;
+        },
+
         selectProjectById(projectId) {
             this._project = this._projects.find(
                 (project) => project.id == projectId
@@ -34,8 +39,10 @@ export const useProjectStore = defineStore("project", {
         async getProjects(page = 1) {
             try {
                 this._isLoading = true;
-                const response = await axios.get("/projects?page=" + page);
-                console.log("API Response:", response); // Debugging: Log the response
+                this._error = null;
+
+                const response = await axios.get(`/projects?page=${page}`);
+                console.log("API Response:", response);
 
                 this._projects = response.data.projects.data;
                 this._paginate = {
@@ -48,7 +55,10 @@ export const useProjectStore = defineStore("project", {
                 };
             } catch (error) {
                 console.error("Error fetching projects:", error);
-                this._projects = []; // Ensure the UI doesn't break
+                this._error = error.response?.data?.errors || {
+                    general: ["Failed to fetch projects"],
+                };
+                this._projects = [];
             } finally {
                 this._isLoading = false;
             }
@@ -58,20 +68,22 @@ export const useProjectStore = defineStore("project", {
             try {
                 this._error = null;
                 this._isLoading = true;
+
                 const response = await axios.post("/projects", project);
-                this._projects.push(response.data.data);
-            } catch (error) {
-                console.log(error);
 
-                if (
-                    error.response &&
-                    error.response.data &&
-                    error.response.data.message
-                ) {
-                    this._error = error.response.data.errors;
+                // Insert at the top (latest first)
+                this._projects.unshift(response.data.data);
 
-                    console.log(this._error);
+                // Update total count in pagination
+                this._paginate.total += 1;
+                if (this._projects.length > this._paginate.per_page) {
+                    this._projects.pop(); // keep within per_page limit
                 }
+            } catch (error) {
+                console.error("Error adding project:", error);
+                this._error = error.response?.data?.errors || {
+                    general: ["Failed to add project"],
+                };
             } finally {
                 this._isLoading = false;
             }
@@ -79,43 +91,73 @@ export const useProjectStore = defineStore("project", {
 
         async updateProject() {
             try {
+                this._error = null;
+                this._isLoading = true;
+
                 const response = await axios.put(
                     `/projects/${this._project.id}`,
                     this._project
                 );
-                this._projects = this._projects.map((project) => {
-                    if (project.id === response.data.id) {
-                        return response.data;
-                    }
-                    return project;
-                });
+
+                const updated = response.data.data || response.data;
+                this._projects = this._projects.map((project) =>
+                    project.id === updated.id ? updated : project
+                );
             } catch (error) {
-                console.log(error);
+                console.error("Error updating project:", error);
+                this._error = error.response?.data?.errors || {
+                    general: ["Failed to update project"],
+                };
             } finally {
+                this._isLoading = false;
             }
         },
 
         async getProjectById(projectId) {
             try {
                 this._isLoading = true;
+                this._error = null;
+
                 const response = await axios.get(`/projects/${projectId}`);
-                console.log(response.data);
-                this._project = response.data;
+                this._project = response.data.data || response.data;
             } catch (error) {
-                console.log(error);
+                console.error("Error fetching project:", error);
+                this._error = error.response?.data?.errors || {
+                    general: ["Failed to fetch project"],
+                };
             } finally {
                 this._isLoading = false;
             }
         },
+
         async deleteProject(projectId) {
             try {
                 this._isLoading = true;
-                const response = await axios.delete(`/projects/${projectId}`);
+                this._error = null;
+
+                await axios.delete(`/projects/${projectId}`);
+
+                // Remove from current projects list
                 this._projects = this._projects.filter(
                     (project) => project.id !== projectId
                 );
+
+                // Update pagination info
+                this._paginate.total -= 1;
+
+                // If we're on a page that might now be empty, fetch previous page
+                if (
+                    this._projects.length === 0 &&
+                    this._paginate.current_page > 1
+                ) {
+                    await this.getProjects(this._paginate.current_page - 1);
+                }
             } catch (error) {
-                console.log(error);
+                console.error("Error deleting project:", error);
+                this._error = error.response?.data?.errors || {
+                    general: ["Failed to delete project"],
+                };
+                throw error; // Re-throw to handle in component
             } finally {
                 this._isLoading = false;
             }
@@ -124,10 +166,17 @@ export const useProjectStore = defineStore("project", {
         async searchProjects(search) {
             try {
                 this._isLoading = true;
-                const response = await axios.get(`/projects/search?search=${search}`);
+                this._error = null;
+
+                const response = await axios.get(
+                    `/projects/search?search=${search}`
+                );
                 this._projects = response.data.projects.data;
             } catch (error) {
-                console.log(error);
+                console.error("Error searching projects:", error);
+                this._error = error.response?.data?.errors || {
+                    general: ["Search failed"],
+                };
             } finally {
                 this._isLoading = false;
             }

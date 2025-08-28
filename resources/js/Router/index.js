@@ -214,7 +214,37 @@ const routes = [
             title: "Projects",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Project/ListProject.vue"),
+        redirect: { name: "List Projects" },
+        component: () => import("@/Pages/Project/ParentProjectView.vue"),
+        children: [
+            {
+                path: "list-projects",
+                name: "List Projects",
+                meta: {
+                    title: "List Projects",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Project/ListProject.vue"),
+            },
+            {
+                path: "add-project",
+                name: "Add Project",
+                meta: {
+                    title: "Add Project",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Project/AddProject.vue"),
+            },
+            {
+                path: "edit-project/:id",
+                name: "Edit Project",
+                meta: {
+                    title: "Edit Project",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Project/EditProject.vue"),
+            },
+        ],
     },
     {
         path: "/officials",

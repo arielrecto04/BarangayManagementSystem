@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Project;
+use Illuminate\Support\Facades\Storage;
+
 class ProjectController extends Controller
 {
     /**
@@ -11,18 +13,10 @@ class ProjectController extends Controller
      */
     public function index()
     {
-       $projects = project::paginate(9);
-         return response()->json([
-        'projects' => $projects
-    ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-      //
+        $projects = Project::paginate(9);
+        return response()->json([
+            'projects' => $projects
+        ]);
     }
 
     /**
@@ -30,27 +24,40 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-          $validated = $request->validate([
-            'title'=> 'required|string',
-            'description'=> 'required|string',
-            'start_date'=> 'required|date',
-            'end_date'=> 'required|date',
-            'status'=> 'required|string',
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'description' => 'nullable|string',
+            'category' => 'nullable|string',
+            'status' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'target_completion' => 'nullable|date',
+            'actual_completion' => 'nullable|date',
+            'funding_source' => 'nullable|string',
+            'barangay_zone' => 'nullable|string',
+            'completion_percentage' => 'nullable|integer|min:0|max:100',
+            'milestone_achieved' => 'nullable|string',
+            'project_lead' => 'nullable|string',
+            'assigned_organizations' => 'nullable|array',
+            'number_of_members' => 'nullable|integer|min:0',
+            'site_address' => 'nullable|string',
+            'disbursement_schedule' => 'nullable|string',
+            'challenges_encountered' => 'nullable|string',
+            'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx',
         ]);
 
+        // Handle multiple file uploads
+        $files = [];
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $file_name = time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('projects', $file_name, 'public');
+                $files[] = asset('storage/projects/' . $file_name);
+            }
+        }
+
+        $validated['files'] = $files;
         $project = Project::create($validated);
 
-        if($request->hasFile('attachments')){
-
-            $file = $request->file('attachments');
-
-            $file_name = time() . '.' . $file->getClientOriginalExtension();
-
-            $request->attachments->storeAs('projects', $file_name);
-            $project->update([
-                'attachments' => asset('storage/projects/' . $file_name)
-            ]);
-        }
         return response()->json([
             'message' => 'Project created successfully',
             'data' => $project,
@@ -62,15 +69,8 @@ class ProjectController extends Controller
      */
     public function show(string $id)
     {
-        return Project::findOrFail($id);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        $project = Project::findOrFail($id);
+        return response()->json($project);
     }
 
     /**
@@ -78,30 +78,58 @@ class ProjectController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $request->validate([
-            'title'=> 'required|string',
-            'description'=> 'required|string',
-            'attachments'=> 'required|file',
-            'start_date'=> 'required|date',
-            'end_date'=> 'required|date',
-            'status'=> 'required|string',
+        $validated = $request->validate([
+            // ... your validation rules ...
         ]);
 
         $project = Project::findOrFail($id);
-        $project->update($request->all());
+
+        // Handle file updates
+        $files = $project->files ?? [];
+
+        // Handle existing files
+        if ($request->has('existing_files')) {
+            $files = $request->existing_files;
+        }
+
+        // Add new files
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $file_name = time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('projects', $file_name, 'public');
+                $files[] = asset('storage/projects/' . $file_name);
+            }
+        }
+
+        $validated['files'] = $files;
+
+        // Handle assigned_organizations if it's a JSON string
+        if ($request->has('assigned_organizations') && is_string($request->assigned_organizations)) {
+            $validated['assigned_organizations'] = json_decode($request->assigned_organizations, true);
+        }
+
+        $project->update($validated);
 
         return response()->json([
             'message' => 'Project updated successfully',
             'data' => $project,
         ], 200);
     }
-
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
         $project = Project::findOrFail($id);
+
+        // Optionally delete uploaded files
+        if ($project->files) {
+            foreach ($project->files as $file) {
+                $path = str_replace(asset('storage/'), '', $file);
+                Storage::disk('public')->delete($path);
+            }
+        }
+
         $project->delete();
 
         return response()->json([
@@ -109,15 +137,21 @@ class ProjectController extends Controller
         ], 200);
     }
 
+    /**
+     * Search projects by multiple fields.
+     */
     public function search(Request $request)
     {
         $search = $request->search;
+
         $projects = Project::where('title', 'like', "%{$search}%")
-        ->orWhere('description', 'like', "%{$search}%")
-        ->orWhere('status', 'like', "%{$search}%")
-        ->orWhere('start_date', 'like', "%{$search}%")
-        ->orWhere('end_date', 'like', "%{$search}%")
-        ->paginate(9);
+            ->orWhere('description', 'like', "%{$search}%")
+            ->orWhere('status', 'like', "%{$search}%")
+            ->orWhere('category', 'like', "%{$search}%")
+            ->orWhere('funding_source', 'like', "%{$search}%")
+            ->orWhere('barangay_zone', 'like', "%{$search}%")
+            ->paginate(9);
+
         return response()->json([
             'projects' => $projects
         ]);
