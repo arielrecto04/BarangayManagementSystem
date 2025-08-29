@@ -367,7 +367,7 @@ onMounted(async () => {
                                         :style="`width: ${selectedProject.completion_percentage || 0}%`"></div>
                                 </div>
                                 <span class="text-sm text-gray-900">{{ selectedProject.completion_percentage || 0
-                                }}%</span>
+                                    }}%</span>
                             </div>
                         </div>
                     </div>
@@ -390,6 +390,20 @@ onMounted(async () => {
                             <label class="block text-sm font-medium text-gray-700">Funding Source</label>
                             <p class="text-sm text-gray-900">{{ selectedProject.funding_source || 'N/A' }}</p>
                         </div>
+                        <!-- Added Assigned Organizations Section -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Assigned Organizations</label>
+                            <div v-if="selectedProject.assigned_organizations && selectedProject.assigned_organizations.length > 0"
+                                class="mt-1">
+                                <div class="flex flex-wrap gap-1">
+                                    <span v-for="(org, index) in selectedProject.assigned_organizations" :key="index"
+                                        class="text-sm text-gray-900">
+                                        {{ org }}
+                                    </span>
+                                </div>
+                            </div>
+                            <p v-else class="text-sm text-gray-900">No organizations assigned</p>
+                        </div>
                     </div>
                 </div>
 
@@ -403,6 +417,11 @@ onMounted(async () => {
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Barangay/Zone</label>
                             <p class="text-sm text-gray-900">{{ selectedProject.barangay_zone || 'N/A' }}</p>
+                        </div>
+                        <!-- Added Disbursement Schedule -->
+                        <div v-if="selectedProject.disbursement_schedule">
+                            <label class="block text-sm font-medium text-gray-700">Disbursement Schedule</label>
+                            <p class="text-sm text-gray-900">{{ selectedProject.disbursement_schedule }}</p>
                         </div>
                     </div>
                 </div>

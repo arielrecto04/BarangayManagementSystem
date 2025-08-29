@@ -30,6 +30,10 @@ export const useProjectStore = defineStore("project", {
             this._error = null;
         },
 
+        clearErrors() {
+            this._error = null;
+        },
+
         selectProjectById(projectId) {
             this._project = this._projects.find(
                 (project) => project.id == projectId
@@ -64,12 +68,28 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
-        async addProject(project) {
+        async addProject(project, config = {}) {
             try {
                 this._error = null;
                 this._isLoading = true;
 
-                const response = await axios.post("/projects", project);
+                console.log("Sending project data to API...");
+
+                // Merge default config with provided config
+                const requestConfig = {
+                    ...config,
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                        ...config.headers,
+                    },
+                };
+
+                const response = await axios.post(
+                    "/projects",
+                    project,
+                    requestConfig
+                );
+                console.log("Project creation successful:", response.data);
 
                 // Insert at the top (latest first)
                 this._projects.unshift(response.data.data);
@@ -81,9 +101,36 @@ export const useProjectStore = defineStore("project", {
                 }
             } catch (error) {
                 console.error("Error adding project:", error);
-                this._error = error.response?.data?.errors || {
-                    general: ["Failed to add project"],
-                };
+
+                // Enhanced error logging similar to ListComplaints.vue pattern
+                if (error.response) {
+                    console.error("Response status:", error.response.status);
+                    console.error("Response data:", error.response.data);
+
+                    this._error = error.response?.data?.errors || {
+                        general: [
+                            error.response?.data?.message ||
+                                "Failed to add project",
+                        ],
+                    };
+                } else if (error.request) {
+                    console.error("No response received:", error.request);
+                    this._error = {
+                        general: [
+                            "No response from server. Please check your connection.",
+                        ],
+                    };
+                } else {
+                    console.error("Error setting up request:", error.message);
+                    this._error = {
+                        general: [
+                            "An unexpected error occurred while adding the project.",
+                        ],
+                    };
+                }
+
+                // Re-throw the error so the component can handle it
+                throw error;
             } finally {
                 this._isLoading = false;
             }
@@ -105,9 +152,29 @@ export const useProjectStore = defineStore("project", {
                 );
             } catch (error) {
                 console.error("Error updating project:", error);
-                this._error = error.response?.data?.errors || {
-                    general: ["Failed to update project"],
-                };
+
+                if (error.response) {
+                    console.error(
+                        "Update response status:",
+                        error.response.status
+                    );
+                    console.error("Update response data:", error.response.data);
+
+                    this._error = error.response?.data?.errors || {
+                        general: [
+                            error.response?.data?.message ||
+                                "Failed to update project",
+                        ],
+                    };
+                } else {
+                    this._error = {
+                        general: [
+                            "An unexpected error occurred while updating the project.",
+                        ],
+                    };
+                }
+
+                throw error;
             } finally {
                 this._isLoading = false;
             }
@@ -122,9 +189,15 @@ export const useProjectStore = defineStore("project", {
                 this._project = response.data.data || response.data;
             } catch (error) {
                 console.error("Error fetching project:", error);
+
                 this._error = error.response?.data?.errors || {
-                    general: ["Failed to fetch project"],
+                    general: [
+                        error.response?.data?.message ||
+                            "Failed to fetch project",
+                    ],
                 };
+
+                throw error;
             } finally {
                 this._isLoading = false;
             }
@@ -154,9 +227,14 @@ export const useProjectStore = defineStore("project", {
                 }
             } catch (error) {
                 console.error("Error deleting project:", error);
+
                 this._error = error.response?.data?.errors || {
-                    general: ["Failed to delete project"],
+                    general: [
+                        error.response?.data?.message ||
+                            "Failed to delete project",
+                    ],
                 };
+
                 throw error; // Re-throw to handle in component
             } finally {
                 this._isLoading = false;
@@ -174,8 +252,9 @@ export const useProjectStore = defineStore("project", {
                 this._projects = response.data.projects.data;
             } catch (error) {
                 console.error("Error searching projects:", error);
+
                 this._error = error.response?.data?.errors || {
-                    general: ["Search failed"],
+                    general: [error.response?.data?.message || "Search failed"],
                 };
             } finally {
                 this._isLoading = false;

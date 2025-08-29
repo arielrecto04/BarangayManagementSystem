@@ -55,7 +55,10 @@ function handleStatusUpdated() {
         <div class="m-5">
             <!-- Header -->
             <div class="flex items-center justify-between mb-4">
-                <h1 class="text-2xl font-semibold">Announcements & Events</h1>
+                <div>
+                    <h1 class="text-base sm:text-xl lg:text-2xl font-semibold text-gray-900">Project Management</h1>
+                    <p class="text-gray-600">Create, Manage, and Share Community Announcements and Events</p>
+                </div>
                 <router-link to="/announcement-events/add-announcement-event"
                     class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 flex items-center gap-2">
                     <PlusIcon class="w-5 h-5" />

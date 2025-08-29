@@ -4,7 +4,9 @@ import { useRouter } from 'vue-router';
 import { useProjectStore } from '@/Stores';
 import { Loader } from '@/Components';
 import { storeToRefs } from 'pinia';
+import useToast from '@/Utils/useToast';
 
+const { showToast } = useToast();
 const router = useRouter();
 const projectStore = useProjectStore();
 const { isLoading, error } = storeToRefs(projectStore);
@@ -37,21 +39,25 @@ const handleSubmit = async () => {
     try {
         isSubmitting.value = true;
 
+        // Validate required fields
+        if (!form.value.title.trim()) {
+            showToast({ icon: 'error', title: 'Project title is required.' });
+            return;
+        }
+
         // Create FormData for file uploads
         const formData = new FormData();
 
-        // Add all form fields to FormData
+        // Add all form fields to FormData (except files)
         Object.keys(form.value).forEach(key => {
-            if (key === 'files' && form.value[key] && form.value[key].length > 0) {
-                // Handle multiple files
-                for (let i = 0; i < form.value[key].length; i++) {
-                    formData.append('files[]', form.value[key][i]);
-                }
+            if (key === 'files') {
+                // Skip files here, handle separately
+                return;
             } else if (key === 'assigned_organizations') {
                 // Handle assigned organizations array
-                if (Array.isArray(form.value[key])) {
-                    form.value[key].forEach(org => {
-                        formData.append('assigned_organizations[]', org);
+                if (Array.isArray(form.value[key]) && form.value[key].length > 0) {
+                    form.value[key].forEach((org, index) => {
+                        formData.append(`assigned_organizations[${index}]`, org);
                     });
                 }
             } else if (form.value[key] !== null && form.value[key] !== undefined && form.value[key] !== '') {
@@ -59,20 +65,183 @@ const handleSubmit = async () => {
             }
         });
 
-        await projectStore.addProject(formData);
+        // Handle files separately with better validation
+        if (form.value.files && form.value.files.length > 0) {
+            // Validate each file before adding
+            const validFiles = [];
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            for (let i = 0; i < form.value.files.length; i++) {
+                const file = form.value.files[i];
+
+                // Check if it's actually a File object
+                if (!(file instanceof File)) {
+                    console.error('Invalid file object at index', i);
+                    continue;
+                }
+
+                // Validate file type
+                if (!allowedTypes.includes(file.type)) {
+                    showToast({
+                        icon: 'error',
+                        title: `Invalid file type: ${file.name}. Allowed types: JPG, PNG, PDF, DOC, DOCX`
+                    });
+                    return;
+                }
+
+                // Validate file size
+                if (file.size > maxSize) {
+                    showToast({
+                        icon: 'error',
+                        title: `File too large: ${file.name}. Maximum size is 10MB`
+                    });
+                    return;
+                }
+
+                // Validate file is not empty
+                if (file.size === 0) {
+                    showToast({
+                        icon: 'error',
+                        title: `Empty file: ${file.name}`
+                    });
+                    return;
+                }
+
+                validFiles.push(file);
+            }
+
+            // Add validated files to FormData
+            validFiles.forEach((file, index) => {
+                formData.append('files[]', file, file.name);
+            });
+
+            console.log(`Added ${validFiles.length} valid files to form data`);
+        } else {
+            console.log('No files to upload');
+        }
+
+        // Debug: Log FormData contents
+        console.log('FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(key, `File: ${value.name} (${value.size} bytes, ${value.type})`);
+            } else {
+                console.log(key, value);
+            }
+        }
+
+        // Set proper headers for file upload
+        const config = {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        };
+
+        await projectStore.addProject(formData, config);
 
         if (!error.value) {
+            showToast({ icon: 'success', title: 'Project created successfully!' });
             router.push({ name: 'List Projects' });
+        } else {
+            // Handle specific validation errors
+            if (error.value['files.0']) {
+                showToast({
+                    icon: 'error',
+                    title: `File validation error: ${error.value['files.0'][0]}`
+                });
+            } else {
+                showToast({ icon: 'error', title: 'Failed to create project. Please check the form.' });
+            }
         }
     } catch (err) {
         console.error('Error creating project:', err);
+
+        // Log detailed error information
+        if (err.response?.data?.errors) {
+            console.error('Validation errors:', err.response.data.errors);
+
+            // Show specific validation errors
+            const errors = err.response.data.errors;
+
+            // Handle file-specific errors
+            if (errors['files.0']) {
+                showToast({
+                    icon: 'error',
+                    title: `File error: ${errors['files.0'][0]}`
+                });
+                return;
+            }
+
+            // Handle other validation errors
+            const firstErrorKey = Object.keys(errors)[0];
+            if (firstErrorKey && errors[firstErrorKey]) {
+                const errorMessage = Array.isArray(errors[firstErrorKey])
+                    ? errors[firstErrorKey][0]
+                    : errors[firstErrorKey];
+
+                showToast({
+                    icon: 'error',
+                    title: `${firstErrorKey.replace('_', ' ')}: ${errorMessage}`
+                });
+                return;
+            }
+        }
+
+        showToast({
+            icon: 'error',
+            title: 'An unexpected error occurred while creating the project.'
+        });
     } finally {
         isSubmitting.value = false;
     }
 };
 
 const handleFileUpload = (event) => {
-    form.value.files = event.target.files;
+    const newFiles = Array.from(event.target.files);
+
+    // Validate file types and sizes
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    const validFiles = [];
+    const invalidFiles = [];
+
+    newFiles.forEach(file => {
+        if (!allowedTypes.includes(file.type)) {
+            invalidFiles.push(`${file.name} - Invalid file type`);
+        } else if (file.size > maxSize) {
+            invalidFiles.push(`${file.name} - File too large (max 10MB)`);
+        } else {
+            validFiles.push(file);
+        }
+    });
+
+    if (invalidFiles.length > 0) {
+        showToast({
+            icon: 'error',
+            title: `Invalid files: ${invalidFiles.join(', ')}`
+        });
+    }
+
+    // Remove duplicate files by name
+    const existingNames = new Set(form.value.files.map(file => file.name));
+    const uniqueValidFiles = validFiles.filter(file => !existingNames.has(file.name));
+
+    form.value.files = [...form.value.files, ...uniqueValidFiles];
+
+    console.log('Files selected:', form.value.files.map(f => ({
+        name: f.name,
+        size: f.size,
+        type: f.type
+    })));
+
+    // Clear the input
+    event.target.value = '';
+};
+
+const removeFile = (index) => {
+    form.value.files.splice(index, 1);
 };
 
 // Organization management
@@ -92,7 +261,7 @@ const removeOrganization = (index) => {
 // Clear errors when user starts typing
 const clearFieldError = (fieldName) => {
     if (error.value && error.value[fieldName]) {
-        projectStore.clearErrors();
+        projectStore.clearError();
     }
 };
 </script>
@@ -108,7 +277,7 @@ const clearFieldError = (fieldName) => {
             </button>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="space-y-6" enctype="multipart/form-data">
+        <form @submit.prevent="handleSubmit" class="space-y-6">
             <!-- Basic Information -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -281,13 +450,59 @@ const clearFieldError = (fieldName) => {
                     placeholder="Describe the funding disbursement schedule..."></textarea>
             </div>
 
-            <!-- Files -->
+            <!-- Files Upload Section -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Project Files</label>
-                <input type="file" multiple @change="handleFileUpload" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                    class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500">
-                <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, JPEG, PNG, PDF, DOC, DOCX</p>
-                <p v-if="error?.files" class="text-red-500 text-sm mt-1">{{ error.files[0] }}</p>
+
+                <!-- Hidden file input -->
+                <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
+                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+
+                <!-- Upload button -->
+                <button type="button" @click="$refs.fileInput.click()"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Upload Files
+                </button>
+
+                <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, JPEG, PNG, PDF, DOC, DOCX (Max 10MB each)
+                </p>
+
+                <!-- Display file validation errors -->
+                <div v-if="error && (error['files.0'] || error.files)" class="mt-2">
+                    <p class="text-red-500 text-sm">
+                        {{ error['files.0'] ? error['files.0'][0] : (error.files ? error.files[0] : '') }}
+                    </p>
+                </div>
+
+                <!-- Show selected files -->
+                <div v-if="form.files && form.files.length > 0" class="mt-3 space-y-2">
+                    <p class="text-sm text-gray-600 mb-2">Selected files:</p>
+                    <div v-for="(file, index) in form.files" :key="index"
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <div class="min-w-0">
+                                <p class="text-sm text-gray-900 truncate">{{ file.name }}</p>
+                                <p class="text-xs text-gray-500">{{ Math.round(file.size / 1024) }} KB</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="removeFile(index)"
+                            class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Form Actions -->

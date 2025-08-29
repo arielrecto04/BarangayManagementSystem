@@ -37,7 +37,10 @@ onMounted(() => {
         <div class="p-2 sm:p-5 lg:p-6">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-6 gap-2 sm:gap-0">
-                <h1 class="text-base sm:text-xl lg:text-2xl font-semibold text-gray-900">Project Management</h1>
+                <div>
+                    <h1 class="text-base sm:text-xl lg:text-2xl font-semibold text-gray-900">Project Management</h1>
+                    <p class="text-gray-600">Create, Manage, and Track Barangay Projects</p>
+                </div>
                 <router-link to="/projects/add-project"
                     class="bg-green-700 text-white px-3 py-1.5 sm:py-2 rounded-md hover:bg-green-800 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm font-medium">
                     <PlusIcon class="w-3 h-3 sm:w-4 sm:h-4" />
@@ -55,6 +58,26 @@ onMounted(() => {
                     </div>
                     <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ totalProjects }}</div>
                     <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">All projects</div>
+                </div>
+
+                <!-- Approved -->
+                <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
+                    <div class="flex justify-between items-start mb-1 sm:mb-3">
+                        <div class="text-xs font-medium text-gray-600 leading-tight">Approved</div>
+                        <HandThumbUpIcon class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-teal-500" />
+                    </div>
+                    <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ approved }}</div>
+                    <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Approved projects</div>
+                </div>
+
+                <!-- Rejected -->
+                <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
+                    <div class="flex justify-between items-start mb-1 sm:mb-3">
+                        <div class="text-xs font-medium text-gray-600 leading-tight">Rejected</div>
+                        <XCircleIcon class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-500" />
+                    </div>
+                    <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ rejected }}</div>
+                    <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Rejected projects</div>
                 </div>
 
                 <!-- Planning -->
@@ -97,25 +120,6 @@ onMounted(() => {
                     <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Finished projects</div>
                 </div>
 
-                <!-- Approved -->
-                <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
-                    <div class="flex justify-between items-start mb-1 sm:mb-3">
-                        <div class="text-xs font-medium text-gray-600 leading-tight">Approved</div>
-                        <HandThumbUpIcon class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-teal-500" />
-                    </div>
-                    <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ approved }}</div>
-                    <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Approved projects</div>
-                </div>
-
-                <!-- Rejected -->
-                <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
-                    <div class="flex justify-between items-start mb-1 sm:mb-3">
-                        <div class="text-xs font-medium text-gray-600 leading-tight">Rejected</div>
-                        <XCircleIcon class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-500" />
-                    </div>
-                    <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ rejected }}</div>
-                    <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Rejected projects</div>
-                </div>
             </div>
 
             <!-- Nested List Project View -->

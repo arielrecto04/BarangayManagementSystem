@@ -21,7 +21,7 @@ const route = useRoute();
             <div class="bg-white p-4 sm:p-5 shadow-lg rounded-lg w-full md:w-1/4">
                 <h1 class="uppercase font-bold text-lg sm:text-xl">Health Service Manager</h1>
                 <p class="text-gray-600 text-sm sm:text-base">
-                    Oversee announcement and health data.
+                    Manage Health Records and Announcements
                 </p>
             </div>
 
