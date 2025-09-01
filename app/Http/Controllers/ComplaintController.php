@@ -130,15 +130,33 @@ class ComplaintController extends Controller
 
             $complaint = Complaint::findOrFail($id);
 
-            // Handle supporting documents
+            // FIXED: Handle supporting documents properly
             $finalDocuments = [];
 
-            // Keep existing documents if specified
+            // Process existing documents - ALWAYS process this field
             if ($request->has('existing_documents')) {
-                $existingDocs = json_decode($request->existing_documents, true);
-                if (is_array($existingDocs)) {
-                    $finalDocuments = array_merge($finalDocuments, $existingDocs);
+                $existingDocsJson = $request->existing_documents;
+                Log::info('Existing documents received: ' . $existingDocsJson);
+
+                if (!empty($existingDocsJson)) {
+                    $existingDocs = json_decode($existingDocsJson, true);
+                    if (is_array($existingDocs)) {
+                        $finalDocuments = $existingDocs;
+                        Log::info('Processed existing documents: ' . count($finalDocuments) . ' files');
+                    } else {
+                        Log::warning('Invalid existing_documents JSON format');
+                    }
+                } else {
+                    Log::info('Empty existing_documents - all existing files will be removed');
                 }
+            } else {
+                // If existing_documents is not provided, keep current documents
+                // This maintains backward compatibility
+                $currentDocs = $complaint->supporting_documents;
+                if (is_array($currentDocs)) {
+                    $finalDocuments = $currentDocs;
+                }
+                Log::info('No existing_documents field - keeping current documents');
             }
 
             // Add new uploaded files
@@ -152,26 +170,33 @@ class ComplaintController extends Controller
                         'name' => $originalName
                     ];
                 }
+                Log::info('Added ' . count($request->file('supporting_documents')) . ' new files');
             }
 
-            // Update supporting documents if any changes were made
-            if (!empty($finalDocuments) || $request->has('supporting_documents') || $request->has('existing_documents')) {
+            // FIXED: Always update supporting_documents when the field is being managed
+            if ($request->has('existing_documents') || $request->hasFile('supporting_documents')) {
                 $validated['supporting_documents'] = $finalDocuments;
+                Log::info('Final documents count: ' . count($finalDocuments));
             }
 
             $complaint->update($validated);
 
+            // Log the final state for debugging
+            Log::info('Complaint updated. Supporting documents in DB: ' . json_encode($complaint->fresh()->supporting_documents));
+
             return response()->json([
                 'message' => 'Complaint updated successfully',
-                'data' => $complaint,
+                'data' => $complaint->fresh(), // Return fresh data from DB
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed: ' . json_encode($e->errors()));
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
             Log::error('Error updating complaint: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'message' => 'An error occurred while updating the complaint',
                 'error' => $e->getMessage()

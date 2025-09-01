@@ -115,18 +115,44 @@ watch(selectedRespondent, (val) => {
 // Methods
 const handleFileUpload = (event) => {
     const newFiles = Array.from(event.target.files);
+
+    console.log('Files selected:', newFiles.map(f => ({
+        name: f.name,
+        size: f.size,
+        type: f.type
+    })));
+
+    // Check for duplicates
     const existingNames = new Set(
         blotterDataForm.value.supporting_documents.map(file => file.name)
     );
-    const uniqueNewFiles = newFiles.filter(file => !existingNames.has(file.name));
 
+    const uniqueNewFiles = newFiles.filter(file => {
+        if (existingNames.has(file.name)) {
+            console.warn('Duplicate file detected:', file.name);
+            return false;
+        }
+        return true;
+    });
+
+    if (uniqueNewFiles.length !== newFiles.length) {
+        showToast({
+            icon: 'warning',
+            title: 'Some duplicate files were skipped'
+        });
+    }
+
+    // Add unique files to form
     blotterDataForm.value.supporting_documents = [
         ...blotterDataForm.value.supporting_documents,
         ...uniqueNewFiles
     ];
+
+    console.log('Total files after upload:', blotterDataForm.value.supporting_documents.length);
+
+    // Clear input to allow re-selecting the same file
     event.target.value = '';
 };
-
 const validateForm = () => {
     errors.value = {};
     let isValid = true;
@@ -192,32 +218,86 @@ const createBlotter = async () => {
 
         console.log('✅ Validation passed, creating FormData...');
 
+        // FIXED: Use the store's prepareFormData method or create FormData properly
         const formData = new FormData();
 
-        // Append all form fields
-        Object.entries(blotterDataForm.value).forEach(([key, value]) => {
-            if (key === 'supporting_documents' && Array.isArray(value)) {
-                console.log(`Adding ${value.length} files for supporting_documents`);
-                value.forEach(file => {
-                    formData.append('supporting_documents[]', file);
-                });
+        // Add required fields that might be missing
+        const formDataWithDefaults = {
+            ...blotterDataForm.value,
+            complainants_type: 'App\\Models\\Resident',
+            respondents_type: 'App\\Models\\Resident',
+            total_cases: '0',
+            witness: blotterDataForm.value.witness || ''
+        };
+
+        // Append all form fields except supporting_documents
+        Object.entries(formDataWithDefaults).forEach(([key, value]) => {
+            if (key === 'supporting_documents') {
+                // Handle files separately
+                if (Array.isArray(value) && value.length > 0) {
+                    console.log(`Adding ${value.length} files for supporting_documents`);
+                    value.forEach((file, index) => {
+                        formData.append('supporting_documents[]', file);
+                        console.log(`File ${index}:`, file.name, file.type, file.size);
+                    });
+                } else {
+                    console.log('No supporting documents to add');
+                }
             } else {
                 console.log(`Adding form field: ${key} = ${value}`);
-                formData.append(key, value);
+                formData.append(key, value || '');
             }
         });
 
         // Debug FormData contents
         console.log('FormData contents:');
         for (let pair of formData.entries()) {
-            console.log(pair[0], pair[1]);
+            if (pair[1] instanceof File) {
+                console.log(pair[0], 'File:', pair[1].name, pair[1].type, pair[1].size);
+            } else {
+                console.log(pair[0], pair[1]);
+            }
         }
 
         console.log('Calling blotterStore.addBlotter...');
-        await blotterStore.addBlotter(formData);
+        const result = await blotterStore.addBlotter(formData);
 
-        console.log('✅ Blotter created successfully!');
+        console.log('✅ Blotter created successfully!', result);
         showToast({ icon: 'success', title: 'Blotter created successfully' });
+
+        // Clear form after successful creation
+        const resetForm = () => {
+            blotterDataForm.value = {
+                complainants_name: '',
+                respondents_name: '',
+                blotter_no: '',
+                filing_date: '',
+                title_case: '',
+                nature_of_case: '',
+                complainants_id: '',
+                respondents_id: '',
+                incident_location: '',
+                datetime_of_incident: '',
+                blotter_type: '',
+                barangay_case_no: '',
+                status: '',
+                description: '',
+                witness: '',
+                supporting_documents: []
+            };
+
+            selectedComplainant.value = null;
+            selectedRespondent.value = null;
+            errors.value = {};
+
+            // Clear file input
+            if (fileInput.value) {
+                fileInput.value.value = '';
+            }
+        };
+
+
+        // Navigate back to list
         router.push('/blotter/list-blotter');
 
     } catch (error) {
@@ -228,8 +308,24 @@ const createBlotter = async () => {
             status: error.response?.status,
             statusText: error.response?.statusText
         });
-        showToast({ icon: 'error', title: error.message || 'Failed to create blotter' });
+
+        // Show specific error message if available
+        let errorMessage = 'Failed to create blotter';
+        if (error.response?.data?.errors) {
+            const errors = Object.values(error.response.data.errors).flat();
+            errorMessage = errors.join(', ');
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        showToast({ icon: 'error', title: errorMessage });
     }
+};
+
+const removeFile = (index) => {
+    console.log('Removing file at index:', index);
+    blotterDataForm.value.supporting_documents.splice(index, 1);
+    console.log('Remaining files:', blotterDataForm.value.supporting_documents.length);
 };
 </script>
 

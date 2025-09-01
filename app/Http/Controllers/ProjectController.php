@@ -174,6 +174,9 @@ class ProjectController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, string $id)
     {
         try {
@@ -199,17 +202,41 @@ class ProjectController extends Controller
                 'files' => 'nullable|array',
                 'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
                 'existing_files' => 'nullable|array', // For keeping existing files
-                'existing_files.*' => 'nullable|string|url',
+                'existing_files.*' => 'nullable|string',
             ]);
 
             $project = Project::findOrFail($id);
+
+            // Get current files for comparison to delete removed files
+            $currentFiles = $project->files ? (is_array($project->files) ? $project->files : []) : [];
 
             // Handle file updates - start with existing files that should be kept
             $fileUrls = [];
             if (isset($validated['existing_files']) && is_array($validated['existing_files'])) {
                 $fileUrls = array_filter($validated['existing_files']);
-            } elseif ($project->files && is_array($project->files)) {
-                $fileUrls = $project->files;
+            }
+
+            // Determine which files to delete (were in current but not in existing_files)
+            $filesToDelete = array_diff($currentFiles, $fileUrls);
+
+            // Delete removed files from storage
+            foreach ($filesToDelete as $fileUrl) {
+                try {
+                    // Extract file path from URL
+                    $relativePath = str_replace('/storage/', '', parse_url($fileUrl, PHP_URL_PATH));
+
+                    if (Storage::disk('public')->exists($relativePath)) {
+                        Storage::disk('public')->delete($relativePath);
+                        Log::info('Deleted file:', ['path' => $relativePath]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to delete file during update:', [
+                        'project_id' => $id,
+                        'file_url' => $fileUrl,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Continue with other files
+                }
             }
 
             // Add new files
@@ -223,6 +250,13 @@ class ProjectController extends Controller
 
                             $filePath = $file->storeAs('projects', $fileName, 'public');
                             $fileUrls[] = Storage::url($filePath);
+
+                            Log::info('File uploaded successfully during update:', [
+                                'project_id' => $id,
+                                'original_name' => $originalName,
+                                'stored_name' => $fileName,
+                                'path' => $filePath
+                            ]);
                         } catch (\Exception $e) {
                             Log::error('File upload failed during update:', [
                                 'project_id' => $id,
@@ -252,6 +286,11 @@ class ProjectController extends Controller
                 'data' => $project->fresh(),
             ], 200);
         } catch (ValidationException $e) {
+            Log::error('Project update validation failed:', [
+                'project_id' => $id,
+                'errors' => $e->errors()
+            ]);
+
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
@@ -274,7 +313,6 @@ class ProjectController extends Controller
             ], 500);
         }
     }
-
     /**
      * Remove the specified resource from storage.
      */

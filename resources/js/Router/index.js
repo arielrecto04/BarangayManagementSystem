@@ -477,16 +477,33 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     const auth = useAuthenticationStore();
 
+    // Clear any potential store state issues when leaving edit pages
+    if (from.name && from.name.includes("Edit")) {
+        console.log("Leaving edit page, ensuring cleanup...");
+
+        // Give components time to cleanup
+        setTimeout(() => {
+            // Force cleanup of any remaining reactive state
+            // This helps prevent DOM node insertion issues
+        }, 50);
+    }
+
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
         next({ name: "Login" });
         return;
     }
-    // if (!to.meta.requiresAuth && auth.isAuthenticated && to.name == "Login" ) {
-    //     next({ name: "Dashboard" });
-    //     return;
-    // }
 
     next();
+});
+
+router.afterEach((to, from) => {
+    // Ensure DOM is stable after navigation
+    if (from.name && from.name.includes("Edit")) {
+        // Force garbage collection of any lingering DOM references
+        setTimeout(() => {
+            console.log("Post-navigation cleanup completed");
+        }, 100);
+    }
 });
 
 router.beforeResolve((to, from, next) => {

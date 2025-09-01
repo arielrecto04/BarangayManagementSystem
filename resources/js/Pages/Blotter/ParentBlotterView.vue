@@ -33,7 +33,7 @@ const resolved = computed(() => blotters.value.filter(b => b.status === 'Resolve
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-6 gap-2 sm:gap-0">
         <div>
-          <h1 class="text-base sm:text-xl lg:text-2xl font-semibold text-gray-900">Project Management</h1>
+          <h1 class="text-base sm:text-xl lg:text-2xl font-semibold text-gray-900">Blotter Management</h1>
           <p class="text-gray-600">Record, Manage, and Monitor Blotter and Crime Reports</p>
         </div>
         <router-link to="/blotter/add-blotter"

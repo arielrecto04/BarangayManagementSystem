@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Blotter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BlotterController extends Controller
 {
@@ -47,49 +48,105 @@ class BlotterController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'blotter_no' => 'required',
-            'filing_date' => 'required|date',
-            'title_case' => 'required',
-            'nature_of_case' => 'required',
-            'complainants_name' => 'required',
-            'complainants_id' => 'required|exists:residents,id',
-            'respondents_name' => 'required',
-            'respondents_id' => 'required|exists:residents,id',
-            'incident_location' => 'required',
-            'datetime_of_incident' => 'required|date',
-            'blotter_type' => 'required',
-            'barangay_case_no' => 'required',
-            'total_cases' => 'nullable',
-            'status' => 'required|in:Open,In Progress,Resolved',
-            'description' => 'required|string|max:1000',
-            'witness' => 'nullable|string|max:255',
-            'supporting_documents' => 'nullable|array',
-            'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
-        ]);
+        try {
+            Log::info('Blotter store request received');
+            Log::info('Request data: ' . json_encode($request->all()));
 
-        $fileData = [];
-        if ($request->hasFile('supporting_documents')) {
-            foreach ($request->file('supporting_documents') as $file) {
-                $originalName = $file->getClientOriginalName();
-                $path = $file->store('documents', 'public');
-                $fileData[] = [
-                    'name' => $originalName,
-                    'path' => $path,
-                    'mime_type' => $file->getClientMimeType(),
-                ];
+            $validated = $request->validate([
+                'blotter_no' => 'required',
+                'filing_date' => 'required|date',
+                'title_case' => 'required',
+                'nature_of_case' => 'required',
+                'complainants_name' => 'required',
+                'complainants_id' => 'required|exists:residents,id',
+                'respondents_name' => 'required',
+                'respondents_id' => 'required|exists:residents,id',
+                'incident_location' => 'required',
+                'datetime_of_incident' => 'required|date',
+                'blotter_type' => 'required',
+                'barangay_case_no' => 'required',
+                'total_cases' => 'nullable',
+                'status' => 'required|in:Open,In Progress,Resolved',
+                'description' => 'required|string|max:1000',
+                'witness' => 'nullable|string|max:255',
+                'supporting_documents' => 'nullable|array',
+                'supporting_documents.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:2048',
+            ]);
+
+            Log::info('Validation passed');
+
+            // FIXED: Handle file uploads properly
+            $fileData = [];
+            if ($request->hasFile('supporting_documents')) {
+                Log::info('Processing ' . count($request->file('supporting_documents')) . ' files');
+
+                foreach ($request->file('supporting_documents') as $file) {
+                    $originalName = $file->getClientOriginalName();
+                    $path = $file->store('documents', 'public');
+
+                    $fileInfo = [
+                        'name' => $originalName,
+                        'path' => $path,
+                        'mime_type' => $file->getClientMimeType(),
+                    ];
+
+                    $fileData[] = $fileInfo;
+                    Log::info('File processed: ' . json_encode($fileInfo));
+                }
+
+                // Store as JSON string
+                $validated['supporting_documents'] = json_encode($fileData);
+                Log::info('Final supporting_documents JSON: ' . $validated['supporting_documents']);
+            } else {
+                // FIXED: Explicitly set to null when no files
+                $validated['supporting_documents'] = null;
+                Log::info('No files uploaded, setting supporting_documents to null');
             }
-            $validated['supporting_documents'] = json_encode($fileData);
+
+            $blotter = Blotter::create($validated);
+
+            // FIXED: Return consistent response format with processed documents
+            $documents = [];
+            if (!empty($blotter->supporting_documents)) {
+                $decoded = json_decode($blotter->supporting_documents, true);
+                if (is_array($decoded)) {
+                    $documents = array_map(function ($doc) {
+                        return [
+                            'name' => $doc['name'] ?? basename($doc['path'] ?? ''),
+                            'url' => isset($doc['path']) ? asset('storage/' . $doc['path']) : null,
+                            'mime_type' => $doc['mime_type'] ?? null,
+                            'path' => $doc['path'] ?? null,
+                        ];
+                    }, $decoded);
+                }
+            }
+
+            // Prepare response data
+            $responseData = $blotter->toArray();
+            $responseData['supporting_documents'] = $documents;
+
+            Log::info('Blotter created successfully with ID: ' . $blotter->id);
+            Log::info('Response supporting_documents: ' . json_encode($documents));
+
+            return response()->json([
+                'message' => 'Blotter created successfully',
+                'data' => $responseData,
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed: ' . json_encode($e->errors()));
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error creating blotter: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'An error occurred while creating the blotter',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $blotter = Blotter::create($validated);
-
-        return response()->json([
-            'message' => 'Blotter created successfully',
-            'data' => $blotter,
-        ], 201);
     }
-
     /**
      * Display the specified resource.
      */
@@ -164,18 +221,37 @@ class BlotterController extends Controller
 
         $blotter = Blotter::findOrFail($id);
 
-        // Handle file uploads
+        // FIXED: Handle file uploads properly
         $finalDocuments = [];
 
-        // First, handle existing documents that should be kept
-        if ($request->has('existing_documents') && !empty($request->existing_documents)) {
-            $existingDocs = json_decode($request->existing_documents, true);
-            if (is_array($existingDocs)) {
-                $finalDocuments = $existingDocs;
+        // Process existing documents - ALWAYS check this field when provided
+        if ($request->has('existing_documents')) {
+            $existingDocsJson = $request->existing_documents;
+            Log::info('Blotter existing documents received: ' . $existingDocsJson);
+
+            if (!empty($existingDocsJson)) {
+                $existingDocs = json_decode($existingDocsJson, true);
+                if (is_array($existingDocs)) {
+                    $finalDocuments = $existingDocs;
+                    Log::info('Blotter processed existing documents: ' . count($finalDocuments) . ' files');
+                } else {
+                    Log::warning('Invalid existing_documents JSON format for blotter');
+                }
+            } else {
+                Log::info('Empty existing_documents - all existing blotter files will be removed');
             }
+        } else {
+            // If existing_documents is not provided, keep current documents
+            if (!empty($blotter->supporting_documents)) {
+                $currentDocs = json_decode($blotter->supporting_documents, true);
+                if (is_array($currentDocs)) {
+                    $finalDocuments = $currentDocs;
+                }
+            }
+            Log::info('No existing_documents field - keeping current blotter documents');
         }
 
-        // Then, handle new file uploads
+        // Add new uploaded files
         if ($request->hasFile('supporting_documents')) {
             foreach ($request->file('supporting_documents') as $file) {
                 $originalName = $file->getClientOriginalName();
@@ -186,29 +262,25 @@ class BlotterController extends Controller
                     'mime_type' => $file->getClientMimeType(),
                 ];
             }
-        } else if (!$request->has('existing_documents')) {
-            // If no new files and no existing documents specified, keep current documents
-            if (!empty($blotter->supporting_documents)) {
-                $currentDocs = json_decode($blotter->supporting_documents, true);
-                if (is_array($currentDocs)) {
-                    $finalDocuments = $currentDocs;
-                }
-            }
+            Log::info('Added ' . count($request->file('supporting_documents')) . ' new files to blotter');
         }
 
-        // Update supporting documents if there are any changes
-        if (!empty($finalDocuments)) {
-            $validated['supporting_documents'] = json_encode($finalDocuments);
-        } else {
-            $validated['supporting_documents'] = null;
+        // FIXED: Always update supporting_documents when the field is being managed
+        if ($request->has('existing_documents') || $request->hasFile('supporting_documents')) {
+            if (!empty($finalDocuments)) {
+                $validated['supporting_documents'] = json_encode($finalDocuments);
+            } else {
+                $validated['supporting_documents'] = null; // Explicitly set to null when empty
+            }
+            Log::info('Final blotter documents count: ' . count($finalDocuments));
         }
 
         $blotter->update($validated);
 
         // Return the updated blotter with processed documents for response
         $documents = [];
-        if (!empty($blotter->supporting_documents)) {
-            $decoded = json_decode($blotter->supporting_documents, true);
+        if (!empty($blotter->fresh()->supporting_documents)) {
+            $decoded = json_decode($blotter->fresh()->supporting_documents, true);
             if (is_array($decoded)) {
                 $documents = array_map(function ($doc) {
                     return [
@@ -221,8 +293,10 @@ class BlotterController extends Controller
             }
         }
 
-        $responseData = $blotter->toArray();
+        $responseData = $blotter->fresh()->toArray(); // Get fresh data from DB
         $responseData['supporting_documents'] = $documents;
+
+        Log::info('Blotter updated. Supporting documents in DB: ' . json_encode($blotter->fresh()->supporting_documents));
 
         return response()->json([
             'message' => 'Blotter updated successfully',

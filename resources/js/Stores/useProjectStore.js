@@ -136,44 +136,54 @@ export const useProjectStore = defineStore("project", {
             }
         },
 
-        async updateProject() {
+        async updateProject(projectId, projectData) {
             try {
                 this._error = null;
                 this._isLoading = true;
 
-                const response = await axios.put(
-                    `/projects/${this._project.id}`,
-                    this._project
-                );
+                const config = {};
 
-                const updated = response.data.data || response.data;
-                this._projects = this._projects.map((project) =>
-                    project.id === updated.id ? updated : project
-                );
-            } catch (error) {
-                console.error("Error updating project:", error);
-
-                if (error.response) {
-                    console.error(
-                        "Update response status:",
-                        error.response.status
+                if (projectData instanceof FormData) {
+                    config.headers = {
+                        "Content-Type": "multipart/form-data",
+                    };
+                    // Use POST with _method=PUT for Laravel FormData handling
+                    projectData.append("_method", "PUT");
+                    var response = await axios.post(
+                        `/projects/${projectId}`,
+                        projectData,
+                        config
                     );
-                    console.error("Update response data:", error.response.data);
-
-                    this._error = error.response?.data?.errors || {
-                        general: [
-                            error.response?.data?.message ||
-                                "Failed to update project",
-                        ],
-                    };
                 } else {
-                    this._error = {
-                        general: [
-                            "An unexpected error occurred while updating the project.",
-                        ],
-                    };
+                    var response = await axios.put(
+                        `/projects/${projectId}`,
+                        projectData,
+                        config
+                    );
                 }
 
+                // Update the project in the store
+                const updatedProject = response.data.data;
+                this._project = updatedProject;
+
+                // Update in the projects list if it exists
+                const projectIndex = this._projects.findIndex(
+                    (p) => p.id == projectId
+                );
+                if (projectIndex !== -1) {
+                    this._projects[projectIndex] = updatedProject;
+                }
+
+                return updatedProject;
+            } catch (error) {
+                // Enhanced error handling
+                console.error("Error updating project:", error);
+                this._error = error.response?.data?.errors || {
+                    general: [
+                        error.response?.data?.message ||
+                            "Failed to update project",
+                    ],
+                };
                 throw error;
             } finally {
                 this._isLoading = false;

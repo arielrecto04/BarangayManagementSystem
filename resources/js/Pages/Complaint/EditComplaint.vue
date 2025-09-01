@@ -101,7 +101,13 @@ const handleFileUpload = (event) => {
 
 const removeExistingDocument = (index) => {
     if (!isComponentActive || isDestroyed.value) return;
+
+    console.log('Removing existing document at index:', index);
+    console.log('Before removal:', existingSupportingDocuments.value);
+
     existingSupportingDocuments.value.splice(index, 1);
+
+    console.log('After removal:', existingSupportingDocuments.value);
 };
 
 const removeNewDocument = (index) => {
@@ -417,15 +423,18 @@ const submitForm = async () => {
 
         const formData = new FormData();
 
+        // Add all form fields except supporting_documents
         Object.entries(complaintForm.value).forEach(([key, value]) => {
             if (key !== 'supporting_documents') {
                 formData.append(key, value || '');
             }
         });
 
-        if (existingSupportingDocuments.value.length > 0) {
-            formData.append('existing_documents', JSON.stringify(existingSupportingDocuments.value));
-        }
+        // FIXED: Always send existing documents array (even if empty)
+        // This ensures that deleted files are actually removed
+        formData.append('existing_documents', JSON.stringify(existingSupportingDocuments.value));
+
+        // Add new files if any
         if (newSupportingDocuments.value.length > 0) {
             newSupportingDocuments.value.forEach(file => {
                 formData.append('supporting_documents[]', file);
@@ -433,6 +442,9 @@ const submitForm = async () => {
         }
 
         formData.append('_method', 'PATCH');
+
+        console.log('Existing documents being sent:', existingSupportingDocuments.value);
+        console.log('New documents count:', newSupportingDocuments.value.length);
 
         await complaintStore.updateComplaint(complaintId.value, formData);
 
