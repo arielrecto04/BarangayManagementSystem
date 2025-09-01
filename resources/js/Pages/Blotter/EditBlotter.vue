@@ -383,21 +383,24 @@ const handleCancel = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
+    <div class="min-h-screen bg-gray-100 flex justify-center items-start p-2 sm:p-6 lg:p-10">
         <template v-if="isLoading || !blotter || !isInitialized">
-            <div class="flex justify-center items-center">
-                <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+            <div class="flex justify-center items-center pt-20">
+                <div
+                    class="animate-spin rounded-full h-16 w-16 sm:h-24 sm:w-24 lg:h-32 lg:w-32 border-b-2 border-gray-900">
+                </div>
             </div>
         </template>
         <template v-else>
-            <form @submit.prevent="updateBlotterData" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
-                <h1 class="text-2xl font-bold mb-6">Edit Blotter</h1>
+            <form @submit.prevent="updateBlotterData"
+                class="bg-white p-4 sm:p-6 lg:p-10 rounded-lg sm:rounded-xl shadow-md w-full max-w-4xl">
+                <h1 class="text-lg sm:text-xl lg:text-2xl font-bold mb-4 sm:mb-6">Edit Blotter</h1>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
                     <!-- Complainant Searchable Dropdown -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm mb-1">Complainant</label>
+                        <label class="font-semibold text-xs sm:text-sm mb-1">Complainant</label>
                         <Multiselect v-model="selectedComplainant" :options="filteredComplainants"
                             :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
                             placeholder="Search or select complainant" :searchable="true" :show-labels="false"
@@ -407,7 +410,7 @@ const handleCancel = () => {
 
                     <!-- Respondent Searchable Dropdown -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm mb-1">Respondent</label>
+                        <label class="font-semibold text-xs sm:text-sm mb-1">Respondent</label>
                         <Multiselect v-model="selectedRespondent" :options="filteredRespondents"
                             :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
                             placeholder="Search or select respondent" :searchable="true" :show-labels="false"
@@ -417,8 +420,8 @@ const handleCancel = () => {
 
                     <!-- Nature of Case -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Nature of Case</label>
-                        <select v-model="blotter.nature_of_case" class="border rounded-md p-2"
+                        <label class="font-semibold text-xs sm:text-sm">Nature of Case</label>
+                        <select v-model="blotter.nature_of_case" class="border rounded-md p-2 text-sm"
                             :disabled="isDocumentOperationInProgress">
                             <option value="" disabled>Select Nature of Case</option>
                             <option value="civil case">Civil Case</option>
@@ -428,8 +431,8 @@ const handleCancel = () => {
 
                     <!-- Blotter Type -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Blotter Type</label>
-                        <select v-model="blotter.blotter_type" class="border rounded-md p-2"
+                        <label class="font-semibold text-xs sm:text-sm">Blotter Type</label>
+                        <select v-model="blotter.blotter_type" class="border rounded-md p-2 text-sm"
                             :disabled="isDocumentOperationInProgress">
                             <option value="" disabled>Select Blotter Type</option>
                             <option value="Incident">Incident</option>
@@ -440,50 +443,50 @@ const handleCancel = () => {
 
                     <!-- Blotter Number -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Blotter Number</label>
-                        <input v-model="blotter.blotter_no" type="text" class="border rounded-md p-2"
+                        <label class="font-semibold text-xs sm:text-sm">Blotter Number</label>
+                        <input v-model="blotter.blotter_no" type="text" class="border rounded-md p-2 text-sm"
                             placeholder="Enter Blotter No" :disabled="isDocumentOperationInProgress" />
                     </div>
 
                     <!-- Barangay Case Number -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Barangay Case Number</label>
-                        <input v-model="blotter.barangay_case_no" type="text" class="border rounded-md p-2"
+                        <label class="font-semibold text-xs sm:text-sm">Barangay Case Number</label>
+                        <input v-model="blotter.barangay_case_no" type="text" class="border rounded-md p-2 text-sm"
                             placeholder="Enter Case No" :disabled="isDocumentOperationInProgress" />
                     </div>
 
                     <!-- Title Case -->
-                    <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Title Case</label>
-                        <input v-model="blotter.title_case" type="text" class="border rounded-md p-2"
+                    <div class="flex flex-col sm:col-span-2">
+                        <label class="font-semibold text-xs sm:text-sm">Title Case</label>
+                        <input v-model="blotter.title_case" type="text" class="border rounded-md p-2 text-sm"
                             placeholder="Enter Title Case" :disabled="isDocumentOperationInProgress" />
                     </div>
 
                     <!-- Location of Incident -->
-                    <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Location of Incident</label>
-                        <input v-model="blotter.incident_location" type="text" class="border rounded-md p-2"
+                    <div class="flex flex-col sm:col-span-2">
+                        <label class="font-semibold text-xs sm:text-sm">Location of Incident</label>
+                        <input v-model="blotter.incident_location" type="text" class="border rounded-md p-2 text-sm"
                             placeholder="Enter Location of Incident" :disabled="isDocumentOperationInProgress" />
                     </div>
 
                     <!-- Date & Time of Incident -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Date & Time of Incident</label>
+                        <label class="font-semibold text-xs sm:text-sm">Date & Time of Incident</label>
                         <input type="datetime-local" v-model="blotter.datetime_of_incident"
-                            class="border rounded-md p-2" :disabled="isDocumentOperationInProgress" />
+                            class="border rounded-md p-2 text-sm" :disabled="isDocumentOperationInProgress" />
                     </div>
 
                     <!-- Filing Date & Time -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Filing Date & Time</label>
-                        <input type="datetime-local" v-model="blotter.filing_date" class="border rounded-md p-2"
+                        <label class="font-semibold text-xs sm:text-sm">Filing Date & Time</label>
+                        <input type="datetime-local" v-model="blotter.filing_date" class="border rounded-md p-2 text-sm"
                             :disabled="isDocumentOperationInProgress" />
                     </div>
 
                     <!-- Status -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Status</label>
-                        <select v-model="blotter.status" class="border rounded-md p-2"
+                        <label class="font-semibold text-xs sm:text-sm">Status</label>
+                        <select v-model="blotter.status" class="border rounded-md p-2 text-sm"
                             :disabled="isDocumentOperationInProgress">
                             <option value="" disabled>Select Status</option>
                             <option value="Open">Open</option>
@@ -494,42 +497,42 @@ const handleCancel = () => {
 
                     <!-- Witness -->
                     <div class="flex flex-col">
-                        <label class="font-semibold text-sm">Witness/es</label>
-                        <textarea v-model="blotter.witness" class="border rounded-md p-2"
+                        <label class="font-semibold text-xs sm:text-sm">Witness/es</label>
+                        <textarea v-model="blotter.witness" class="border rounded-md p-2 text-sm h-20 sm:h-auto"
                             placeholder="Enter Witness Name" :disabled="isDocumentOperationInProgress"></textarea>
                     </div>
 
                     <!-- Description (full width) -->
-                    <div class="flex flex-col col-span-2">
-                        <label class="font-semibold text-sm">Description</label>
-                        <textarea v-model="blotter.description" class="border rounded-md p-2"
+                    <div class="flex flex-col sm:col-span-2">
+                        <label class="font-semibold text-xs sm:text-sm">Description</label>
+                        <textarea v-model="blotter.description" class="border rounded-md p-2 text-sm h-24 sm:h-auto"
                             placeholder="Enter Description" rows="4"
                             :disabled="isDocumentOperationInProgress"></textarea>
                     </div>
 
                     <!-- Supporting Documents Upload (full width) -->
-                    <div class="flex flex-col col-span-2">
-                        <label class="font-semibold text-sm mb-1">Supporting Documents</label>
+                    <div class="flex flex-col sm:col-span-2">
+                        <label class="font-semibold text-xs sm:text-sm mb-1">Supporting Documents</label>
                         <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
                             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                         <button type="button"
-                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-md w-full sm:w-fit disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                             :disabled="isDocumentOperationInProgress" @click="$refs.fileInput.click()">
                             {{ isDocumentOperationInProgress ? 'Processing...' : 'Upload Files' }}
                         </button>
 
                         <!-- Existing Supporting Documents -->
                         <div v-if="existingSupportingDocuments.length > 0 && !isDocumentOperationInProgress"
-                            class="mt-2 space-y-1 text-sm text-gray-700">
+                            class="mt-2 space-y-1 text-xs sm:text-sm text-gray-700">
                             <div v-for="doc in existingSupportingDocuments" :key="doc._id"
                                 class="flex items-center gap-2 justify-between bg-blue-50 rounded px-2 py-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-blue-600">📄</span>
-                                    <span>{{ getFileName(doc) }}</span>
+                                <div class="flex items-center gap-2 min-w-0 flex-1">
+                                    <span class="text-blue-600 text-sm">📄</span>
+                                    <span class="truncate">{{ getFileName(doc) }}</span>
                                     <a v-if="doc.url" :href="doc.url" target="_blank"
-                                        class="text-blue-500 hover:underline text-xs">(View)</a>
+                                        class="text-blue-500 hover:underline text-xs whitespace-nowrap">(View)</a>
                                 </div>
-                                <button type="button" class="text-red-500 hover:underline"
+                                <button type="button" class="text-red-500 hover:underline flex-shrink-0 ml-2"
                                     @click="removeExistingDocument(doc)" aria-label="Remove existing document">
                                     ✖
                                 </button>
@@ -538,15 +541,16 @@ const handleCancel = () => {
 
                         <!-- New Supporting Documents -->
                         <div v-if="newSupportingDocuments.length && !isDocumentOperationInProgress"
-                            class="mt-2 space-y-1 text-sm text-gray-700">
+                            class="mt-2 space-y-1 text-xs sm:text-sm text-gray-700">
                             <div v-for="file in newSupportingDocuments" :key="file._id"
                                 class="flex items-center gap-2 justify-between bg-green-50 rounded px-2 py-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-green-600">📄</span>
-                                    <span>{{ file.name }}</span>
-                                    <span class="text-green-600 text-xs">(New)</span>
+                                <div class="flex items-center gap-2 min-w-0 flex-1">
+                                    <span class="text-green-600 text-sm">📄</span>
+                                    <span class="truncate">{{ file.name }}</span>
+                                    <span class="text-green-600 text-xs whitespace-nowrap">(New)</span>
                                 </div>
-                                <button type="button" class="transition-transform duration-300 hover:rotate-180"
+                                <button type="button"
+                                    class="transition-transform duration-300 hover:rotate-180 flex-shrink-0 ml-2"
                                     @click="removeNewDocument(file)" aria-label="Remove new document">
                                     ✖
                                 </button>
@@ -555,7 +559,7 @@ const handleCancel = () => {
 
                         <!-- Loading indicator for document operations -->
                         <div v-if="isDocumentOperationInProgress"
-                            class="mt-2 flex items-center gap-2 text-sm text-gray-600">
+                            class="mt-2 flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                             <div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600">
                             </div>
                             <span>Processing documents...</span>
@@ -564,14 +568,14 @@ const handleCancel = () => {
                 </div>
 
                 <!-- Buttons -->
-                <div class="mt-6 flex justify-end gap-4">
+                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
                     <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium order-1 sm:order-2"
                         :disabled="isDocumentOperationInProgress">
                         {{ isDocumentOperationInProgress ? 'Processing...' : 'Save' }}
                     </button>
                     <button @click="handleCancel" type="button"
-                        class="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium order-2 sm:order-1"
                         :disabled="isDocumentOperationInProgress">
                         Cancel
                     </button>

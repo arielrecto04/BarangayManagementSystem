@@ -42,14 +42,14 @@ onMounted(() => {
                     <p class="text-gray-600">Create, Manage, and Track Barangay Projects</p>
                 </div>
                 <router-link to="/projects/add-project"
-                    class="bg-green-700 text-white px-3 py-1.5 sm:py-2 rounded-md hover:bg-green-800 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm font-medium">
+                    class="bg-black text-white px-3 py-1.5 sm:py-2 rounded-md hover:bg-gray-800 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm font-medium">
                     <PlusIcon class="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>New Project</span>
+                    <span>New</span>
                 </router-link>
             </div>
 
-            <!-- Cards Grid - Updated to 3 columns for better layout -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6 mb-4 sm:mb-8">
+            <!-- Cards Grid - Mobile-First 2x2 Layout -->
+            <div class="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6 mb-4 sm:mb-8">
                 <!-- Total Projects -->
                 <div class="bg-white rounded-md sm:rounded-lg p-2.5 sm:p-4 lg:p-5 shadow-sm">
                     <div class="flex justify-between items-start mb-1 sm:mb-3">
@@ -119,7 +119,6 @@ onMounted(() => {
                     <div class="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{{ completed }}</div>
                     <div class="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Finished projects</div>
                 </div>
-
             </div>
 
             <!-- Nested List Project View -->

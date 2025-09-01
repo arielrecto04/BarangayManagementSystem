@@ -307,83 +307,86 @@ onMounted(async () => {
         </div>
 
         <!-- Mobile Card View -->
-        <div v-else class="block sm:hidden">
-            <div class="space-y-3">
-                <div v-for="blotter in blotters" :key="blotter.id"
-                    class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex-1 min-w-0">
-                            <div class="text-xs font-medium text-gray-500 mb-1">Complainant</div>
-                            <div class="text-sm font-semibold text-gray-900 truncate">
-                                {{ getResidentName(blotter.complainants_id) }}
+        <template v-else>
+            <!-- Mobile Card View -->
+            <div class="block sm:hidden">
+                <div class="space-y-3">
+                    <div v-for="blotter in blotters" :key="blotter.id"
+                        class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-medium text-gray-500 mb-1">Complainant</div>
+                                <div class="text-sm font-semibold text-gray-900 truncate">
+                                    {{ getResidentName(blotter.complainants_id) }}
+                                </div>
+                            </div>
+                            <button @click="openModal(blotter)"
+                                class="ml-2 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                                :disabled="!blotter || !blotter.id">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="text-xs font-medium text-gray-500 mb-1">Respondent</div>
+                            <div class="text-sm text-gray-700 truncate">
+                                {{ getResidentName(blotter.respondents_id) }}
                             </div>
                         </div>
-                        <button @click="openModal(blotter)"
-                            class="ml-2 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
-                            :disabled="!blotter || !blotter.id">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                        </button>
-                    </div>
 
-                    <div class="mb-2">
-                        <div class="text-xs font-medium text-gray-500 mb-1">Respondent</div>
-                        <div class="text-sm text-gray-700 truncate">
-                            {{ getResidentName(blotter.respondents_id) }}
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <div class="bg-gray-100 px-2 py-1 rounded">
+                                <span class="text-gray-600">ID:</span>
+                                <span class="font-medium">{{ blotter.blotter_no || 'N/A' }}</span>
+                            </div>
+                            <div class="bg-gray-100 px-2 py-1 rounded">
+                                <span :class="{
+                                    'text-green-600 font-semibold': blotter.status === 'Resolved',
+                                    'text-yellow-600 font-semibold': blotter.status === 'In Progress',
+                                    'text-red-600 font-semibold': blotter.status === 'Open'
+                                }">
+                                    {{ blotter.status || 'N/A' }}
+                                </span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="flex flex-wrap gap-2 text-xs">
-                        <div class="bg-gray-100 px-2 py-1 rounded">
-                            <span class="text-gray-600">ID:</span>
-                            <span class="font-medium">{{ blotter.blotter_no || 'N/A' }}</span>
-                        </div>
-                        <div class="bg-gray-100 px-2 py-1 rounded">
-                            <span :class="{
-                                'text-green-600 font-semibold': blotter.status === 'Resolved',
-                                'text-yellow-600 font-semibold': blotter.status === 'In Progress',
-                                'text-red-600 font-semibold': blotter.status === 'Open'
-                            }">
-                                {{ blotter.status || 'N/A' }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mt-2 pt-2 border-t border-gray-100">
-                        <div class="text-xs text-gray-600 truncate" :title="blotter.title_case">
-                            {{ blotter.title_case || 'N/A' }}
-                        </div>
-                        <div class="text-xs text-gray-500 mt-1">
-                            {{ formatDateTime(blotter.filing_date) }}
+                        <div class="mt-2 pt-2 border-t border-gray-100">
+                            <div class="text-xs text-gray-600 truncate" :title="blotter.title_case">
+                                {{ blotter.title_case || 'N/A' }}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                {{ formatDateTime(blotter.filing_date) }}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Desktop Table View -->
-        <div v-else class="hidden sm:block">
-            <Table :columns="desktopColumns" :rows="blotters">
-                <template #actions="{ row }">
-                    <div class="flex gap-2">
-                        <button @click="openModal(row)" title="View"
-                            class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125"
-                            :disabled="!row || !row.id">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                        </button>
-                    </div>
-                </template>
-            </Table>
-        </div>
+            <!-- Desktop Table View -->
+            <div class="hidden sm:block">
+                <Table :columns="desktopColumns" :rows="blotters">
+                    <template #actions="{ row }">
+                        <div class="flex gap-2">
+                            <button @click="openModal(row)" title="View"
+                                class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125"
+                                :disabled="!row || !row.id">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </template>
+                </Table>
+            </div>
+        </template>
 
         <!-- Pagination -->
         <div v-if="paginate && !isLoading" class="mt-4">

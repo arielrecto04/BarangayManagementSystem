@@ -72,32 +72,30 @@ watch(() => route.query, (newQuery) => {
 
 <template>
     <AuthLayout>
-        <!-- Header Row -->
-        <div
-            class="m-4 flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 md:p-6 shadow-md rounded-lg gap-4">
-            <!-- Resident Manager Info (LEFT) -->
-            <div class="flex-1">
-                <h1 class="uppercase font-bold text-xl md:text-2xl mb-1">Resident Manager</h1>
-                <p class="text-gray-600 text-sm md:text-base">Manage and View Resident Information</p>
-            </div>
+        <div class="p-2 sm:p-5 lg:p-6">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-6 gap-2 sm:gap-0">
+                <div>
+                    <h1 class="text-base sm:text-xl lg:text-2xl font-semibold text-gray-900">
+                        Resident Manager
+                    </h1>
+                    <p class="text-gray-600 text-xs sm:text-sm lg:text-base">
+                        Manage and View Resident Information
+                    </p>
+                </div>
 
-            <!-- Add Resident Button (RIGHT) -->
-            <div class="flex-shrink-0">
+                <!-- Add Resident Button -->
                 <template v-if="router.currentRoute.value.path === '/residents/list-residents'">
-                    <router-link to="/residents/add-resident">
-                        <button
-                            class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 md:py-3 px-3 md:px-5 rounded-lg shadow transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                            <PlusIcon class="w-5 h-5 md:w-6 md:h-6" />
-                            <span class="hidden md:inline">Add Resident</span>
-                        </button>
+                    <router-link to="/residents/add-resident"
+                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 sm:py-2 rounded-md shadow transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm font-medium">
+                        <PlusIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span>Add</span>
                     </router-link>
                 </template>
             </div>
-        </div>
 
-        <!-- Page Content -->
-        <div class="m-4">
-            <router-view></router-view>
+            <!-- Nested List Resident View -->
+            <router-view />
         </div>
     </AuthLayout>
 </template>

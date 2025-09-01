@@ -5,16 +5,18 @@ import { useResidentStore } from '@/Stores/useResidentStore'
 import { useComplaintStore } from '@/Stores/useComplaintStore'
 import { useBlotterStore } from '@/Stores/useBlotterStore'
 import { useAnnouncementEventStore } from '@/Stores/useAnnouncementEventStore'
+import { useProjectStore } from '@/Stores/useProjectStore' // Add this import
 
 const residentStore = useResidentStore();
 const complaintStore = useComplaintStore();
 const blotterStore = useBlotterStore();
 const announcementStore = useAnnouncementEventStore();
+const projectStore = useProjectStore(); // Add this store
 
 const totalResidents = ref(0);
 const documentsProcessed = ref(890);
 const activeComplaints = ref(0);
-const ongoingProjects = ref(12);
+const ongoingProjects = ref(0); // This will now show actual project count
 const blottersCount = ref(0);
 const announcementsCount = ref(0);
 
@@ -49,6 +51,11 @@ onMounted(async () => {
         await blotterStore.getBlotters(1);
         blottersCount.value = blotterStore.paginate?.total || 0;
         console.log('Blotters count:', blottersCount.value);
+
+        // Projects - Add this section
+        await projectStore.getProjects(1);
+        ongoingProjects.value = projectStore.paginate?.total || 0;
+        console.log('Projects count:', ongoingProjects.value);
 
         // Announcements & Events - Try multiple approaches
         console.log('Fetching announcements count...');
@@ -157,7 +164,7 @@ onMounted(async () => {
                     </div>
                 </div>
 
-                <!-- Card 5: Ongoing Projects -->
+                <!-- Card 5: Total Projects (Updated) -->
                 <div
                     class="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow-sm sm:shadow-md p-3 sm:p-5 sm:space-x-4 hover:shadow-md transition-shadow cursor-pointer">
                     <div class="text-purple-600 mb-2 sm:mb-0 self-center sm:self-auto">
@@ -168,7 +175,7 @@ onMounted(async () => {
                         </svg>
                     </div>
                     <div class="text-center sm:text-left">
-                        <p class="text-xs sm:text-sm font-medium text-gray-600">Projects</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600">Total Projects</p>
                         <p class="text-lg sm:text-2xl font-bold text-gray-900">{{ ongoingProjects }}</p>
                     </div>
                 </div>
