@@ -340,7 +340,7 @@ const clearFieldError = (fieldName) => {
                     <input v-model="form.target_completion" type="date" @input="clearFieldError('target_completion')"
                         class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500">
                     <p v-if="error?.target_completion" class="text-red-500 text-sm mt-1">{{ error.target_completion[0]
-                        }}</p>
+                    }}</p>
                 </div>
 
                 <div>
@@ -348,7 +348,7 @@ const clearFieldError = (fieldName) => {
                     <input v-model="form.actual_completion" type="date" @input="clearFieldError('actual_completion')"
                         class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500">
                     <p v-if="error?.actual_completion" class="text-red-500 text-sm mt-1">{{ error.actual_completion[0]
-                        }}</p>
+                    }}</p>
                 </div>
             </div>
 

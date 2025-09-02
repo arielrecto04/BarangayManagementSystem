@@ -204,30 +204,10 @@ onMounted(async () => {
             class="hidden md:flex bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex-col items-center justify-center border-r border-gray-200">
             <h1 class="text-2xl font-bold mb-4 text-center">Edit Official</h1>
             <h2 class="text-base font-medium mb-6 text-center text-gray-600">Update Official Information</h2>
-
-            <!-- Image Placeholder -->
-            <div
-              class="w-40 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
-              <div class="text-center">
-                <div class="text-4xl text-gray-400 mb-2">📸</div>
-                <p class="text-sm text-gray-500">Upload Photo</p>
-              </div>
-            </div>
           </div>
 
           <!-- Form Content -->
           <div class="p-4 md:p-8 md:w-2/3">
-
-            <!-- Mobile Image Upload (visible only on mobile) -->
-            <div class="md:hidden mb-6 flex justify-center">
-              <div
-                class="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
-                <div class="text-center">
-                  <div class="text-3xl text-gray-400 mb-1">📸</div>
-                  <p class="text-xs text-gray-500">Upload Photo</p>
-                </div>
-              </div>
-            </div>
 
             <!-- Resident and Position Selection -->
             <div class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">

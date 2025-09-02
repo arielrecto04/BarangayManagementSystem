@@ -257,13 +257,22 @@ const routes = [
         component: () => import("@/Pages/Official/ParentOfficialView.vue"),
         children: [
             {
+                path: "CardOfficial",
+                name: "Card Official",
+                meta: {
+                    title: "Card Official",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Official/CardOfficial.vue"),
+            },
+            {
                 path: "list-officials",
                 name: "List Officials",
                 meta: {
                     title: "List Officials",
                     requiresAuth: true,
                 },
-                component: () => import("@/Pages/Official/CardOfficial.vue"),
+                component: () => import("@/Pages/Official/ListOfficials.vue"),
             },
             {
                 path: "add-official",

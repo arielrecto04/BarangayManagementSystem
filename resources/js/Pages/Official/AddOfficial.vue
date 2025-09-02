@@ -140,7 +140,7 @@ const createOfficial = async () => {
       start_date: officialDataForm.value.start_date,
       end_date: officialDataForm.value.end_date,
       description: officialDataForm.value.description,
-      resident_id: officialDataForm.value.resident_id
+      resident_id: selectedResident.value?.id // Fix: Add resident_id
     })
     showToast({ icon: 'success', title: 'Official created successfully' })
     router.push('/officials')
@@ -165,15 +165,6 @@ const createOfficial = async () => {
           class="bg-gradient-to-b from-blue-50 to-white p-6 md:p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
           <h1 class="text-2xl font-bold mb-2 text-center">Add New Official</h1>
           <h2 class="text-sm md:text-base font-medium mb-4 text-center text-gray-600">Official Profile Information</h2>
-
-          <!-- Image Placeholder -->
-          <div
-            class="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
-            <div class="text-center">
-              <div class="text-3xl md:text-4xl text-gray-400 mb-1">📸</div>
-              <p class="text-xs md:text-sm text-gray-500">Upload Photo</p>
-            </div>
-          </div>
         </div>
 
         <!-- Right Column (Form) -->

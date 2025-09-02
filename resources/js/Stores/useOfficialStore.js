@@ -27,17 +27,23 @@ export const useOfficialStore = defineStore("official", {
         async getOfficials() {
             try {
                 this._isLoading = true;
+                // Remove the include parameter since backend now includes resident by default
                 const response = await axios.get("/officials");
-                console.log("API Response:", response); // Debugging: Log the response
+                console.log("API Response:", response);
                 if (response.data && response.data.data) {
-                    this._officials = response.data.data;
+                    this._officials = response.data.data.map((official) => ({
+                        ...official,
+                        image: official.image || official.photo || null,
+                        // Include resident data if available
+                        resident: official.resident || null,
+                    }));
                 } else {
                     console.error("Invalid response format:", response);
                     this._officials = [];
                 }
             } catch (error) {
                 console.error("Error fetching officials:", error);
-                this._officials = []; // Ensure the UI doesn't break
+                this._officials = [];
             } finally {
                 this._isLoading = false;
             }
@@ -47,7 +53,13 @@ export const useOfficialStore = defineStore("official", {
             try {
                 this._isLoading = true;
                 const response = await axios.post("/officials", official);
-                this._officials.push(response.data);
+                // Normalize the response data
+                const newOfficial = {
+                    ...response.data,
+                    image: response.data.image || response.data.photo || null,
+                    resident: response.data.resident || null,
+                };
+                this._officials.push(newOfficial);
                 return response;
             } catch (error) {
                 throw error;
@@ -64,9 +76,16 @@ export const useOfficialStore = defineStore("official", {
                     updatedData
                 );
 
-                this._official = response.data;
+                // Normalize the response data
+                const updatedOfficial = {
+                    ...response.data,
+                    image: response.data.image || response.data.photo || null,
+                    resident: response.data.resident || null,
+                };
+
+                this._official = updatedOfficial;
                 this._officials = this._officials.map((o) =>
-                    o.id === response.data.id ? response.data : o
+                    o.id === updatedOfficial.id ? updatedOfficial : o
                 );
 
                 return response;
@@ -82,13 +101,19 @@ export const useOfficialStore = defineStore("official", {
                 this._isLoading = true;
                 const response = await axios.get(`/officials/${officialId}`);
                 console.log(response.data);
-                this._official = response.data;
+                // Normalize the response data
+                this._official = {
+                    ...response.data,
+                    image: response.data.image || response.data.photo || null,
+                    resident: response.data.resident || null,
+                };
             } catch (error) {
                 console.log(error);
             } finally {
                 this._isLoading = false;
             }
         },
+
         async deleteOfficial(officialId) {
             try {
                 this._isLoading = true;
@@ -96,8 +121,10 @@ export const useOfficialStore = defineStore("official", {
                 this._officials = this._officials.filter(
                     (official) => official.id !== officialId
                 );
+                return response;
             } catch (error) {
                 console.log(error);
+                throw error;
             } finally {
                 this._isLoading = false;
             }

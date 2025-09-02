@@ -17,6 +17,7 @@ const { residents, isLoading, paginate } = storeToRefs(residentStore);
 const currentPage = ref(parseInt(route.query.page) || 1);
 const showModal = ref(false);
 const selectedResident = ref(null);
+const searchQuery = ref("");
 
 // Add method to force refresh avatar images with cache busting
 const refreshAvatar = (url) => {
@@ -89,8 +90,6 @@ watch(() => route.query.page, (newPage) => {
     }
 });
 
-const searchQuery = ref("");
-
 const filteredResidents = computed(() => {
     if (!searchQuery.value) return residents.value;
     return residents.value.filter(r =>
@@ -102,17 +101,18 @@ const filteredResidents = computed(() => {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 px-3 sm:px-4 lg:px-0">
-
+    <div class="flex flex-col gap-3 sm:gap-4 p-2 sm:p-0">
         <!-- Header -->
-        <div
-            class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 md:p-6 rounded-lg shadow gap-4">
-            <h1 class="text-xl md:text-2xl font-bold text-gray-600">List of Residents</h1>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900">List of Residents</h1>
+            <div class="text-xs sm:text-sm text-gray-600" v-if="paginate">
+                {{ paginate.from }}-{{ paginate.to }} of {{ paginate.total }} residents
+            </div>
         </div>
 
         <!-- Loading -->
-        <div v-if="isLoading" class="flex justify-center items-center min-h-[200px] md:min-h-[400px]">
-            <div class="animate-spin rounded-full h-12 w-12 md:h-16 md:w-16 border-b-2 border-blue-500"></div>
+        <div v-if="isLoading" class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-gray-900"></div>
         </div>
 
         <!-- Empty -->
@@ -129,53 +129,48 @@ const filteredResidents = computed(() => {
         <!-- Residents List -->
         <template v-else>
             <!-- Mobile View -->
-            <div class="bg-white rounded-lg shadow-sm md:hidden">
-                <div class="divide-y divide-gray-100">
-                    <!-- Search -->
-                    <div class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 p-4">
-                        <input type="text" v-model="searchQuery" placeholder="Search residents..."
-                            class="w-full px-3 py-2 border rounded-lg text-sm" />
-                    </div>
-
-                    <!-- Resident List -->
+            <div class="block sm:hidden">
+                <div class="space-y-3">
                     <div v-for="resident in filteredResidents" :key="resident.id"
-                        class="flex items-center justify-between p-4 hover:bg-gray-50">
-                        <!-- Avatar added to mobile view -->
-                        <div class="flex-shrink-0 mr-4">
-                            <img :src="resident.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
-                                :alt="`${resident.first_name} ${resident.last_name}`"
-                                class="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
-                                @error="handleImageError" />
+                        class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center min-w-0">
+                                <!-- Avatar -->
+                                <div class="flex-shrink-0 mr-3">
+                                    <img :src="resident.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
+                                        :alt="`${resident.first_name} ${resident.last_name}`"
+                                        class="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                                        @error="handleImageError" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-semibold text-gray-900 truncate">
+                                        {{ resident.first_name }} {{ resident.last_name }}
+                                    </div>
+                                    <div class="text-xs text-gray-600 truncate">
+                                        {{ resident.resident_number }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        {{ resident.gender }} • {{ resident.age }} yrs
+                                    </div>
+                                </div>
+                            </div>
+                            <button @click="openModal(resident)"
+                                class="ml-2 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-gray-900 text-base truncate">
-                                {{ resident.resident_number }}
-                            </div>
-                            <div class="text-gray-600 text-sm mt-1 truncate">
-                                {{ resident.first_name }} {{ resident.last_name }}
-                            </div>
-                            <div class="text-gray-500 text-xs mt-1">
-                                {{ resident.gender }} • {{ resident.age }} yrs
-                            </div>
-                        </div>
-                        <button @click="openModal(resident)"
-                            class="ml-3 w-10 h-10 flex items-center justify-center text-blue-600 rounded-full hover:bg-blue-50"
-                            title="View Details">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Desktop Table -->
-            <div class="hidden md:block bg-white rounded-lg shadow overflow-x-auto">
+            <!-- Desktop Table View -->
+            <div class="hidden sm:block">
                 <Table :columns="columns" :rows="residents">
-                    <!-- ✅ FIXED: Correct slot name syntax -->
                     <template #cell(avatar)="{ row }">
                         <img :src="row.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
                             :alt="`${row.first_name} ${row.last_name}`"
@@ -184,8 +179,8 @@ const filteredResidents = computed(() => {
                     </template>
                     <template #actions="{ row }">
                         <div class="flex justify-center">
-                            <button @click="openModal(row)" class="text-blue-600 p-2 rounded-full hover:bg-blue-50"
-                                title="View Details">
+                            <button @click="openModal(row)" title="View"
+                                class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -201,139 +196,113 @@ const filteredResidents = computed(() => {
         </template>
 
         <!-- Pagination -->
-        <div v-if="paginate && residents?.length > 0" class="bg-white rounded-lg shadow-sm px-4 py-4 sm:px-6">
+        <div v-if="paginate && residents?.length > 0" class="mt-4">
             <Paginate @page-changed="handlePageChange" :maxVisibleButtons="3" :totalPages="paginate.last_page"
                 :totalItems="paginate.total" :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
         </div>
 
         <!-- Modal -->
-        <Modal :show="showModal" title="Resident Details" max-width="2xl" @close="closeModal">
-            <div class="grid grid-cols-2 gap-4">
-                <!-- Avatar (full width) -->
-                <div class="col-span-2 flex justify-center mb-4">
-                    <img :src="selectedResident?.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
-                        :alt="`${selectedResident?.first_name} ${selectedResident?.last_name}`"
-                        class="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
-                        @error="handleImageError" />
-                </div>
+        <Modal :show="showModal" title="Resident Details" max-width="5xl" @close="closeModal">
+            <div v-if="selectedResident" class="flex flex-col space-y-6">
 
-                <!-- Info fields (2 columns) -->
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Resident ID</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.id || 'N/A' }}
+                <!-- Profile & Details: Horizontal layout on medium screens -->
+                <div class="flex flex-col md:flex-row items-center md:items-start md:space-x-6">
+
+                    <!-- Avatar -->
+                    <div class="flex-shrink-0 mb-4 md:mb-0">
+                        <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 shadow-lg">
+                            <img :src="selectedResident?.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
+                                :alt="`${selectedResident?.first_name} ${selectedResident?.last_name}`"
+                                class="w-full h-full object-cover" @error="handleImageError" />
+                        </div>
+                        <div class="mt-3 text-center">
+                            <p v-if="selectedResident?.first_name" class="text-xl font-bold text-gray-800">
+                                {{ selectedResident.first_name }}
+                            </p>
+                            <p v-if="selectedResident?.middle_name" class="text-lg font-bold text-gray-800">
+                                {{ selectedResident.middle_name }}
+                            </p>
+                            <p v-if="selectedResident?.last_name" class="text-xl font-bold text-gray-800">
+                                {{ selectedResident.last_name }}
+                            </p>
+                            <p v-if="!selectedResident?.first_name && !selectedResident?.last_name && !selectedResident?.middle_name"
+                                class="text-xl font-bold text-gray-800">
+                                No Name
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Resident Details -->
+                    <div class="flex-1 text-center md:text-left">
+
+                        <!-- Info Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+
+                            <!-- Dynamic Info Cards -->
+                            <div v-for="(value, label) in {
+                                'Resident ID': selectedResident?.id,
+                                'Resident Number': selectedResident?.resident_number,
+                                'Middle Name': selectedResident?.middle_name,
+                                Age: selectedResident?.age,
+                                Gender: selectedResident?.gender,
+                                Birthday: selectedResident?.birthday,
+                                Address: selectedResident?.address,
+                                'Contact Number': selectedResident?.contact_number,
+                                'Emergency Contact': selectedResident?.emergency_contact,
+                                Email: selectedResident?.email,
+                                'Family Member': selectedResident?.family_member
+                            }" :key="label" :class="{ 'sm:col-span-2': ['Address'].includes(label) }"
+                                class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-1">
+                                <h4 class="text-gray-800 font-semibold text-xs">{{ label }}</h4>
+                                <p class="text-gray-700 text-sm break-words">{{ value || 'N/A' }}</p>
+                            </div>
+
+                            <!-- Created / Updated Dates -->
+                            <div v-if="selectedResident?.created_at"
+                                class="sm:col-span bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                <h4 class="text-gray-800 font-semibold text-xs">Created At</h4>
+                                <p class="text-gray-700 text-sm break-words">{{ new
+                                    Date(selectedResident.created_at).toLocaleString() }}</p>
+                            </div>
+                            <div v-if="selectedResident?.updated_at"
+                                class="sm:col-span bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                <h4 class="text-gray-800 font-semibold text-xs">Updated At</h4>
+                                <p class="text-gray-700 text-sm break-words">{{ new
+                                    Date(selectedResident.updated_at).toLocaleString() }}</p>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Resident Number</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.resident_number
-                        || 'N/A'
-                    }}</div>
+
+                <!-- Optional Description Section -->
+                <div v-if="selectedResident.description" class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <h4 class="text-gray-800 font-semibold border-b pb-1 mb-2">Notes / Description</h4>
+                    <p class="text-gray-700 text-sm sm:text-base leading-relaxed">
+                        {{ selectedResident.description }}
+                    </p>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">First Name</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.first_name ||
-                        'N/A' }}
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Middle Name</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.middle_name ||
-                        'N/A' }}
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Last Name</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.last_name ||
-                        'N/A' }}
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Age</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.age || 'N/A' }}
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Gender</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.gender || 'N/A'
-                    }}</div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Birthday</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.birthday ||
-                        'N/A' }}
-                    </div>
-                </div>
-
-                <!-- Address (full width) -->
-                <div class="col-span-2">
-                    <label class="block text-xs font-medium text-gray-600">Address</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md min-h-[60px] break-words">{{
-                        selectedResident?.address ||
-                        'N/A' }}</div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Contact Number</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.contact_number
-                        || 'N/A'
-                    }}</div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">Emergency Contact</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{
-                        selectedResident?.emergency_contact ||
-                        'N/A' }}</div>
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-xs font-medium text-gray-600">Email</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.email || 'N/A'
-                    }}</div>
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-xs font-medium text-gray-600">Family Member</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.family_member ||
-                        'N/A'
-                    }}</div>
-                </div>
-
-                <!-- Dates side by side -->
-                <div v-if="selectedResident?.created_at">
-                    <label class="block text-xs font-medium text-gray-600">Created At</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md text-sm break-words">{{ new
-                        Date(selectedResident.created_at).toLocaleString() }}</div>
-                </div>
-                <div v-if="selectedResident?.updated_at">
-                    <label class="block text-xs font-medium text-gray-600">Updated At</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md text-sm break-words">{{ new
-                        Date(selectedResident.updated_at).toLocaleString() }}</div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <template #footer>
-                <div class="flex flex-row justify-end gap-3 mt-4 w-full">
+                <!-- Footer Buttons -->
+                <div class="flex justify-center gap-3 mt-4">
                     <button @click="deleteResident(selectedResident?.id)"
-                        class="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                        class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition text-sm sm:text-base">
                         Delete
                     </button>
 
                     <router-link :to="`/residents/edit-resident/${selectedResident?.id}`" @click="closeModal"
-                        class="flex-1 sm:flex-none flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                        class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition text-sm sm:text-base flex items-center justify-center">
                         Edit
                     </router-link>
 
                     <button @click="closeModal"
-                        class="flex-1 sm:flex-none bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg">
+                        class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition text-sm sm:text-base">
                         Close
                     </button>
                 </div>
-            </template>
+            </div>
         </Modal>
+
 
     </div>
 </template>
