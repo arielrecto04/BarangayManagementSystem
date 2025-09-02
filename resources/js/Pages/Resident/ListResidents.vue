@@ -7,7 +7,6 @@ import { onMounted, ref, watch, computed } from "vue";
 import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
 
-
 const { showToast } = useToast();
 const route = useRoute();
 const router = useRouter();
@@ -18,6 +17,17 @@ const { residents, isLoading, paginate } = storeToRefs(residentStore);
 const currentPage = ref(parseInt(route.query.page) || 1);
 const showModal = ref(false);
 const selectedResident = ref(null);
+
+// Add method to force refresh avatar images with cache busting
+const refreshAvatar = (url) => {
+    if (!url || url.includes('ionicframework.com')) return url;
+    return url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+};
+
+// Add method to handle image loading errors
+const handleImageError = (event) => {
+    event.target.src = 'https://ionicframework.com/docs/img/demos/avatar.svg';
+};
 
 const handlePageChange = async (page) => {
     try {
@@ -54,7 +64,9 @@ const deleteResident = async (residentId) => {
     }
 };
 
+// Updated columns to include avatar
 const columns = [
+    { key: "avatar", label: "Photo", class: "hidden sm:table-cell" },
     { key: "resident_number", label: "Resident Number", class: "hidden sm:table-cell" },
     { key: "household_number", label: "Household ID", class: "hidden sm:table-cell" },
     { key: "first_name", label: "First Name", class: "hidden sm:table-cell" },
@@ -128,6 +140,13 @@ const filteredResidents = computed(() => {
                     <!-- Resident List -->
                     <div v-for="resident in filteredResidents" :key="resident.id"
                         class="flex items-center justify-between p-4 hover:bg-gray-50">
+                        <!-- Avatar added to mobile view -->
+                        <div class="flex-shrink-0 mr-4">
+                            <img :src="resident.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
+                                :alt="`${resident.first_name} ${resident.last_name}`"
+                                class="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                                @error="handleImageError" />
+                        </div>
                         <div class="flex-1 min-w-0">
                             <div class="font-semibold text-gray-900 text-base truncate">
                                 {{ resident.resident_number }}
@@ -153,12 +172,15 @@ const filteredResidents = computed(() => {
                 </div>
             </div>
 
-
             <!-- Desktop Table -->
             <div class="hidden md:block bg-white rounded-lg shadow overflow-x-auto">
                 <Table :columns="columns" :rows="residents">
-                    <template #cell="{ column, row }">
-                        <div :class="column.class">{{ row[column.key] }}</div>
+                    <!-- ✅ FIXED: Correct slot name syntax -->
+                    <template #cell(avatar)="{ row }">
+                        <img :src="row.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
+                            :alt="`${row.first_name} ${row.last_name}`"
+                            class="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                            @error="handleImageError" />
                     </template>
                     <template #actions="{ row }">
                         <div class="flex justify-center">
@@ -189,92 +211,106 @@ const filteredResidents = computed(() => {
             <div class="grid grid-cols-2 gap-4">
                 <!-- Avatar (full width) -->
                 <div class="col-span-2 flex justify-center mb-4">
-                    <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-                        <span class="text-4xl text-gray-400">👤</span>
-                    </div>
+                    <img :src="selectedResident?.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
+                        :alt="`${selectedResident?.first_name} ${selectedResident?.last_name}`"
+                        class="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
+                        @error="handleImageError" />
                 </div>
 
                 <!-- Info fields (2 columns) -->
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Resident ID</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.id || 'N/A' }}</div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.id || 'N/A' }}
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Resident Number</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.resident_number || 'N/A' }}
-                    </div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.resident_number
+                        || 'N/A'
+                    }}</div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-gray-600">First Name</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.first_name || 'N/A' }}</div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.first_name ||
+                        'N/A' }}
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Middle Name</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.middle_name || 'N/A' }}
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.middle_name ||
+                        'N/A' }}
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Last Name</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.last_name || 'N/A' }}</div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.last_name ||
+                        'N/A' }}
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Age</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.age || 'N/A' }}</div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.age || 'N/A' }}
+                    </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Gender</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.gender || 'N/A' }}</div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.gender || 'N/A'
+                    }}</div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Birthday</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.birthday || 'N/A' }}</div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.birthday ||
+                        'N/A' }}
+                    </div>
                 </div>
 
                 <!-- Address (full width) -->
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-gray-600">Address</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md min-h-[60px]">
-                        {{ selectedResident?.address || 'N/A' }}
-                    </div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md min-h-[60px] break-words">{{
+                        selectedResident?.address ||
+                        'N/A' }}</div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Contact Number</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.contact_number || 'N/A' }}
-                    </div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.contact_number
+                        || 'N/A'
+                    }}</div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Emergency Contact</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.emergency_contact || 'N/A'
-                        }}</div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{
+                        selectedResident?.emergency_contact ||
+                        'N/A' }}</div>
                 </div>
 
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-gray-600">Email</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.email || 'N/A' }}</div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.email || 'N/A'
+                    }}</div>
                 </div>
 
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-gray-600">Family Member</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md">{{ selectedResident?.family_member || 'N/A' }}
-                    </div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md break-words">{{ selectedResident?.family_member ||
+                        'N/A'
+                    }}</div>
                 </div>
 
                 <!-- Dates side by side -->
                 <div v-if="selectedResident?.created_at">
                     <label class="block text-xs font-medium text-gray-600">Created At</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md text-sm">
-                        {{ new Date(selectedResident.created_at).toLocaleString() }}
-                    </div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md text-sm break-words">{{ new
+                        Date(selectedResident.created_at).toLocaleString() }}</div>
                 </div>
                 <div v-if="selectedResident?.updated_at">
                     <label class="block text-xs font-medium text-gray-600">Updated At</label>
-                    <div class="mt-1 p-2 bg-gray-50 border rounded-md text-sm">
-                        {{ new Date(selectedResident.updated_at).toLocaleString() }}
-                    </div>
+                    <div class="mt-1 p-2 bg-gray-50 border rounded-md text-sm break-words">{{ new
+                        Date(selectedResident.updated_at).toLocaleString() }}</div>
                 </div>
             </div>
 
@@ -298,6 +334,7 @@ const filteredResidents = computed(() => {
                 </div>
             </template>
         </Modal>
+
     </div>
 </template>
 

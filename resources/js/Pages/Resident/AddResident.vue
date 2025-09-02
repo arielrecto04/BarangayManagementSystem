@@ -3,11 +3,16 @@ import { useResidentStore } from '@/Stores'
 import { ref, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import useToast from '@/Utils/useToast'
+// ✅ Import WebcamCapture component
+import WebcamCapture from '@/Components/WebcamCapture.vue'
 
 const router = useRouter()
 const route = useRoute()
 const { showToast } = useToast()
 const residentStore = useResidentStore()
+
+// ✅ Reference to WebcamCapture component
+const webcamRef = ref(null)
 
 const residentDataForm = ref({
     first_name: '',
@@ -22,16 +27,18 @@ const residentDataForm = ref({
     family_member: '',
     emergency_contact: '',
     email: '',
+    // ✅ Add avatar for profile photo
+    avatar: null,
 })
+
+const formErrors = ref({})
 
 const isDuplicateResident = () => {
     const allResidents = residentStore.residents || []
-
     return allResidents.some(r => {
         const first = (r.first_name || '').trim().toLowerCase()
         const middle = (r.middle_name || '').trim().toLowerCase()
         const last = (r.last_name || '').trim().toLowerCase()
-
         return (
             first === residentDataForm.value.first_name.trim().toLowerCase() &&
             middle === residentDataForm.value.middle_name.trim().toLowerCase() &&
@@ -39,9 +46,6 @@ const isDuplicateResident = () => {
         )
     })
 }
-
-
-const formErrors = ref({})
 
 const restrictPhoneInput = (field) => {
     let value = residentDataForm.value[field]
@@ -99,11 +103,20 @@ const createResident = async () => {
         return
     }
 
+    console.log('Form data being sent:', residentDataForm.value); // Debug log
+    console.log('Avatar value:', residentDataForm.value.avatar); // Debug log
+
     try {
+        // ✅ Stop webcam before making API call
+        if (webcamRef.value) {
+            webcamRef.value.stopWebcam();
+        }
+
         await residentStore.addResident(residentDataForm.value)
         showToast({ icon: 'success', title: 'Resident created successfully' })
         router.push('/residents')
     } catch (error) {
+        console.error('Create resident error:', error); // Debug log
         if (error.response && error.response.status === 422 && error.response.data.errors) {
             const errors = error.response.data.errors
             formErrors.value = {}
@@ -118,7 +131,30 @@ const createResident = async () => {
     }
 }
 
+// ✅ Handle image upload from WebcamCapture
+const handleImageUploaded = (imageUrl) => {
+    console.log('Image uploaded:', imageUrl); // Debug log
+    console.log('Image URL type:', typeof imageUrl); // Debug log
+    console.log('Is valid URL?', /^https?:\/\//.test(imageUrl)); // Debug log
+    console.log('Is data URL?', /^data:image\//.test(imageUrl)); // Debug log
+
+    residentDataForm.value.avatar = imageUrl
+    showToast({ icon: 'success', title: 'Profile photo captured! Remember to save to complete registration.' })
+}
+
+// ✅ Handle navigation cleanup
+const handleCancel = () => {
+    if (webcamRef.value) {
+        webcamRef.value.stopWebcam();
+    }
+    router.push('/residents');
+};
+
 onBeforeUnmount(() => {
+    console.log('AddResident unmounting, cleaning up webcam...'); // Debug log
+    if (webcamRef.value) {
+        webcamRef.value.stopWebcam();
+    }
     residentStore.clearState()
 })
 </script>
@@ -128,18 +164,23 @@ onBeforeUnmount(() => {
         class="min-h-screen bg-gray-100 flex justify-center items-start sm:items-center p-2 sm:p-4 md:p-10">
         <form @submit.prevent="createResident" class="w-full max-w-5xl">
             <div class="bg-white rounded-lg sm:rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
-                <!-- Left Column (Avatar) - Mobile First -->
+
+                <!-- Left Column (Avatar + Webcam) -->
                 <div
                     class="bg-gradient-to-b from-blue-50 to-white p-4 sm:p-6 md:p-8 w-full md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
-                    <h1 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 text-center leading-tight">Add New Resident
+
+                    <h1 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 text-center leading-tight">
+                        Add New Resident
                     </h1>
-                    <h2 class="text-sm sm:text-base font-medium mb-4 text-center text-gray-600">Resident Profile</h2>
-                    <div
-                        class="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg sm:rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
-                        <div class="text-center">
-                            <div class="text-2xl sm:text-3xl md:text-4xl text-gray-400 mb-1">📸</div>
-                            <p class="text-xs sm:text-sm text-gray-500">Upload Photo</p>
-                        </div>
+                    <h2 class="text-sm sm:text-base font-medium mb-4 text-center text-gray-600">
+                        Resident Profile
+                    </h2>
+
+                    <!-- ✅ WebcamCapture with reference -->
+                    <div class="w-full">
+                        <WebcamCapture ref="webcamRef" @image-uploaded="handleImageUploaded" />
+                        <input type="hidden" v-model="residentDataForm.avatar" />
+                        <p v-if="formErrors.avatar" class="text-red-500 text-xs mt-1">{{ formErrors.avatar }}</p>
                     </div>
                 </div>
 
@@ -153,7 +194,7 @@ onBeforeUnmount(() => {
                                 :class="{ 'border-red-500': formErrors.first_name }"
                                 class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
                             <p v-if="formErrors.first_name" class="text-red-500 text-xs mt-1">{{ formErrors.first_name
-                            }}</p>
+                                }}</p>
                         </div>
 
                         <!-- Middle Name -->
@@ -270,10 +311,10 @@ onBeforeUnmount(() => {
                             class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg font-semibold text-sm sm:text-base transition-all transform hover:scale-105 w-full sm:w-auto order-2 sm:order-1 active:scale-95">
                             Save
                         </button>
-                        <router-link to="/residents"
+                        <button type="button" @click="handleCancel"
                             class="bg-white border-2 border-gray-300 hover:border-gray-400 px-6 py-3 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 text-sm sm:text-base transition-all transform hover:scale-105 w-full sm:w-auto text-center order-1 sm:order-2 active:scale-95">
                             Cancel
-                        </router-link>
+                        </button>
                     </div>
                 </div>
             </div>

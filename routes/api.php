@@ -46,6 +46,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ Count route for Announcement Events
     Route::get('/announcement-events/count', [AnnouncementEventController::class, 'count']);
 
+    /*
+     * Upload resident image (multipart/form-data)
+     * Endpoint: POST /api/upload-resident-image
+     * Field name: "image"
+     */
+    Route::post('/upload-resident-image', function (Request $request) {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $imageName = 'resident_' . time() . '.' . $request->image->extension();
+        $path = $request->image->storeAs('resident_images', $imageName, 'public');
+
+        return response()->json([
+            'imageUrl' => asset('storage/' . $path)
+        ]);
+    });
+
     // API Resources
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);

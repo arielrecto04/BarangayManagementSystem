@@ -1,39 +1,45 @@
 <script setup>
 import { useResidentStore } from '@/Stores'
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import useToast from '@/Utils/useToast';
-import { storeToRefs } from 'pinia';
+import useToast from '@/Utils/useToast'
+import { storeToRefs } from 'pinia'
 
-const router = useRouter();
-const { showToast } = useToast();
+// ✅ Import WebcamCapture component
+import WebcamCapture from '@/Components/WebcamCapture.vue'
 
-const residentStore = useResidentStore();
+const router = useRouter()
+const { showToast } = useToast()
+const residentStore = useResidentStore()
 
-const { resident, isLoading } = storeToRefs(residentStore);
-const residentId = router.currentRoute.value.params.id;
+const { resident, isLoading } = storeToRefs(residentStore)
+const residentId = router.currentRoute.value.params.id
+
+// ✅ Reference to WebcamCapture component
+const webcamRef = ref(null)
+
+// Track if image was updated to show success message
+const imageUpdated = ref(false)
 
 // Reactive formErrors object to hold any validation messages
-const formErrors = ref({});
+const formErrors = ref({})
 
 // Watch resident to reset formErrors on data load
 watch(resident, () => {
-    formErrors.value = {};
-}, { immediate: true });
+    formErrors.value = {}
+    imageUpdated.value = false
+}, { immediate: true })
 
 // Restrict number inputs for contact fields
 const restrictPhoneInput = (field) => {
     let value = resident.value[field]
 
-    // Remove any non-digit characters
-    value = value.replace(/\D/g, '')
+    value = value.replace(/\D/g, '') // remove non-digits
 
-    // Ensure it starts with 09
     if (value.length > 0 && !value.startsWith('09')) {
         value = '09' + value.replace(/^0+/, '').replace(/^9?/, '')
     }
 
-    // Limit to 11 digits only
     if (value.length > 11) {
         value = value.slice(0, 11)
     }
@@ -41,11 +47,18 @@ const restrictPhoneInput = (field) => {
     resident.value[field] = value
 }
 
-const validateForm = () => {
-    formErrors.value = {};
-    let isValid = true;
+// ✅ Handle uploaded image from WebcamCapture
+const handleImageUploaded = (imageUrl) => {
+    resident.value.avatar = imageUrl
+    imageUpdated.value = true
 
-    // Define required fields and their labels
+    showToast({ icon: 'success', title: 'Profile photo updated! Remember to save changes.' })
+}
+
+const validateForm = () => {
+    formErrors.value = {}
+    let isValid = true
+
     const requiredFields = {
         first_name: 'First Name',
         last_name: 'Last Name',
@@ -54,63 +67,76 @@ const validateForm = () => {
         gender: 'Gender',
         address: 'Address',
         contact_number: 'Contact Number',
-    };
+    }
 
     for (const [field, label] of Object.entries(requiredFields)) {
-        const value = resident.value[field];
+        const value = resident.value[field]
         if (!value || (typeof value === 'string' && value.trim() === '')) {
-            formErrors.value[field] = `${label} is required.`;
-            isValid = false;
+            formErrors.value[field] = `${label} is required.`
+            isValid = false
         }
     }
 
-    // ✅ Extra validation for Contact Number
-    const contact = resident.value.contact_number
-    if (contact && !/^09\d{9}$/.test(contact)) {
+    if (resident.value.contact_number && !/^09\d{9}$/.test(resident.value.contact_number)) {
         formErrors.value.contact_number = 'Contact Number must start with 09 and be exactly 11 digits.'
         isValid = false
     }
 
-    // ✅ Extra validation for Emergency Contact (if provided)
-    const emergencyContact = resident.value.emergency_contact
-    if (emergencyContact && emergencyContact.trim() !== '' && !/^09\d{9}$/.test(emergencyContact)) {
+    if (resident.value.emergency_contact && resident.value.emergency_contact.trim() !== '' &&
+        !/^09\d{9}$/.test(resident.value.emergency_contact)) {
         formErrors.value.emergency_contact = 'Emergency Contact must start with 09 and be exactly 11 digits.'
         isValid = false
     }
 
-    return isValid;
-};
+    return isValid
+}
 
 const updateResidentData = async () => {
     if (!validateForm()) {
-        showToast({ icon: 'error', title: 'Please fill in all required fields.' });
-        return;
+        showToast({ icon: 'error', title: 'Please fill in all required fields.' })
+        return
     }
 
     try {
-        // Pass the updated resident data object to update method
-        await residentStore.updateResident(resident.value);
-        showToast({ icon: 'success', title: 'Resident updated successfully' });
-        router.push('/residents');
+        if (webcamRef.value) {
+            webcamRef.value.stopWebcam()
+        }
+
+        await residentStore.updateResident(resident.value)
+        showToast({ icon: 'success', title: 'Resident updated successfully' })
+
+        router.push('/residents')
     } catch (error) {
-        // Handle validation errors from backend (HTTP 422)
         if (error.response && error.response.status === 422 && error.response.data.errors) {
-            const errors = error.response.data.errors;
-            formErrors.value = {};
+            const errors = error.response.data.errors
+            formErrors.value = {}
             for (const [field, messages] of Object.entries(errors)) {
-                formErrors.value[field] = messages.join(' ');
+                formErrors.value[field] = messages.join(' ')
             }
-            const message = Object.values(errors).flat().join(' ');
-            showToast({ icon: 'error', title: message });
+            const message = Object.values(errors).flat().join(' ')
+            showToast({ icon: 'error', title: message })
         } else {
-            showToast({ icon: 'error', title: error.message || 'Failed to update resident.' });
+            showToast({ icon: 'error', title: error.message || 'Failed to update resident.' })
         }
     }
-};
+}
+
+const handleCancel = () => {
+    if (webcamRef.value) {
+        webcamRef.value.stopWebcam()
+    }
+    router.push('/residents')
+}
 
 onMounted(() => {
-    residentStore.getResidentById(residentId);
-});
+    residentStore.getResidentById(residentId)
+})
+
+onBeforeUnmount(() => {
+    if (webcamRef.value) {
+        webcamRef.value.stopWebcam()
+    }
+})
 </script>
 
 <template>
@@ -125,23 +151,31 @@ onMounted(() => {
             <form @submit.prevent="updateResidentData" class="w-full max-w-6xl">
                 <div class="bg-white rounded-lg sm:rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
 
-                    <!-- Left Column (Avatar) -->
+                    <!-- Left Column -->
                     <div
                         class="bg-gradient-to-b from-blue-50 to-white p-4 sm:p-6 md:p-8 w-full md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
-                        <h1 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 text-center leading-tight">Edit
-                            Resident</h1>
+                        <h1 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 text-center">Edit Resident</h1>
                         <h2 class="text-sm sm:text-base font-medium mb-4 text-center text-gray-600">Resident Profile
                         </h2>
-                        <div
-                            class="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg sm:rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
-                            <div class="text-center">
-                                <div class="text-2xl sm:text-3xl md:text-4xl text-gray-400 mb-1">📸</div>
-                                <p class="text-xs sm:text-sm text-gray-500">Upload Photo</p>
+
+                        <div class="w-full">
+                            <div v-if="resident.avatar && !resident.avatar.includes('ionicframework.com')" class="mb-4">
+                                <p class="text-xs text-gray-600 mb-2">Current photo:</p>
+                                <div class="relative">
+                                    <img :src="resident.avatar" alt="Current avatar"
+                                        class="w-24 h-24 rounded-lg object-cover border-2 border-gray-200 mx-auto" />
+                                    <div v-if="imageUpdated"
+                                        class="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                        Updated
+                                    </div>
+                                </div>
                             </div>
+
+                            <WebcamCapture ref="webcamRef" @image-uploaded="handleImageUploaded" />
                         </div>
                     </div>
 
-                    <!-- Right Column (Form) -->
+                    <!-- Right Column -->
                     <div class="p-4 sm:p-6 md:p-8 w-full md:w-2/3">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
@@ -151,7 +185,7 @@ onMounted(() => {
                                     Name</label>
                                 <input type="text" v-model="resident.first_name"
                                     :class="{ 'border-red-500': formErrors.first_name }"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 <p v-if="formErrors.first_name" class="text-red-500 text-xs mt-1">{{
                                     formErrors.first_name }}</p>
                             </div>
@@ -161,7 +195,7 @@ onMounted(() => {
                                 <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Middle
                                     Name</label>
                                 <input type="text" v-model="resident.middle_name"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
 
                             <!-- Last Name -->
@@ -170,7 +204,7 @@ onMounted(() => {
                                     Name</label>
                                 <input type="text" v-model="resident.last_name"
                                     :class="{ 'border-red-500': formErrors.last_name }"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 <p v-if="formErrors.last_name" class="text-red-500 text-xs mt-1">{{ formErrors.last_name
                                     }}</p>
                             </div>
@@ -181,7 +215,7 @@ onMounted(() => {
                                     class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Birthday</label>
                                 <input type="date" v-model="resident.birthday"
                                     :class="{ 'border-red-500': formErrors.birthday }"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 <p v-if="formErrors.birthday" class="text-red-500 text-xs mt-1">{{ formErrors.birthday
                                     }}</p>
                             </div>
@@ -191,7 +225,7 @@ onMounted(() => {
                                 <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Age</label>
                                 <input type="number" v-model="resident.age"
                                     :class="{ 'border-red-500': formErrors.age }"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 <p v-if="formErrors.age" class="text-red-500 text-xs mt-1">{{ formErrors.age }}</p>
                             </div>
 
@@ -199,7 +233,7 @@ onMounted(() => {
                             <div>
                                 <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Gender</label>
                                 <select v-model="resident.gender" :class="{ 'border-red-500': formErrors.gender }"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white">
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option value="" disabled>Select Gender</option>
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
@@ -208,13 +242,13 @@ onMounted(() => {
                                 </p>
                             </div>
 
-                            <!-- Address (full width) -->
+                            <!-- Address -->
                             <div class="sm:col-span-2">
                                 <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Address</label>
                                 <input type="text" v-model="resident.address"
                                     :class="{ 'border-red-500': formErrors.address }"
                                     placeholder="Block & Lot / Street / Subdivision / Barangay / City / Province"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 <p v-if="formErrors.address" class="text-red-500 text-xs mt-1">{{ formErrors.address }}
                                 </p>
                             </div>
@@ -226,7 +260,7 @@ onMounted(() => {
                                 <input type="text" v-model="resident.contact_number"
                                     @input="restrictPhoneInput('contact_number')"
                                     :class="{ 'border-red-500': formErrors.contact_number }"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 <p v-if="formErrors.contact_number" class="text-red-500 text-xs mt-1">{{
                                     formErrors.contact_number }}</p>
                             </div>
@@ -238,7 +272,7 @@ onMounted(() => {
                                 <input type="text" v-model="resident.emergency_contact"
                                     @input="restrictPhoneInput('emergency_contact')"
                                     :class="{ 'border-red-500': formErrors.emergency_contact }"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 <p v-if="formErrors.emergency_contact" class="text-red-500 text-xs mt-1">{{
                                     formErrors.emergency_contact }}</p>
                             </div>
@@ -248,7 +282,7 @@ onMounted(() => {
                                 <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Email</label>
                                 <input type="text" v-model="resident.email"
                                     :class="{ 'border-red-500': formErrors.email }"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 <p v-if="formErrors.email" class="text-red-500 text-xs mt-1">{{ formErrors.email }}</p>
                             </div>
 
@@ -257,31 +291,30 @@ onMounted(() => {
                                 <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Contact
                                     Person</label>
                                 <input type="text" v-model="resident.contact_person"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
 
-                            <!-- Family Member (full width) -->
+                            <!-- Family Member -->
                             <div class="sm:col-span-2">
                                 <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Family
                                     Member</label>
                                 <input type="text" v-model="resident.family_member"
-                                    class="border rounded-md sm:rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 w-full text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" />
+                                    class="border rounded-md sm:rounded-lg px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
 
                         </div>
 
                         <!-- Buttons -->
-                        <div class="flex flex-col sm:flex-row justify-center mt-6 gap-3 sm:gap-4">
+                        <div class="flex flex-col sm:flex-row justify-center mt-6 gap-3">
                             <button type="submit"
-                                class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg font-semibold text-sm sm:text-base transition-all transform hover:scale-105 w-full sm:w-auto order-2 sm:order-1 active:scale-95">
+                                class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold text-sm transition transform hover:scale-105 w-full sm:w-auto">
                                 Save
                             </button>
-                            <router-link to="/residents"
-                                class="bg-white border-2 border-gray-300 hover:border-gray-400 px-6 py-3 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 text-sm sm:text-base transition-all transform hover:scale-105 w-full sm:w-auto text-center order-1 sm:order-2 active:scale-95">
+                            <button type="button" @click="handleCancel"
+                                class="bg-white border-2 border-gray-300 hover:border-gray-400 px-6 py-3 rounded-lg shadow-lg font-semibold text-gray-700 hover:bg-gray-50 text-sm transition transform hover:scale-105 w-full sm:w-auto">
                                 Cancel
-                            </router-link>
+                            </button>
                         </div>
-
                     </div>
                 </div>
             </form>

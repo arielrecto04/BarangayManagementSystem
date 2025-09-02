@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Resident extends Model
 {
-
     use HasFactory;
 
     protected $fillable = [
@@ -24,19 +23,24 @@ class Resident extends Model
         'contact_person',
         'family_member',
         'emergency_contact',
+        'avatar', // ✅ ADD THIS LINE - This was missing!
     ];
+
     public function complainantBlotter()
     {
         return $this->hasMany(Blotter::class, 'complainant');
     }
+
     public function officialRecords()
     {
         return $this->hasMany(Official::class);
     }
+
     public function respondentComplaints()
     {
         return $this->hasMany(Complaint::class, 'respondent_id');
     }
+
     public function complainantComplaints()
     {
         return $this->hasMany(Complaint::class, 'complainant_id');
@@ -51,6 +55,7 @@ class Resident extends Model
     {
         return $this->morphTo();
     }
+
     public function documentRequests()
     {
         return $this->morphMany(DocumentRequest::class, 'requestable');
