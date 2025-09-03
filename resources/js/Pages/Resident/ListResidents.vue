@@ -7,7 +7,7 @@ import { onMounted, ref, watch, computed } from "vue";
 import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
 
-const { showToast } = useToast();
+const { showToast, showConfirm } = useToast();
 const route = useRoute();
 const router = useRouter();
 
@@ -52,19 +52,28 @@ const closeModal = () => {
 };
 
 const deleteResident = async (residentId) => {
-    if (!confirm('Are you sure you want to delete this resident?')) return;
+    // ✅ SweetAlert2 confirmation dialog
+    const result = await showConfirm(
+        'Are you sure you want to delete this resident?',
+        'Delete Confirmation'
+    );
+
+    if (!result.isConfirmed) return;
 
     try {
         await residentStore.deleteResident(residentId);
         showToast({ icon: 'success', title: 'Resident deleted successfully' });
+
+        // Close modal after success
         closeModal();
+
+        // Refresh residents list
         await residentStore.getResidents(currentPage.value);
     } catch (error) {
         console.error('Error deleting resident:', error);
         showToast({ icon: 'error', title: error.message || 'Error deleting resident' });
     }
 };
-
 // Updated columns to include avatar
 const columns = [
     { key: "avatar", label: "Photo", class: "hidden sm:table-cell" },
@@ -131,8 +140,8 @@ const filteredResidents = computed(() => {
             <!-- Mobile View -->
             <div class="block sm:hidden">
                 <div class="space-y-3">
-                    <div v-for="resident in filteredResidents" :key="resident.id"
-                        class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+                    <div v-for="resident in filteredResidents" :key="resident.id" @click="openModal(resident)"
+                        class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm cursor-pointer hover:shadow-md transition">
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex items-center min-w-0">
                                 <!-- Avatar -->
@@ -154,45 +163,26 @@ const filteredResidents = computed(() => {
                                     </div>
                                 </div>
                             </div>
-                            <button @click="openModal(resident)"
-                                class="ml-2 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
+
             <!-- Desktop Table View -->
             <div class="hidden sm:block">
-                <Table :columns="columns" :rows="residents">
+                <Table :columns="columns" :rows="residents" :rowClickable="true" @row-click="openModal"
+                    class="cursor-pointer">
+                    <!-- Avatar column -->
                     <template #cell(avatar)="{ row }">
                         <img :src="row.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
                             :alt="`${row.first_name} ${row.last_name}`"
                             class="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
                             @error="handleImageError" />
                     </template>
-                    <template #actions="{ row }">
-                        <div class="flex justify-center">
-                            <button @click="openModal(row)" title="View"
-                                class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </template>
                 </Table>
             </div>
+
         </template>
 
         <!-- Pagination -->
@@ -321,5 +311,9 @@ const filteredResidents = computed(() => {
         min-height: 44px;
         min-width: 44px;
     }
+}
+
+.cursor-pointer {
+    cursor: pointer;
 }
 </style>

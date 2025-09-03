@@ -8,7 +8,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue"
 import useToast from '@/Utils/useToast'
 import BlotterPrintTemplate from './BlotterPrintTemplate.vue'
 
-const { showToast } = useToast()
+const { showToast, showConfirm } = useToast();
 const route = useRoute()
 const router = useRouter()
 
@@ -213,35 +213,40 @@ const editBlotter = (blotterOrId) => {
 
 // Enhanced delete function
 const deleteBlotter = async (blotterIdOrObject) => {
-    if (isComponentDestroyed.value) return
+    if (isComponentDestroyed.value) return;
 
     let blotterId;
 
     if (typeof blotterIdOrObject === 'object' && blotterIdOrObject !== null) {
-        blotterId = blotterIdOrObject.id
+        blotterId = blotterIdOrObject.id;
     } else {
-        blotterId = blotterIdOrObject
+        blotterId = blotterIdOrObject;
     }
 
     if (!blotterId) {
-        console.error('Cannot delete: blotter ID is null or missing')
-        showToast({ icon: 'error', title: 'Cannot delete - invalid blotter data' })
-        return
+        console.error('Cannot delete: blotter ID is null or missing');
+        showToast({ icon: 'error', title: 'Cannot delete - invalid blotter data' });
+        return;
     }
 
-    // Add confirmation dialog
-    if (!confirm('Are you sure you want to delete this blotter?')) {
-        return
+    // ✅ SweetAlert2 confirmation dialog instead of native confirm
+    const result = await showConfirm(
+        'Are you sure you want to delete this blotter?',
+        'Delete Confirmation'
+    );
+
+    if (!result.isConfirmed) {
+        return;
     }
 
     try {
-        await blotterStore.deleteBlotter(blotterId)
-        showToast({ icon: 'success', title: 'Blotter deleted successfully' })
-        await blotterStore.getBlotters(currentPage.value)
-        closeModal()
+        await blotterStore.deleteBlotter(blotterId);
+        showToast({ icon: 'success', title: 'Blotter deleted successfully' });
+        await blotterStore.getBlotters(currentPage.value);
+        closeModal();
     } catch (error) {
-        showToast({ icon: 'error', title: 'Failed to delete blotter' })
-        console.error('Delete error:', error)
+        showToast({ icon: 'error', title: 'Failed to delete blotter' });
+        console.error('Delete error:', error);
     }
 }
 
@@ -311,8 +316,8 @@ onMounted(async () => {
             <!-- Mobile Card View -->
             <div class="block sm:hidden">
                 <div class="space-y-3">
-                    <div v-for="blotter in blotters" :key="blotter.id"
-                        class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+                    <div v-for="blotter in blotters" :key="blotter.id" @click="openModal(blotter)"
+                        class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm cursor-pointer hover:shadow-md transition">
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex-1 min-w-0">
                                 <div class="text-xs font-medium text-gray-500 mb-1">Complainant</div>
@@ -320,16 +325,6 @@ onMounted(async () => {
                                     {{ getResidentName(blotter.complainants_id) }}
                                 </div>
                             </div>
-                            <button @click="openModal(blotter)"
-                                class="ml-2 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
-                                :disabled="!blotter || !blotter.id">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
                         </div>
 
                         <div class="mb-2">
@@ -367,25 +362,29 @@ onMounted(async () => {
                 </div>
             </div>
 
+
             <!-- Desktop Table View -->
             <div class="hidden sm:block">
-                <Table :columns="desktopColumns" :rows="blotters">
-                    <template #actions="{ row }">
-                        <div class="flex gap-2">
-                            <button @click="openModal(row)" title="View"
-                                class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125"
-                                :disabled="!row || !row.id">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
-                        </div>
+                <Table :columns="desktopColumns" :rows="blotters" :rowClickable="true" @row-click="openModal"
+                    class="cursor-pointer">
+                    <!-- You can keep other slots like avatar if needed -->
+                    <template #cell(avatar)="{ row }">
+                        <img :src="row.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'" :alt="row.name"
+                            class="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                            @error="handleImageError" />
+                    </template>
+                    <template #cell(status)="{ row }">
+                        <span :class="{
+                            'text-green-600 font-semibold bg-green-100 px-2 py-1 rounded-full text-xs': row.status === 'Resolved',
+                            'text-yellow-600 font-semibold bg-yellow-100 px-2 py-1 rounded-full text-xs': row.status === 'In Progress',
+                            'text-red-600 font-semibold bg-red-100 px-2 py-1 rounded-full text-xs': row.status === 'Open'
+                        }">
+                            {{ row.status }}
+                        </span>
                     </template>
                 </Table>
             </div>
+
         </template>
 
         <!-- Pagination -->

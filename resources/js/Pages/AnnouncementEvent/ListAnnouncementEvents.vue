@@ -11,7 +11,7 @@ import { useRoute, useRouter } from 'vue-router';
 const announcementEventStore = useAnnouncementEventStore();
 const { events, isLoading, paginate } = storeToRefs(announcementEventStore);
 
-const { showToast } = useToast();
+const { showToast, showConfirm } = useToast();
 const route = useRoute();
 const router = useRouter();
 
@@ -79,19 +79,26 @@ const editEvent = (eventId) => {
 };
 
 const deleteEvent = async (eventId) => {
-    if (confirm('Are you sure you want to delete this announcement/event?')) {
-        try {
-            await announcementEventStore.deleteEvent(eventId);
-            showToast({ icon: 'success', title: 'Event deleted successfully' });
+    // ✅ SweetAlert2 confirmation dialog
+    const result = await showConfirm(
+        'Are you sure you want to delete this announcement/event?',
+        'Delete Confirmation'
+    );
 
-            // Refresh the list
-            announcementEventStore.getEvents(currentPage.value);
+    if (!result.isConfirmed) return;
 
-            // Close the modal
-            closeModal();
-        } catch (error) {
-            showToast({ icon: 'error', title: error.message });
-        }
+    try {
+        await announcementEventStore.deleteEvent(eventId);
+        showToast({ icon: 'success', title: 'Event deleted successfully' });
+
+        // Refresh the list
+        announcementEventStore.getEvents(currentPage.value);
+
+        // Close the modal
+        closeModal();
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        showToast({ icon: 'error', title: error.message || 'Failed to delete event' });
     }
 };
 

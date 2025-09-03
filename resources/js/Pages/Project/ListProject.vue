@@ -1,65 +1,75 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router'
-import { Modal, Loader, Paginate, Table } from '@/Components'
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { Modal, Loader, Paginate, Table } from '@/Components';
 import { debounce } from '@/Utils';
-
-import {
-    CalendarIcon,
-    ClockIcon,
-    EyeIcon,
-    UserGroupIcon,
-    FolderOpenIcon,
-    Squares2X2Icon,
-    TableCellsIcon,
-} from '@heroicons/vue/24/outline';
 import { useProjectStore } from '@/Stores';
 import { storeToRefs } from 'pinia';
+import useToast from '@/Utils/useToast';
 
+const { showToast, showConfirm, showAlert } = useToast();
 const router = useRouter();
 const route = useRoute();
 const projectStore = useProjectStore();
-const isDeleting = ref(false);
 
-const viewMode = ref(route.query.viewMode || 'grid');
+const isDeleting = ref(false);
 const createModal = ref(false);
 const viewModal = ref(false);
 const selectedProject = ref(null);
+const isSearching = ref(false);
+
 const { error, isLoading, projects, paginate } = storeToRefs(projectStore);
+
+const currentPage = ref(route.query.page || 1);
 
 const deleteProjectHandler = async () => {
     if (!selectedProject.value) return;
 
-    if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-        return;
-    }
+    const result = await showConfirm(
+        'Are you sure you want to delete this project?',
+        'Delete Project'
+    );
 
-    isDeleting.value = true;
+    if (!result.isConfirmed) return;
+
     try {
         await projectStore.deleteProject(selectedProject.value.id);
         viewModal.value = false;
         await projectStore.getProjects(currentPage.value);
-    } catch (error) {
-        console.error('Error deleting project:', error);
-        alert('Failed to delete project. Please try again.');
-    } finally {
-        isDeleting.value = false;
+
+        showToast({ icon: 'success', title: 'Project deleted!' });
+    } catch (err) {
+        console.error('Error deleting project:', err);
+        showAlert({ icon: 'error', title: 'Error', text: 'Failed to delete project. Please try again.' });
     }
-}
+};
 
-const handleViewModeChange = (mode) => {
-    viewMode.value = mode;
-    router.replace({
-        query: {
-            viewMode: viewMode.value,
-            page: currentPage.value
+// Improved search handler with validation
+const handleSearch = debounce(async (query) => {
+    try {
+        // Only search if query has at least 2 characters or is empty (to reset)
+        if (query === '' || query.length >= 2) {
+            isSearching.value = true;
+
+            if (query === '') {
+                // Reset to show all projects when search is cleared
+                await projectStore.getProjects(1);
+                currentPage.value = 1;
+            } else {
+                // Perform search
+                await projectStore.searchProjects(query);
+            }
         }
-    })
-}
-
-const handleSearch = debounce((query) => {
-    projectStore.searchProjects(query);
-}, 300);
+    } catch (error) {
+        console.error('Search error:', error);
+        // Don't show error for empty searches or short queries
+        if (query.length >= 2) {
+            alert('Search failed. Please try again.');
+        }
+    } finally {
+        isSearching.value = false;
+    }
+}, 500);
 
 const handleCreateModalAction = () => {
     createModal.value = !createModal.value;
@@ -67,28 +77,22 @@ const handleCreateModalAction = () => {
         // Reset errors when closing modal
         projectStore._error = null;
     }
-}
-
-const currentPage = ref(route.query.page || 1);
+};
 
 const handlePageChange = (page) => {
     currentPage.value = page;
     projectStore.getProjects(currentPage.value);
-
     router.replace({
         query: {
-            page: currentPage.value,
-            viewMode: viewMode.value
+            page: currentPage.value
         }
-    })
-}
+    });
+};
 
 const search = ref('');
-const statusFilter = ref('');
 const createForm = ref(null);
 const isSubmitting = ref(false);
 
-// Updated columns to match database fields - removed actions column
 const columns = [
     { key: "title", label: "Title" },
     { key: "description", label: "Description" },
@@ -96,20 +100,22 @@ const columns = [
     { key: "target_completion", label: "Target Completion" },
     { key: "status", label: "Status" },
     { key: "completion_percentage", label: "Progress" }
-]
+];
 
-const filteredProjects = computed(() => {
-    if (isLoading.value && projects.value.length === 0) {
-        return [];
-    }
+// Responsive table columns
+const mobileColumns = [
+    { key: "title", label: "Title" },
+    { key: "status", label: "Status" }
+];
 
-    return projects.value.filter(project => {
-        const matchesSearch = project.title.toLowerCase().includes(search.value.toLowerCase()) ||
-            (project.description && project.description.toLowerCase().includes(search.value.toLowerCase()));
-        const matchesStatus = !statusFilter.value || project.status === statusFilter.value;
-        return matchesSearch && matchesStatus;
-    });
-});
+const desktopColumns = [
+    { key: "title", label: "Title" },
+    { key: "description", label: "Description" },
+    { key: "start_date", label: "Start Date" },
+    { key: "target_completion", label: "Target Completion" },
+    { key: "status", label: "Status" },
+    { key: "completion_percentage", label: "Progress" }
+];
 
 function formatStatus(status) {
     const statusMap = {
@@ -144,11 +150,15 @@ function formatDate(dateString) {
 }
 
 function viewProject(project) {
-    selectedProject.value = project;
+    selectedProject.value = { ...project }; // Create copy to avoid reactivity issues
     viewModal.value = true;
 }
 
 function editProject(id) {
+    // Close modal first
+    viewModal.value = false;
+    selectedProject.value = null;
+
     router.push({ name: 'Edit Project', params: { id } });
 }
 
@@ -157,7 +167,6 @@ const createProject = async () => {
         isSubmitting.value = true;
         const formData = new FormData(createForm.value);
         await projectStore.addProject(formData);
-
         if (!error.value) {
             createModal.value = false;
             createForm.value.reset();
@@ -168,315 +177,289 @@ const createProject = async () => {
     } finally {
         isSubmitting.value = false;
     }
-}
+};
+
+// Close modal
+const closeModal = () => {
+    viewModal.value = false;
+    selectedProject.value = null;
+};
 
 onMounted(async () => {
-    await projectStore.getProjects();
-})
+    try {
+        await projectStore.getProjects(currentPage.value);
+    } catch (error) {
+        console.error('Error loading projects:', error);
+    }
+});
 </script>
 
 <template>
-    <div class="py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Search and Filter -->
-        <div class="mb-6 flex justify-between items-center">
-            <div class="w-1/3">
-                <input v-model="search" @input="handleSearch(search)" type="search" placeholder="Search projects..."
-                    class="w-full border border-gray-300 rounded-md p-2 bg-white" />
-            </div>
-            <div class="flex item-center gap-2">
-                <select v-model="statusFilter"
-                    class="rounded-md border-gray-300 shadow-sm p-2 bg-white focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    <option value="">All Status</option>
-                    <option value="planning">Planning</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="on_hold">On Hold</option>
-                    <option value="completed">Completed</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="pending">Pending</option>
-                </select>
-                <button @click="handleViewModeChange('grid')"
-                    :class="viewMode === 'grid' ? 'p-2 bg-green-700 rounded-md hover:bg-green-800 transition-colors text-white' : 'p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors'">
-                    <Squares2X2Icon class="w-5 h-5" />
-                </button>
-                <button @click="handleViewModeChange('list')"
-                    :class="viewMode === 'list' ? 'p-2 bg-green-700 rounded-md hover:bg-green-800 transition-colors text-white' : 'p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors'">
-                    <TableCellsIcon class="w-5 h-5" />
-                </button>
+    <div class="flex flex-col gap-3 sm:gap-4 p-2 sm:p-0">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900">List of Projects</h1>
+            <div class="text-xs sm:text-sm text-gray-600" v-if="paginate">
+                {{ paginate.from }}-{{ paginate.to }} of {{ paginate.total }} projects
             </div>
         </div>
 
-        <template v-if="isLoading && projects.length === 0">
-            <Loader />
-        </template>
-        <template v-else>
-            <div v-if="viewMode === 'grid'">
-                <!-- Projects Grid -->
-                <div v-if="filteredProjects.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div v-for="project in filteredProjects" :key="project.id"
-                        class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                        <div class="p-5">
-                            <div class="flex justify-between items-start mb-3">
-                                <h3 class="text-lg font-semibold text-gray-900 truncate">
-                                    {{ project.title }}
-                                </h3>
-                                <span :class="`px-2 py-1 text-xs rounded-full ${getStatusColor(project.status)}`">
-                                    {{ formatStatus(project.status) }}
+        <!-- Loading State -->
+        <div v-if="isLoading" class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-gray-900"></div>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div v-else class="block sm:hidden">
+            <div class="space-y-3">
+                <div v-for="project in projects" :key="project.id" @click="viewProject(project)"
+                    class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm cursor-pointer hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-medium text-gray-500 mb-1">Title</div>
+                            <div class="text-sm font-semibold text-gray-900 truncate">
+                                {{ project.title }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="text-xs font-medium text-gray-500 mb-1">Description</div>
+                        <div class="text-sm text-gray-700 truncate">
+                            {{ project.description || 'No description available' }}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <div class="bg-gray-100 px-2 py-1 rounded">
+                            <span class="text-gray-600">Progress:</span>
+                            <span class="font-medium">{{ project.completion_percentage || 0 }}%</span>
+                        </div>
+                        <div class="bg-gray-100 px-2 py-1 rounded">
+                            <span :class="{
+                                'text-green-600 font-semibold': project.status === 'completed',
+                                'text-yellow-600 font-semibold': project.status === 'in_progress',
+                                'text-blue-600 font-semibold': project.status === 'planning',
+                                'text-red-600 font-semibold': project.status === 'on_hold'
+                            }">
+                                {{ formatStatus(project.status) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 pt-2 border-t border-gray-100">
+                        <div class="text-xs text-gray-600">
+                            Start: {{ formatDate(project.start_date) }}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            Target: {{ formatDate(project.target_completion) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden sm:block">
+            <Table :columns="desktopColumns" :rows="projects.map(p => ({
+                ...p,
+                start_date: formatDate(p.start_date),
+                target_completion: formatDate(p.target_completion)
+            }))" :rowClickable="true" :showActions="false" @row-click="viewProject" class="cursor-pointer">
+                <template #cell(description)="{ row }">
+                    <p class="truncate max-w-xs">{{ row.description || 'No description' }}</p>
+                </template>
+                <template #cell(status)="{ row }">
+                    <span :class="`px-2 py-1 text-xs rounded-full ${getStatusColor(row.status)}`">
+                        {{ formatStatus(row.status) }}
+                    </span>
+                </template>
+                <template #cell(completion_percentage)="{ row }">
+                    <span>{{ row.completion_percentage || 0 }}%</span>
+                </template>
+            </Table>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="paginate" class="mt-4">
+            <Paginate @page-changed="handlePageChange" :maxVisibleButtons="3" :totalPages="paginate.last_page"
+                :totalItems="paginate.total" :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
+        </div>
+
+        <!-- View Project Details Modal -->
+        <Modal title="Project Details" :show="viewModal" @close="closeModal" max-width="4xl">
+            <div v-if="selectedProject" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Title</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.title }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Description</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.description || `No description
+                                    available` }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Category</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.category || 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Status</label>
+                                <span
+                                    :class="`px-2 py-1 text-xs rounded-full ${getStatusColor(selectedProject.status)}`">
+                                    {{ formatStatus(selectedProject.status) }}
                                 </span>
                             </div>
+                        </div>
+                    </div>
 
-                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">
-                                {{ project.description || 'No description available' }}
-                            </p>
-
-                            <div class="flex items-center text-sm text-gray-500 mb-4">
-                                <CalendarIcon class="h-4 w-4 mr-1" />
-                                <span>Target: {{ formatDate(project.target_completion) }}</span>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Timeline & Progress</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                                <p class="text-sm text-gray-900">{{ formatDate(selectedProject.start_date) }}</p>
                             </div>
-
-                            <div class="flex items-center text-sm text-gray-500 mb-4">
-                                <CalendarIcon class="h-4 w-4 mr-1" />
-                                <span>Actual Completion: {{ formatDate(project.actual_completion) }}</span>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Target Completion</label>
+                                <p class="text-sm text-gray-900">{{ formatDate(selectedProject.target_completion) }}
+                                </p>
                             </div>
-
-                            <div class="flex items-center justify-between text-sm">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Actual Completion</label>
+                                <p class="text-sm text-gray-900">{{ formatDate(selectedProject.actual_completion) }}
+                                </p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Progress</label>
                                 <div class="flex items-center">
-                                    <UserGroupIcon class="h-4 w-4 mr-1 text-gray-400" />
-                                    <span>{{ project.number_of_members || 0 }} members</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <ClockIcon class="h-4 w-4 mr-1 text-gray-400" />
-                                    <span>{{ project.completion_percentage || 0 }}% complete</span>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                                <div class="text-sm text-gray-500">
-                                    Lead: {{ project.project_lead || 'N/A' }}
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button @click="viewProject(project)" class="text-indigo-600 hover:text-indigo-900">
-                                        <EyeIcon class="h-5 w-5" />
-                                    </button>
+                                    <div class="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-green-600 h-2 rounded-full"
+                                            :style="`width: ${selectedProject.completion_percentage || 0}%`"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-900">{{ selectedProject.completion_percentage ||
+                                        0
+                                        }}%</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- Empty State -->
-                <div v-else class="text-center py-12">
-                    <FolderOpenIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No projects found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Team & Organization</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Project Lead</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.project_lead || 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Team Size</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.number_of_members || 0 }}
+                                    members</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Funding Source</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.funding_source || 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Assigned
+                                    Organizations</label>
+                                <div v-if="selectedProject.assigned_organizations && selectedProject.assigned_organizations.length > 0"
+                                    class="mt-1">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span v-for="(org, index) in selectedProject.assigned_organizations"
+                                            :key="index" class="text-sm text-gray-900">{{ org }}</span>
+                                    </div>
+                                </div>
+                                <p v-else class="text-sm text-gray-900">No organizations assigned</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Location & Details</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Site Address</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.site_address || 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Barangay/Zone</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.barangay_zone || 'N/A' }}</p>
+                            </div>
+                            <div v-if="selectedProject.disbursement_schedule">
+                                <label class="block text-sm font-medium text-gray-700">Disbursement Schedule</label>
+                                <p class="text-sm text-gray-900">{{ selectedProject.disbursement_schedule }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div v-if="viewMode === 'list'">
-                <Table :columns="columns" :rows="filteredProjects" :searchable="false" :selectable="false">
-                    <template #cell(description)="{ row }">
-                        <p class="truncate w-52">{{ row.description || 'No description' }}</p>
-                    </template>
-                    <template #cell(start_date)="{ row }">
-                        <span>{{ formatDate(row.start_date) }}</span>
-                    </template>
-                    <template #cell(target_completion)="{ row }">
-                        <span>{{ formatDate(row.target_completion) }}</span>
-                    </template>
-                    <template #cell(status)="{ row }">
-                        <span :class="`px-2 py-1 text-xs rounded-full ${getStatusColor(row.status)}`">
-                            {{ formatStatus(row.status) }}
-                        </span>
-                    </template>
-                    <template #cell(completion_percentage)="{ row }">
-                        <span>{{ row.completion_percentage || 0 }}%</span>
-                    </template>
-                    <template #actions="{ row }">
-                        <div class="flex gap-2">
-                            <!-- View Button -->
-                            <button @click="viewProject(row)" title="View"
-                                class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </template>
-                </Table>
-            </div>
-        </template>
-    </div>
-
-    <Paginate @page-changed="handlePageChange" :maxVisibleButtons="5" :totalPages="paginate.last_page"
-        :totalItems="paginate.total" :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
-
-    <!-- View Project Details Modal -->
-    <Modal title="Project Details" :show="viewModal" @close="viewModal = false" max-width="4xl">
-        <div v-if="selectedProject" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+                <div v-if="selectedProject.milestone_achieved || selectedProject.challenges_encountered">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
                     <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Title</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.title }}</p>
+                        <div v-if="selectedProject.milestone_achieved">
+                            <label class="block text-sm font-medium text-gray-700">Milestones Achieved</label>
+                            <p class="text-sm text-gray-900">{{ selectedProject.milestone_achieved }}</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Description</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.description || `No description
-                                available` }}
-                            </p>
+                        <div v-if="selectedProject.challenges_encountered">
+                            <label class="block text-sm font-medium text-gray-700">Challenges Encountered</label>
+                            <p class="text-sm text-gray-900">{{ selectedProject.challenges_encountered }}</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Category</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.category || 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Status</label>
-                            <span :class="`px-2 py-1 text-xs rounded-full ${getStatusColor(selectedProject.status)}`">
-                                {{ formatStatus(selectedProject.status) }}
+                    </div>
+                </div>
+
+                <div v-if="selectedProject.files && selectedProject.files.length > 0">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Project Files</h3>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div v-for="(file, index) in selectedProject.files" :key="index"
+                            class="flex items-center p-2 border rounded-md">
+                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span class="text-sm text-blue-600 hover:text-blue-800 overflow-hidden">
+                                <a :href="file" target="_blank">{{ file.split('/').pop() }}</a>
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Timeline & Progress</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Start Date</label>
-                            <p class="text-sm text-gray-900">{{ formatDate(selectedProject.start_date) }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Target Completion</label>
-                            <p class="text-sm text-gray-900">{{ formatDate(selectedProject.target_completion) }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Actual Completion</label>
-                            <p class="text-sm text-gray-900">{{ formatDate(selectedProject.actual_completion) }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Progress</label>
-                            <div class="flex items-center">
-                                <div class="flex-1 bg-gray-200 rounded-full h-2 mr-2">
-                                    <div class="bg-green-600 h-2 rounded-full"
-                                        :style="`width: ${selectedProject.completion_percentage || 0}%`"></div>
-                                </div>
-                                <span class="text-sm text-gray-900">{{ selectedProject.completion_percentage || 0
-                                    }}%</span>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-gray-200">
+                    <button @click="editProject(selectedProject.id)"
+                        class="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                        Edit Project
+                    </button>
+                    <button @click="deleteProjectHandler"
+                        class="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                        :disabled="isDeleting">
+                        {{ isDeleting ? 'Deleting...' : 'Delete Project' }}
+                    </button>
                 </div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Team & Organization</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Project Lead</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.project_lead || 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Team Size</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.number_of_members || 0 }} members</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Funding Source</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.funding_source || 'N/A' }}</p>
-                        </div>
-                        <!-- Added Assigned Organizations Section -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Assigned Organizations</label>
-                            <div v-if="selectedProject.assigned_organizations && selectedProject.assigned_organizations.length > 0"
-                                class="mt-1">
-                                <div class="flex flex-wrap gap-1">
-                                    <span v-for="(org, index) in selectedProject.assigned_organizations" :key="index"
-                                        class="text-sm text-gray-900">
-                                        {{ org }}
-                                    </span>
-                                </div>
-                            </div>
-                            <p v-else class="text-sm text-gray-900">No organizations assigned</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Location & Details</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Site Address</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.site_address || 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Barangay/Zone</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.barangay_zone || 'N/A' }}</p>
-                        </div>
-                        <!-- Added Disbursement Schedule -->
-                        <div v-if="selectedProject.disbursement_schedule">
-                            <label class="block text-sm font-medium text-gray-700">Disbursement Schedule</label>
-                            <p class="text-sm text-gray-900">{{ selectedProject.disbursement_schedule }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="selectedProject.milestone_achieved || selectedProject.challenges_encountered">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
-                <div class="space-y-3">
-                    <div v-if="selectedProject.milestone_achieved">
-                        <label class="block text-sm font-medium text-gray-700">Milestones Achieved</label>
-                        <p class="text-sm text-gray-900">{{ selectedProject.milestone_achieved }}</p>
-                    </div>
-                    <div v-if="selectedProject.challenges_encountered">
-                        <label class="block text-sm font-medium text-gray-700">Challenges Encountered</label>
-                        <p class="text-sm text-gray-900">{{ selectedProject.challenges_encountered }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="selectedProject.files && selectedProject.files.length > 0">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Project Files</h3>
-                <div class="grid grid-cols-1 gap-2">
-                    <div v-for="(file, index) in selectedProject.files" :key="index"
-                        class="flex items-center p-2 border rounded-md">
-                        <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span class="text-sm text-blue-600 hover:text-blue-800 overflow-hidden">
-                            <a :href="file" target="_blank">{{ file.split('/').pop() }}</a>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <template #footer>
-            <div class="flex justify-end gap-2">
-                <button @click="deleteProjectHandler"
-                    class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" :disabled="isDeleting">
-                    {{ isDeleting ? 'Deleting...' : 'Delete Project' }}
-                </button>
-                <button @click="editProject(selectedProject.id)"
-                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                    Edit Project
-                </button>
-                <button @click="viewModal = false"
-                    class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                    Close
-                </button>
-            </div>
-        </template>
-    </Modal>
+        </Modal>
+    </div>
 </template>
 
 <style scoped>
+@media (max-width: 640px) {
+    .truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;

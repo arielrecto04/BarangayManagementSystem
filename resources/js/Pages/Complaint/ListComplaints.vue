@@ -8,7 +8,7 @@ import useToast from '@/Utils/useToast';
 import { useRoute, useRouter } from 'vue-router';
 import ComplaintPrintTemplate from './ComplaintPrintTemplate.vue';
 
-const { showToast } = useToast();
+const { showToast, showConfirm } = useToast();
 const route = useRoute();
 const router = useRouter();
 
@@ -105,7 +105,13 @@ const handlePrint = () => {
 
 // Delete complaint
 const deleteComplaint = async (complaintId) => {
-  if (!confirm('Are you sure you want to delete this complaint?')) return;
+  // ✅ SweetAlert2 confirmation dialog
+  const result = await showConfirm(
+    'Are you sure you want to delete this complaint?',
+    'Delete Confirmation'
+  );
+
+  if (!result.isConfirmed) return;
 
   try {
     await complaintStore.deleteComplaint(complaintId);
@@ -119,7 +125,6 @@ const deleteComplaint = async (complaintId) => {
     console.error(error);
   }
 };
-
 
 // Edit complaint
 const editComplaint = (complaintId) => {
@@ -167,11 +172,12 @@ residentStore.getResidents();
       <div class="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-gray-900"></div>
     </div>
 
+
     <!-- Mobile Card View -->
     <div v-else class="block sm:hidden">
       <div class="space-y-3">
-        <div v-for="complaint in complaints" :key="complaint.id"
-          class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+        <div v-for="complaint in complaints" :key="complaint.id" @click="openModal(complaint)"
+          class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm cursor-pointer hover:shadow-md transition">
           <div class="flex justify-between items-start mb-2">
             <div class="flex-1 min-w-0">
               <div class="text-xs font-medium text-gray-500 mb-1">Complainant</div>
@@ -179,15 +185,6 @@ residentStore.getResidents();
                 {{ getResidentName(complaint.complainant_id) }}
               </div>
             </div>
-            <button @click="openModal(complaint)"
-              class="ml-2 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </button>
           </div>
 
           <div class="mb-2">
@@ -225,6 +222,7 @@ residentStore.getResidents();
       </div>
     </div>
 
+
     <!-- Desktop Table View -->
     <div class="hidden sm:block">
       <Table :columns="desktopColumns" :rows="complaints.map(c => ({
@@ -232,23 +230,22 @@ residentStore.getResidents();
         formatted_filing_date: formatDateTime(c.filing_date),
         complainant_name: getResidentName(c.complainant_id),
         respondent_name: getResidentName(c.respondent_id)
-      }))">
-        <template #actions="{ row }">
-          <div class="flex gap-2">
-            <!-- View Button -->
-            <button @click="openModal(row)" title="View"
-              class="text-gray-600 p-2 rounded text-sm transition-transform flex items-center justify-center hover:scale-125">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </button>
-          </div>
+      }))" :rowClickable="true" :showActions="false" @row-click="openModal" class="cursor-pointer">
+        <!-- Colored Status Column -->
+        <template #cell(status)="{ row }">
+          <span :class="{
+            'text-green-600 font-semibold bg-green-100 px-2 py-1 rounded-full text-xs': row.status === 'Resolved',
+            'text-yellow-600 font-semibold bg-yellow-100 px-2 py-1 rounded-full text-xs': row.status === 'In Progress',
+            'text-red-600 font-semibold bg-red-100 px-2 py-1 rounded-full text-xs': row.status === 'Open'
+          }">
+            {{ row.status }}
+          </span>
         </template>
       </Table>
     </div>
+
+
+
 
     <!-- Pagination -->
     <div v-if="paginate" class="mt-4">
@@ -431,5 +428,9 @@ residentStore.getResidents();
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>
