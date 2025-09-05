@@ -11,6 +11,94 @@ use Exception;
 class ResidentController extends Controller
 {
     /**
+     * Get validation rules for resident
+     */
+    private function getValidationRules($id = null)
+    {
+        $emailRule = $id ? "nullable|email|max:255|unique:residents,email,{$id}" : "nullable|email|max:255|unique:residents,email";
+
+        return [
+            // Basic Information
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'suffix' => 'nullable|in:Jr,Sr,III,IV,V',
+            'email' => $emailRule,
+            'birthday' => 'required|date',
+            'age' => 'required|integer|min:0|max:150',
+            'gender' => 'required|in:Male,Female',
+
+            // Address
+            'house_no' => 'nullable|string|max:50',
+            'street' => 'nullable|string|max:255',
+            'barangay' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'province' => 'nullable|string|max:255',
+            'zipcode' => 'nullable|string|max:20',
+
+            // Contact Information
+            'contact_number' => 'nullable|string|max:20',
+            'contact_person' => 'nullable|string|max:255',
+            'family_member' => 'nullable|string|max:255',
+            'emergency_contact' => 'nullable|string|max:255',
+            'avatar' => 'nullable|string',
+
+            // Demographic & Residency Details
+            'place_of_birth' => 'nullable|string|max:255',
+            'civil_status' => 'nullable|in:Single,Married,Widowed,Divorced,Separated,Common Law',
+            'citizenship' => 'nullable|string|max:255',
+            'religion' => 'nullable|string|max:255',
+            'years_of_residency' => 'nullable|integer|min:0',
+            'voter_status' => 'nullable|in:Registered,Not Registered,Suspended,Transferred',
+            'voter_precinct_number' => 'nullable|string|max:255',
+
+            // Government & ID References
+            'valid_id_type' => 'nullable|in:PhilHealth ID,UMID,Driver\'s License,Passport,Postal ID,Voter\'s ID,TIN ID,Senior Citizen ID,PWD ID,Barangay ID,Student ID,Company ID,Other',
+            'valid_id_number' => 'nullable|string|max:255',
+            'sss_number' => 'nullable|string|max:255',
+            'philhealth_number' => 'nullable|string|max:255',
+            'tin_number' => 'nullable|string|max:255',
+            'pagibig_number' => 'nullable|string|max:255',
+
+            // Employment & Education
+            'occupation' => 'nullable|string|max:255',
+            'educational_attainment' => 'nullable|in:No Formal Education,Elementary Level,Elementary Graduate,High School Level,High School Graduate,Senior High School Graduate,Vocational Graduate,College Level,College Graduate,Post Graduate',
+            'monthly_income' => 'nullable|numeric|min:0',
+            'employer_name' => 'nullable|string|max:255',
+            'employer_address' => 'nullable|string|max:255',
+
+            // Barangay-Specific Flags
+            'is_pwd' => 'boolean',
+            'pwd_id_number' => 'nullable|string|max:255',
+            'disability_type' => 'nullable|string|max:255',
+            'is_senior_citizen' => 'boolean',
+            'senior_citizen_id_number' => 'nullable|string|max:255',
+            'is_4ps_beneficiary' => 'boolean',
+            '4ps_household_id' => 'nullable|string|max:255',
+            'is_registered_voter' => 'boolean',
+            'is_solo_parent' => 'boolean',
+            'solo_parent_id_number' => 'nullable|string|max:255',
+            'is_indigenous' => 'boolean',
+            'indigenous_group' => 'nullable|string|max:255',
+
+            // Additional Barangay Flags
+            'is_ofw' => 'boolean',
+            'ofw_country' => 'nullable|string|max:255',
+            'is_teen_parent' => 'boolean',
+            'is_lactating_mother' => 'boolean',
+            'is_pregnant' => 'boolean',
+
+            // Status and Notes
+            'resident_status' => 'nullable|in:Active,Inactive,Deceased,Transferred,Temporary',
+            'medical_conditions' => 'nullable|string',
+            'allergies' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'date_registered' => 'nullable|date',
+            'registered_by' => 'nullable|string|max:255',
+        ];
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
@@ -28,7 +116,11 @@ class ResidentController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'LIKE', "%{$search}%")
                     ->orWhere('last_name', 'LIKE', "%{$search}%")
-                    ->orWhere('address', 'LIKE', "%{$search}%")
+                    ->orWhere('house_no', 'LIKE', "%{$search}%")
+                    ->orWhere('street', 'LIKE', "%{$search}%")
+                    ->orWhere('barangay', 'LIKE', "%{$search}%")
+                    ->orWhere('city', 'LIKE', "%{$search}%")
+                    ->orWhere('province', 'LIKE', "%{$search}%")
                     ->orWhere('contact_number', 'LIKE', "%{$search}%");
             });
         }
@@ -47,7 +139,7 @@ class ResidentController extends Controller
             }
         }
 
-        if ($gender && $gender !== 'Not Specified') {
+        if ($gender) {
             $query->where('gender', $gender);
         }
 
@@ -77,11 +169,10 @@ class ResidentController extends Controller
     private function deleteOldAvatar($avatarUrl)
     {
         if (!$avatarUrl || str_contains($avatarUrl, 'ionicframework.com')) {
-            return; // Don't delete default avatars
+            return;
         }
 
         try {
-            // Extract path from URL
             $parsedUrl = parse_url($avatarUrl);
             if (!$parsedUrl || !isset($parsedUrl['path'])) {
                 return;
@@ -89,10 +180,8 @@ class ResidentController extends Controller
 
             $path = $parsedUrl['path'];
 
-            // Remove /storage/ prefix to get the actual file path
             if (str_starts_with($path, '/storage/')) {
                 $filePath = str_replace('/storage/', '', $path);
-
                 if (Storage::disk('public')->exists($filePath)) {
                     Storage::disk('public')->delete($filePath);
                     Log::info("Deleted old avatar: " . $filePath);
@@ -112,10 +201,8 @@ class ResidentController extends Controller
             return 'https://ionicframework.com/docs/img/demos/avatar.svg';
         }
 
-        // If it's a base64 data URL
         if (str_starts_with($avatarData, 'data:image/')) {
             try {
-                // Extract image data and mime type
                 $dataParts = explode(',', $avatarData);
                 if (count($dataParts) !== 2) {
                     throw new Exception('Invalid data URL format');
@@ -126,23 +213,19 @@ class ResidentController extends Controller
                     throw new Exception('Failed to decode base64 data');
                 }
 
-                // Extract mime type and determine extension
                 $mimeTypePart = explode(';', explode(':', $dataParts[0])[1])[0];
                 $extension = explode('/', $mimeTypePart)[1];
                 if ($extension === 'jpeg') {
                     $extension = 'jpg';
                 }
 
-                // Generate unique filename
                 $imageName = 'resident_' . time() . '_' . uniqid() . '.' . $extension;
                 $path = 'resident_images/' . $imageName;
 
-                // Delete old avatar before saving new one
                 if ($oldAvatarUrl) {
                     $this->deleteOldAvatar($oldAvatarUrl);
                 }
 
-                // Save new image
                 Storage::disk('public')->put($path, $imageData);
 
                 return asset('storage/' . $path);
@@ -152,42 +235,22 @@ class ResidentController extends Controller
             }
         }
 
-        // If it's already a valid URL, return as is
         if (filter_var($avatarData, FILTER_VALIDATE_URL)) {
             return $avatarData;
         }
 
-        // If invalid format, return old avatar or default
         return $oldAvatarUrl ?: 'https://ionicframework.com/docs/img/demos/avatar.svg';
     }
 
-    public function create()
-    {
-        //
-    }
+    public function create() {}
 
     /**
      * Store a newly created resident.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => "nullable|email|max:255|unique:residents,email",
-            'birthday' => 'required|date',
-            'age' => 'required|integer|min:0|max:150',
-            'gender' => 'required|string|in:Male,Female',
-            'address' => 'required|string|max:500',
-            'contact_number' => 'required|string|max:20',
-            'contact_person' => 'nullable|string|max:255',
-            'family_member' => 'nullable|string|max:255',
-            'emergency_contact' => 'nullable|string|max:255',
-            'avatar' => 'nullable|string',
-        ]);
+        $request->validate($this->getValidationRules());
 
-        // Generate unique resident_number
         do {
             $randomNumber = random_int(100000, 999999);
             $residentNumber = 'RES-' . $randomNumber;
@@ -197,16 +260,9 @@ class ResidentController extends Controller
         $data = $request->all();
         $data['resident_number'] = $residentNumber;
 
-        // Process avatar upload
-        if ($request->hasFile('avatar')) {
-            // Traditional file upload
-            $imageName = 'resident_' . time() . '.' . $request->avatar->extension();
-            $path = $request->avatar->storeAs('resident_images', $imageName, 'public');
-            $data['avatar'] = asset('storage/' . $path);
-        } else {
-            // Handle base64 data URL or regular URL
-            $data['avatar'] = $this->processAvatarUpload($request->avatar);
-        }
+        $data['avatar'] = $request->hasFile('avatar')
+            ? asset('storage/' . $request->avatar->storeAs('resident_images', 'resident_' . time() . '.' . $request->avatar->extension(), 'public'))
+            : $this->processAvatarUpload($request->avatar);
 
         $resident = Resident::create($data);
 
@@ -225,58 +281,27 @@ class ResidentController extends Controller
         ]);
     }
 
-    public function edit(string $id)
-    {
-        //
-    }
+    public function edit(string $id) {}
 
     /**
      * Update an existing resident.
      */
     public function update(Request $request, string $id)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'birthday' => 'required|date',
-            'email' => "nullable|email|max:255|unique:residents,email,{$id}",
-            'age' => 'required|integer|min:0|max:150',
-            'gender' => 'required|string|in:Male,Female',
-            'address' => 'required|string|max:500',
-            'contact_number' => 'required|string|max:20',
-            'contact_person' => 'nullable|string|max:255',
-            'family_member' => 'nullable|string|max:255',
-            'emergency_contact' => 'nullable|string|max:255',
-            'avatar' => 'nullable|string',
-        ]);
-
         $resident = Resident::findOrFail($id);
+
+        $request->validate($this->getValidationRules($id));
+
         $data = $request->all();
 
-        // Handle avatar update
         if ($request->hasFile('avatar')) {
-            // Traditional file upload
             $this->deleteOldAvatar($resident->avatar);
-
-            $imageName = 'resident_' . time() . '.' . $request->avatar->extension();
-            $path = $request->avatar->storeAs('resident_images', $imageName, 'public');
-            $data['avatar'] = asset('storage/' . $path);
+            $data['avatar'] = asset('storage/' . $request->avatar->storeAs('resident_images', 'resident_' . time() . '.' . $request->avatar->extension(), 'public'));
         } elseif ($request->has('avatar')) {
-            // Handle base64 data URL or regular URL
-            $oldAvatar = $resident->avatar;
-            $newAvatar = $this->processAvatarUpload($request->avatar, $oldAvatar);
-
-            // Only update if we got a different avatar URL
-            if ($newAvatar !== $oldAvatar) {
-                $data['avatar'] = $newAvatar;
-            }
+            $data['avatar'] = $this->processAvatarUpload($request->avatar, $resident->avatar);
         }
-        // If no avatar in request, keep the current one
 
         $resident->update($data);
-
-        // Refresh the resident to get updated data
         $resident->refresh();
 
         return response()->json([
@@ -288,10 +313,7 @@ class ResidentController extends Controller
     public function destroy(string $id)
     {
         $resident = Resident::findOrFail($id);
-
-        // Delete avatar file
         $this->deleteOldAvatar($resident->avatar);
-
         $resident->delete();
 
         return response()->json([

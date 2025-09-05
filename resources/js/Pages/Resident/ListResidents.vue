@@ -28,6 +28,7 @@ const openCertificate = () => {
 const { showToast, showConfirm } = useToast();
 const route = useRoute();
 const router = useRouter();
+const activeModalTab = ref('basic'); // default tab in modal
 
 const residentStore = useResidentStore();
 const { residents, isLoading, paginate } = storeToRefs(residentStore);
@@ -340,66 +341,343 @@ const certificatePreviewProps = computed(() => {
                 :totalItems="paginate.total" :currentPage="paginate.current_page" :itemsPerPage="paginate.per_page" />
         </div>
 
-        <!-- Modal -->
-        <Modal :show="showModal" title="Resident Details" max-width="5xl" @close="closeModal">
+        <!-- Modal Section - Replace the existing Modal in ListResidents.vue -->
+        <Modal :show="showModal" title="Resident Details" max-width="6xl" @close="closeModal">
             <div v-if="selectedResident" class="flex flex-col space-y-6">
-                <!-- Profile & Details -->
-                <div class="flex flex-col md:flex-row items-center md:items-start md:space-x-6">
+                <!-- Profile Header -->
+                <div
+                    class="flex flex-col md:flex-row items-center md:items-start md:space-x-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
                     <div class="flex-shrink-0 mb-4 md:mb-0">
                         <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 shadow-lg">
                             <img :src="selectedResident?.avatar || 'https://ionicframework.com/docs/img/demos/avatar.svg'"
                                 :alt="`${selectedResident?.first_name} ${selectedResident?.last_name}`"
                                 class="w-full h-full object-cover" @error="handleImageError" />
                         </div>
-                        <div class="mt-3 text-center">
-                            <p v-if="selectedResident?.first_name" class="text-xl font-bold text-gray-800">
-                                {{ selectedResident.first_name }}
-                            </p>
-                            <p v-if="selectedResident?.middle_name" class="text-lg font-bold text-gray-800">
-                                {{ selectedResident.middle_name }}
-                            </p>
-                            <p v-if="selectedResident?.last_name" class="text-xl font-bold text-gray-800">
-                                {{ selectedResident.last_name }}
-                            </p>
-                            <p v-if="!selectedResident?.first_name && !selectedResident?.last_name && !selectedResident?.middle_name"
-                                class="text-xl font-bold text-gray-800">
-                                No Name
-                            </p>
-                        </div>
                     </div>
 
-                    <!-- Resident Details -->
                     <div class="flex-1 text-center md:text-left">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                            <div v-for="(value, label) in {
-                                'Resident ID': selectedResident?.id,
-                                'Resident Number': selectedResident?.resident_number,
-                                'Middle Name': selectedResident?.middle_name,
-                                Age: selectedResident?.age,
-                                Gender: selectedResident?.gender,
-                                Birthday: selectedResident?.birthday,
-                                Address: selectedResident?.address,
-                                'Contact Number': selectedResident?.contact_number,
-                                'Emergency Contact': selectedResident?.emergency_contact,
-                                Email: selectedResident?.email,
-                                'Family Member': selectedResident?.family_member
-                            }" :key="label" :class="{ 'sm:col-span-2': ['Address'].includes(label) }"
-                                class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-1">
-                                <h4 class="text-gray-800 font-semibold text-xs">{{ label }}</h4>
-                                <p class="text-gray-700 text-sm break-words">{{ value || 'N/A' }}</p>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                            {{ selectedResident?.first_name }}
+                            {{ selectedResident?.middle_name }}
+                            {{ selectedResident?.last_name }}
+                            {{ selectedResident?.suffix }}
+                        </h2>
+                        <div class="flex flex-wrap justify-center md:justify-start gap-2 mb-3">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                ID: {{ selectedResident?.resident_number || selectedResident?.id }}
+                            </span>
+                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                {{ selectedResident?.resident_status || 'Active' }}
+                            </span>
+                            <span v-if="selectedResident?.is_senior_citizen"
+                                class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                Senior Citizen
+                            </span>
+                            <span v-if="selectedResident?.is_pwd"
+                                class="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                PWD
+                            </span>
+                            <span v-if="selectedResident?.is_4ps_beneficiary"
+                                class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                4Ps Beneficiary
+                            </span>
+                        </div>
+                        <p class="text-gray-600">
+                            {{ selectedResident?.age }} years old • {{ selectedResident?.gender }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tabbed Information Display -->
+                <div class="bg-white rounded-lg">
+                    <!-- Tab Navigation -->
+                    <div class="border-b border-gray-200">
+                        <nav class="flex overflow-x-auto" aria-label="Tabs">
+                            <button v-for="tab in [
+                                { key: 'basic', label: 'Basic Info', icon: '👤' },
+                                { key: 'address', label: 'Address', icon: '🏠' },
+                                { key: 'demographic', label: 'Demographics', icon: '📊' },
+                                { key: 'employment', label: 'Employment', icon: '💼' },
+                                { key: 'government', label: 'Gov IDs', icon: '🆔' },
+                                { key: 'special', label: 'Categories', icon: '⭐' },
+                                { key: 'additional', label: 'Additional', icon: '📝' }
+                            ]" :key="tab.key" @click="activeModalTab = tab.key" :class="[
+                                'flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap',
+                                activeModalTab === tab.key
+                                    ? 'border-blue-500 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ]">
+                                <span>{{ tab.icon }}</span>
+                                {{ tab.label }}
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="p-6">
+                        <!-- Basic Information Tab -->
+                        <div v-show="activeModalTab === 'basic'" class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div v-for="(value, label) in {
+                                    'First Name': selectedResident?.first_name,
+                                    'Middle Name': selectedResident?.middle_name,
+                                    'Last Name': selectedResident?.last_name,
+                                    'Suffix': selectedResident?.suffix,
+                                    'Birthday': selectedResident?.birthday,
+                                    'Age': selectedResident?.age,
+                                    'Gender': selectedResident?.gender,
+                                    'Email': selectedResident?.email,
+                                    'Contact Number': selectedResident?.contact_number
+                                }" :key="label" class="bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm">{{ label }}</h4>
+                                    <p class="text-gray-900 font-semibold">{{ value || 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Information Tab -->
+                        <div v-show="activeModalTab === 'address'" class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div v-for="(value, label) in {
+                                    'House No.': selectedResident?.house_no,
+                                    'Street': selectedResident?.street,
+                                    'Barangay': selectedResident?.barangay,
+                                    'City': selectedResident?.city,
+                                    'Province': selectedResident?.province,
+                                    'Zip Code': selectedResident?.zipcode
+                                }" :key="label" class="bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm">{{ label }}</h4>
+                                    <p class="text-gray-900 font-semibold">{{ value || 'N/A' }}</p>
+                                </div>
                             </div>
 
-                            <div v-if="selectedResident?.created_at"
-                                class="sm:col-span bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                                <h4 class="text-gray-800 font-semibold text-xs">Created At</h4>
-                                <p class="text-gray-700 text-sm break-words">{{ new
-                                    Date(selectedResident.created_at).toLocaleString() }}</p>
+                            <!-- Full Address -->
+                            <div class="bg-blue-50 p-4 rounded-lg mt-4">
+                                <h4 class="text-gray-600 font-medium text-sm mb-2">Complete Address</h4>
+                                <p class="text-gray-900 font-semibold">
+                                    {{[selectedResident?.house_no, selectedResident?.street,
+                                    selectedResident?.barangay,
+                                    selectedResident?.city, selectedResident?.province, selectedResident?.zipcode]
+                                        .filter(part => part && part.trim()).join(', ') || 'N/A'}}
+                                </p>
                             </div>
-                            <div v-if="selectedResident?.updated_at"
-                                class="sm:col-span bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                                <h4 class="text-gray-800 font-semibold text-xs">Updated At</h4>
-                                <p class="text-gray-700 text-sm break-words">{{ new
-                                    Date(selectedResident.updated_at).toLocaleString() }}</p>
+
+                            <!-- Contact Information -->
+                            <div class="mt-6">
+                                <h4 class="text-md font-semibold text-gray-900 mb-3">Contact Information</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div v-for="(value, label) in {
+                                        'Contact Person': selectedResident?.contact_person,
+                                        'Emergency Contact': selectedResident?.emergency_contact,
+                                        'Family Member': selectedResident?.family_member
+                                    }" :key="label" class="bg-gray-50 p-3 rounded-lg">
+                                        <h4 class="text-gray-600 font-medium text-sm">{{ label }}</h4>
+                                        <p class="text-gray-900 font-semibold">{{ value || 'N/A' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Demographic Information Tab -->
+                        <div v-show="activeModalTab === 'demographic'" class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Demographic Information</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div v-for="(value, label) in {
+                                    'Place of Birth': selectedResident?.place_of_birth,
+                                    'Civil Status': selectedResident?.civil_status,
+                                    'Citizenship': selectedResident?.citizenship,
+                                    'Religion': selectedResident?.religion,
+                                    'Years of Residency': selectedResident?.years_of_residency,
+                                    'Voter Status': selectedResident?.voter_status,
+                                    'Voter Precinct Number': selectedResident?.voter_precinct_number
+                                }" :key="label" class="bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm">{{ label }}</h4>
+                                    <p class="text-gray-900 font-semibold">{{ value || 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Employment Information Tab -->
+                        <div v-show="activeModalTab === 'employment'" class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Employment & Education</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div v-for="(value, label) in {
+                                    'Occupation': selectedResident?.occupation,
+                                    'Educational Attainment': selectedResident?.educational_attainment,
+                                    'Monthly Income': selectedResident?.monthly_income ? `₱${Number(selectedResident.monthly_income).toLocaleString()}` : null,
+                                    'Employer Name': selectedResident?.employer_name,
+                                    'Employer Address': selectedResident?.employer_address
+                                }" :key="label" :class="{ 'sm:col-span-2': label === 'Employer Address' }"
+                                    class="bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm">{{ label }}</h4>
+                                    <p class="text-gray-900 font-semibold">{{ value || 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Government IDs Tab -->
+                        <div v-show="activeModalTab === 'government'" class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Government & ID References</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div v-for="(value, label) in {
+                                    'Valid ID Type': selectedResident?.valid_id_type,
+                                    'Valid ID Number': selectedResident?.valid_id_number,
+                                    'SSS Number': selectedResident?.sss_number,
+                                    'PhilHealth Number': selectedResident?.philhealth_number,
+                                    'TIN Number': selectedResident?.tin_number,
+                                    'Pag-IBIG Number': selectedResident?.pagibig_number
+                                }" :key="label" class="bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm">{{ label }}</h4>
+                                    <p class="text-gray-900 font-semibold">{{ value || 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Special Categories Tab -->
+                        <div v-show="activeModalTab === 'special'" class="space-y-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Special Categories</h3>
+
+                            <!-- PWD Section -->
+                            <div v-if="selectedResident?.is_pwd"
+                                class="bg-orange-50 border border-orange-200 p-4 rounded-lg">
+                                <div class="flex items-center mb-3">
+                                    <span class="text-orange-600 font-semibold">♿ Person with Disability (PWD)</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <h5 class="text-gray-600 font-medium text-sm">PWD ID Number</h5>
+                                        <p class="text-gray-900 font-semibold">{{ selectedResident?.pwd_id_number ||
+                                            'N/A' }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-gray-600 font-medium text-sm">Disability Type</h5>
+                                        <p class="text-gray-900 font-semibold">{{ selectedResident?.disability_type ||
+                                            'N/A' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Senior Citizen Section -->
+                            <div v-if="selectedResident?.is_senior_citizen"
+                                class="bg-purple-50 border border-purple-200 p-4 rounded-lg">
+                                <div class="flex items-center mb-3">
+                                    <span class="text-purple-600 font-semibold">👴 Senior Citizen</span>
+                                </div>
+                                <div>
+                                    <h5 class="text-gray-600 font-medium text-sm">Senior Citizen ID Number</h5>
+                                    <p class="text-gray-900 font-semibold">{{ selectedResident?.senior_citizen_id_number
+                                        ||
+                                        'N/A' }}</p>
+                                </div>
+                            </div>
+
+                            <!-- 4Ps Section -->
+                            <div v-if="selectedResident?.is_4ps_beneficiary"
+                                class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                                <div class="flex items-center mb-3">
+                                    <span class="text-yellow-600 font-semibold">🏠 4Ps Beneficiary</span>
+                                </div>
+                                <div>
+                                    <h5 class="text-gray-600 font-medium text-sm">4Ps Household ID</h5>
+                                    <p class="text-gray-900 font-semibold">{{ selectedResident?.['4ps_household_id'] ||
+                                        'N/A' }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Solo Parent Section -->
+                            <div v-if="selectedResident?.is_solo_parent"
+                                class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                <div class="flex items-center mb-3">
+                                    <span class="text-blue-600 font-semibold">👨‍👧‍👦 Solo Parent</span>
+                                </div>
+                                <div>
+                                    <h5 class="text-gray-600 font-medium text-sm">Solo Parent ID Number</h5>
+                                    <p class="text-gray-900 font-semibold">{{ selectedResident?.solo_parent_id_number ||
+                                        'N/A'
+                                        }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Indigenous Section -->
+                            <div v-if="selectedResident?.is_indigenous"
+                                class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                                <div class="flex items-center mb-3">
+                                    <span class="text-green-600 font-semibold">🏛️ Indigenous People</span>
+                                </div>
+                                <div>
+                                    <h5 class="text-gray-600 font-medium text-sm">Indigenous Group</h5>
+                                    <p class="text-gray-900 font-semibold">{{ selectedResident?.indigenous_group ||
+                                        'N/A' }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Other Special Categories -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                <div v-for="(status, label) in {
+                                    'Registered Voter': selectedResident?.is_registered_voter,
+                                    'OFW': selectedResident?.is_ofw,
+                                    'Teen Parent': selectedResident?.is_teen_parent,
+                                    'Lactating Mother': selectedResident?.is_lactating_mother,
+                                    'Pregnant': selectedResident?.is_pregnant
+                                }" :key="label" class="bg-gray-50 p-3 rounded-lg text-center">
+                                    <h5 class="text-gray-600 font-medium text-sm">{{ label }}</h5>
+                                    <p class="text-lg font-bold" :class="status ? 'text-green-600' : 'text-red-600'">
+                                        {{ status ? '✓' : '✗' }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- OFW Country -->
+                            <div v-if="selectedResident?.is_ofw && selectedResident?.ofw_country"
+                                class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="text-gray-600 font-medium text-sm">OFW Country</h5>
+                                <p class="text-gray-900 font-semibold">{{ selectedResident.ofw_country }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Tab -->
+                        <div v-show="activeModalTab === 'additional'" class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                <div v-for="(value, label) in {
+                                    'Resident Status': selectedResident?.resident_status,
+                                    'Date Registered': selectedResident?.date_registered,
+                                    'Registered By': selectedResident?.registered_by
+                                }" :key="label" class="bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm">{{ label }}</h4>
+                                    <p class="text-gray-900 font-semibold">{{ value || 'N/A' }}</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div v-for="(value, label) in {
+                                    'Medical Conditions': selectedResident?.medical_conditions,
+                                    'Allergies': selectedResident?.allergies,
+                                    'Notes': selectedResident?.notes
+                                }" :key="label" class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm mb-2">{{ label }}</h4>
+                                    <p class="text-gray-900 whitespace-pre-wrap">{{ value || 'N/A' }}</p>
+                                </div>
+                            </div>
+
+                            <!-- System Information -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                                <div v-if="selectedResident?.created_at" class="bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm">Created At</h4>
+                                    <p class="text-gray-900 font-semibold">{{ new
+                                        Date(selectedResident.created_at).toLocaleString() }}</p>
+                                </div>
+                                <div v-if="selectedResident?.updated_at" class="bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="text-gray-600 font-medium text-sm">Updated At</h4>
+                                    <p class="text-gray-900 font-semibold">{{ new
+                                        Date(selectedResident.updated_at).toLocaleString() }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
