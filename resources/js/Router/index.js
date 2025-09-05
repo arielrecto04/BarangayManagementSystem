@@ -392,6 +392,148 @@ const routes = [
                     },
                 ],
             },
+            // Add these routes to your existing health services children array in Router/index.js
+
+            {
+                path: "inventory",
+                name: "Inventory",
+                meta: {
+                    title: "Medicine Inventory",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Inventory/MedicineInventory.vue"
+                    ),
+            },
+            {
+                path: "health-workers",
+                name: "Health Care Workers",
+                meta: {
+                    title: "Health Care Workers",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/HealthWorkers/HealthCareWorkers.vue"
+                    ),
+            },
+            {
+                path: "doctors",
+                name: "Doctors",
+                meta: {
+                    title: "Doctors",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import("@/Pages/HealthService/Doctors/DoctorList.vue"),
+            },
+            {
+                path: "patient-profiles",
+                name: "Patient Health Profiles",
+                meta: {
+                    title: "Patient Health Profiles",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/PatientProfiles/PatientHealthProfiles.vue"
+                    ),
+            },
+            {
+                path: "appointments",
+                name: "Appointment & Scheduling",
+                meta: {
+                    title: "Appointments & Scheduling",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Appointments/AppointmentScheduling.vue"
+                    ),
+            },
+            {
+                path: "communicable-diseases",
+                name: "Communicable Disease Monitoring",
+                meta: {
+                    title: "Communicable Disease Monitoring",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/CommunicableDisease/CommunicableDiseaseMonitoring.vue"
+                    ),
+            },
+            {
+                path: "dental-services",
+                name: "Dental Services",
+                meta: {
+                    title: "Dental Services",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import("@/Pages/HealthService/Dental/DentalServices.vue"),
+            },
+            {
+                path: "mental-health",
+                name: "Mental Health Support",
+                meta: {
+                    title: "Mental Health Support",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/MentalHealth/MentalHealthSupport.vue"
+                    ),
+            },
+            {
+                path: "emergency-response",
+                name: "Emergency Response Logs",
+                meta: {
+                    title: "Emergency Response Logs",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Emergency/EmergencyResponseLogs.vue"
+                    ),
+            },
+            {
+                path: "health-certificates",
+                name: "Health Certificates & Permits",
+                meta: {
+                    title: "Health Certificates & Permits",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Certificates/HealthCertificates.vue"
+                    ),
+            },
+            {
+                path: "environmental-health",
+                name: "Environmental Health Monitoring",
+                meta: {
+                    title: "Environmental Health Monitoring",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Environmental/EnvironmentalHealthMonitoring.vue"
+                    ),
+            },
+            {
+                path: "clinic-visits/add",
+                name: "Add Clinic Visit",
+                meta: {
+                    title: "Add Clinic Visit",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/ClinicVisit/AddClinicVisit.vue"
+                    ),
+            },
             {
                 path: "reports",
                 name: "Health Reports",

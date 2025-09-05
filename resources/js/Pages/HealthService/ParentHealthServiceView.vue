@@ -9,6 +9,16 @@ import {
     UserGroupIcon,
     BuildingLibraryIcon,
     DocumentChartBarIcon,
+    ArchiveBoxIcon,
+    UsersIcon,
+    UserIcon,
+    FolderIcon,
+    CalendarDaysIcon,
+    HeartIcon,
+    ShieldExclamationIcon,
+    ExclamationTriangleIcon,
+    DocumentTextIcon,
+    BeakerIcon,
 } from "@heroicons/vue/24/outline";
 
 const route = useRoute();
@@ -21,13 +31,15 @@ const route = useRoute();
             <div class="bg-white p-4 sm:p-5 shadow-lg rounded-lg w-full md:w-1/4">
                 <h1 class="uppercase font-bold text-lg sm:text-xl">Health Service Manager</h1>
                 <p class="text-gray-600 text-sm sm:text-base">
-                    Manage Health Records and Announcements
+                    Manage Health Records and Services
                 </p>
             </div>
 
-            <!-- Navigation Grid: 2 columns on mobile -->
+            <!-- Navigation Grid -->
             <div
-                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 bg-white shadow-lg rounded-lg p-3 sm:p-5 mt-0 md:mt-5 -translate-y-0 md:-translate-y-10">
+                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 gap-2 bg-white shadow-lg rounded-lg p-3 sm:p-5 mt-0 md:mt-5 -translate-y-0 md:-translate-y-10">
+
+                <!-- Row 1 -->
                 <router-link :to="{ path: 'dashboard' }"
                     class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
                     active-class="bg-green-700 text-white">
@@ -68,6 +80,85 @@ const route = useRoute();
                     active-class="bg-green-700 text-white">
                     <DocumentChartBarIcon class="w-6 h-6 mb-1" />
                     <span class="text-xs text-center">Reports</span>
+                </router-link>
+
+                <!-- Row 2 -->
+                <router-link :to="{ name: 'Inventory' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <ArchiveBoxIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Inventory</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Health Care Workers' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <UsersIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Health Workers</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Doctors' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <UserIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Doctors</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Patient Health Profiles' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <FolderIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Patient Profiles</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Appointment & Scheduling' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <CalendarDaysIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Appointments</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Communicable Disease Monitoring' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <ShieldExclamationIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Disease Monitor</span>
+                </router-link>
+
+                <!-- Row 3 -->
+                <router-link :to="{ name: 'Dental Services' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <HeartIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Dental Services</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Mental Health Support' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <HeartIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Mental Health</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Emergency Response Logs' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <ExclamationTriangleIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Emergency</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Health Certificates & Permits' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <DocumentTextIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Certificates</span>
+                </router-link>
+
+                <router-link :to="{ name: 'Environmental Health Monitoring' }"
+                    class="flex flex-col items-center justify-center px-3 py-4 rounded-lg text-gray-700 font-semibold transition-colors duration-200 hover:bg-green-800 hover:text-white"
+                    active-class="bg-green-700 text-white">
+                    <BeakerIcon class="w-6 h-6 mb-1" />
+                    <span class="text-xs text-center">Environmental</span>
                 </router-link>
             </div>
         </div>
