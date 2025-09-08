@@ -169,6 +169,7 @@ class AnnouncementEventController extends Controller
 
         return response()->json($record, 200);
     }
+
     public function destroy($id)
     {
         $record = AnnouncementEvent::findOrFail($id);
@@ -200,5 +201,52 @@ class AnnouncementEventController extends Controller
             'message' => "Updated {$updated} event statuses",
             'updated_count' => $updated
         ]);
+    }
+
+    // ✅ New count() method added
+    public function count()
+    {
+        try {
+            $count = AnnouncementEvent::count();
+            return response()->json(['count' => $count]);
+        } catch (\Exception $e) {
+            return response()->json(['count' => 0, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // ✅ New home() method (merged from snippet)
+    public function home()
+    {
+        try {
+            // Get all events and update their status in real-time
+            $events = AnnouncementEvent::all();
+
+            // Update statuses for all events before returning
+            foreach ($events as $event) {
+                $currentStatus = $event->calculateStatus();
+                if ($event->status !== $currentStatus) {
+                    $event->update(['status' => $currentStatus]);
+                }
+            }
+
+            // Return only needed fields for home page
+            return response()->json(
+                $events->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'type' => $item->type,
+                        'title' => $item->title,
+                        'description' => $item->description,
+                        'start_date' => $item->start_date,
+                        'end_date' => $item->end_date,
+                        'location' => $item->location,
+                        'author' => $item->author,
+                        'status' => $item->status,
+                    ];
+                })
+            );
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch events'], 500);
+        }
     }
 }

@@ -8,12 +8,12 @@ const emit = defineEmits(["search"]);
 </script>
 
 <template>
-    <div class="flex min-h-screen bg-gray-50">
+    <div class="flex min-h-screen w-full bg-gray-50">
         <!-- Sidebar -->
         <Sidebar />
 
         <!-- Main Content Area -->
-        <div class="flex flex-col flex-1 gap-2 p-5">
+        <div class="flex flex-col flex-1 gap-2 p-5 overflow-x-auto bg-gray-50">
             <!-- Optional Navbar -->
             <!-- <NavBar /> -->
 
@@ -21,7 +21,7 @@ const emit = defineEmits(["search"]);
             <Header @search="emit('search', $event)" />
 
             <!-- Page Content -->
-            <div class="flex-1">
+            <div class="flex-1 w-full">
                 <slot />
             </div>
         </div>

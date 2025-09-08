@@ -85,9 +85,24 @@ export const useComplaintStore = defineStore("complaint", {
                     response = await axios.patch(`/complaints/${id}`, data);
                 }
 
-                const index = this._complaints.findIndex((c) => c.id === id);
+                // FIXED: Update the local complaints array with fresh data
+                const index = this._complaints.findIndex(
+                    (c) => Number(c.id) === Number(id)
+                );
                 if (index !== -1) {
                     this._complaints[index] = response.data.data;
+                    console.log(
+                        "Updated complaint in store:",
+                        response.data.data
+                    );
+                }
+
+                // FIXED: Also update the single complaint if it's the one being viewed
+                if (
+                    this._complaint &&
+                    Number(this._complaint.id) === Number(id)
+                ) {
+                    this._complaint = response.data.data;
                 }
 
                 return response.data;

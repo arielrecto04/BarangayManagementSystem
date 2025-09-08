@@ -1,6 +1,7 @@
 import { axios } from "@/Utils";
 import { defineStore } from "pinia";
 import useToast from "@/Utils/useToast";
+
 const { showToast } = useToast();
 
 export const useResidentStore = defineStore("resident", {
@@ -33,7 +34,6 @@ export const useResidentStore = defineStore("resident", {
         },
 
         selectResidentById(residentId) {
-            // Fix: Use strict equality and proper type conversion
             const id = Number(residentId);
             this._resident =
                 this._residents.find(
@@ -41,7 +41,6 @@ export const useResidentStore = defineStore("resident", {
                 ) || null;
         },
 
-        // Add method to safely get resident by ID without setting store state
         getResidentByIdSync(residentId) {
             const id = Number(residentId);
             return (
@@ -60,13 +59,14 @@ export const useResidentStore = defineStore("resident", {
                 const response = await axios.get(`/residents?page=${page}`);
                 const residentData = response.data.data || [];
 
-                // Ensure resident IDs are numbers
                 this._residents = residentData.map((r) => ({
                     ...r,
                     id: Number(r.id),
+                    avatar:
+                        r.avatar ||
+                        "https://ionicframework.com/docs/img/demos/avatar.svg",
                 }));
 
-                // More robust pagination handling
                 const paginationData = response.data;
                 this._paginate = {
                     total: paginationData.total ?? 0,
@@ -77,7 +77,6 @@ export const useResidentStore = defineStore("resident", {
                     to: paginationData.to ?? 0,
                 };
 
-                // Ensure current_page doesn't exceed last_page
                 if (
                     this._paginate.current_page > this._paginate.last_page &&
                     this._paginate.last_page > 0
@@ -102,20 +101,21 @@ export const useResidentStore = defineStore("resident", {
 
             try {
                 const response = await axios.post("/residents", resident);
+                const responseData = response.data.data || response.data;
+
                 const newResident = {
-                    ...response.data,
-                    id: Number(response.data.id),
+                    ...responseData,
+                    id: Number(responseData.id),
+                    avatar:
+                        responseData.avatar ||
+                        "https://ionicframework.com/docs/img/demos/avatar.svg",
                 };
 
-                // If we're not on the last page, we might need to refetch
-                // or just add to current list if there's space
                 if (this._residents.length < this._paginate.per_page) {
                     this._residents.push(newResident);
                 }
 
-                // Update pagination totals
                 this._paginate.total += 1;
-
                 return newResident;
             } catch (error) {
                 console.error("Error adding resident:", error);
@@ -127,10 +127,10 @@ export const useResidentStore = defineStore("resident", {
             }
         },
 
-        // Update current resident
-        async updateResident() {
-            if (!this._resident?.id) {
-                console.error("No resident selected for update.");
+        // Update resident
+        async updateResident(residentData) {
+            if (!residentData?.id) {
+                console.error("No resident data or ID provided for update.");
                 return;
             }
 
@@ -139,14 +139,16 @@ export const useResidentStore = defineStore("resident", {
 
             try {
                 const response = await axios.put(
-                    `/residents/${this._resident.id}`,
-                    this._resident
+                    `/residents/${residentData.id}`,
+                    residentData
                 );
 
-                // Update in the residents list
                 const updatedResident = {
                     ...(response.data.data || response.data),
                     id: Number((response.data.data || response.data).id),
+                    avatar:
+                        (response.data.data || response.data).avatar ||
+                        "https://ionicframework.com/docs/img/demos/avatar.svg",
                 };
 
                 this._residents = this._residents.map((resident) =>
@@ -155,7 +157,6 @@ export const useResidentStore = defineStore("resident", {
                         : resident
                 );
 
-                // Update the selected resident
                 this._resident = updatedResident;
 
                 return updatedResident;
@@ -178,10 +179,15 @@ export const useResidentStore = defineStore("resident", {
             try {
                 const response = await axios.get(`/residents/${residentId}`);
                 const residentData = response.data.data || response.data;
+
                 this._resident = {
                     ...residentData,
                     id: Number(residentData.id),
+                    avatar:
+                        residentData.avatar ||
+                        "https://ionicframework.com/docs/img/demos/avatar.svg",
                 };
+
                 return this._resident;
             } catch (error) {
                 console.error("Error fetching resident:", error);
@@ -201,16 +207,13 @@ export const useResidentStore = defineStore("resident", {
             try {
                 await axios.delete(`/residents/${residentId}`);
 
-                // Remove from local list using strict equality
                 const id = Number(residentId);
                 this._residents = this._residents.filter(
                     (resident) => Number(resident.id) !== id
                 );
 
-                // Update pagination totals
                 this._paginate.total = Math.max(0, this._paginate.total - 1);
 
-                // Clear selected resident if it was deleted
                 if (this._resident && Number(this._resident.id) === id) {
                     this._resident = null;
                 }
@@ -227,35 +230,35 @@ export const useResidentStore = defineStore("resident", {
             }
         },
 
+        // Get resident by number
         async getResidentByNumber(residentNumber) {
             try {
                 const response = await axios.get(
                     `/residents/get-resident-by-number/${residentNumber}`
                 );
-                console.log(response.data);
+
                 this._resident = {
                     ...response.data,
                     id: Number(response.data.id),
+                    avatar:
+                        response.data.avatar ||
+                        "https://ionicframework.com/docs/img/demos/avatar.svg",
                 };
             } catch (error) {
                 console.log(error);
 
-                if (error.response) {
-                    if (error.response.status === 404) {
-                        showToast({
-                            icon: "error",
-                            title: "Resident not found",
-                        });
-                    }
+                if (error.response?.status === 404) {
+                    showToast({
+                        icon: "error",
+                        title: "Resident not found",
+                    });
                 }
             }
         },
 
-        // Add method to clear store state safely
         clearState() {
             this._resident = null;
             this._error = null;
-            // Don't clear residents array as it might be needed by other components
         },
     },
 });

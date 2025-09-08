@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue';
-import { PlusIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon } from '@heroicons/vue/24/outline';
 
-// --- Hardcoded data for visualization ---
+// --- Hardcoded data ---
 const immunizations = ref([
     { id: 1, date: '2025-08-05', residentName: 'Jose Rizal Jr.', vaccine: 'BCG', dose: '1 of 1', administeredBy: 'BHW Maria' },
     { id: 2, date: '2025-08-04', residentName: 'Ana Santos', vaccine: 'COVID-19 Booster', dose: 'Booster', administeredBy: 'BHW Pedro' },
@@ -13,61 +13,48 @@ const immunizations = ref([
 </script>
 
 <template>
-    <div class="bg-white p-6 shadow-lg rounded-lg">
-        <div class="flex flex-col md:flex-row justify-between items-center border-b pb-4 mb-4">
-            <h2 class="text-2xl font-bold text-gray-800">Immunization Log</h2>
-            <div class="flex items-center space-x-2 mt-4 md:mt-0">
+    <div class="bg-white p-4 sm:p-6 shadow-lg rounded-lg space-y-4">
+        <!-- Header & Controls -->
+        <div
+            class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 space-y-3 md:space-y-0">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Immunization Log</h2>
+            <div
+                class="flex flex-col md:flex-row items-start md:items-center w-full md:w-auto space-y-2 md:space-y-0 md:space-x-2">
                 <input type="text" placeholder="Search by resident name..."
-                    class="rounded-lg shadow-inner p-2 bg-gray-50 border border-gray-200 w-48">
-                <select class="rounded-lg shadow-inner p-2 bg-gray-50 border border-gray-200">
+                    class="rounded-lg shadow-inner p-2 bg-gray-50 border border-gray-200 w-full md:w-48">
+                <select class="rounded-lg shadow-inner p-2 bg-gray-50 border border-gray-200 w-full md:w-auto">
                     <option value="">Filter by Vaccine</option>
                     <option>BCG</option>
                     <option>Hepatitis B</option>
                     <option>COVID-19 Booster</option>
                 </select>
                 <button
-                    class="bg-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 flex items-center gap-2">
+                    class="bg-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 flex items-center gap-2 w-full md:w-auto justify-center">
                     <PlusIcon class="w-5 h-5" />
                     Log New Immunization
                 </button>
             </div>
         </div>
 
-        <table class="w-full text-left">
-            <thead class="text-sm text-gray-600 uppercase">
-                <tr>
-                    <th class="p-3">Date Administered</th>
-                    <th class="p-3">Resident Name</th>
-                    <th class="p-3">Vaccine</th>
-                    <th class="p-3">Dose</th>
-                    <th class="p-3">Administered By</th>
-                    <th class="p-3 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="record in immunizations" :key="record.id" class="border-t hover:bg-gray-50">
-                    <td class="p-3 font-semibold">{{ record.date }}</td>
-                    <td class="p-3">{{ record.residentName }}</td>
-                    <td class="p-3 font-bold">{{ record.vaccine }}</td>
-                    <td class="p-3">{{ record.dose }}</td>
-                    <td class="p-3">{{ record.administeredBy }}</td>
-                    <td class="p-3 text-right">
-                        <button class="text-green-700 font-semibold hover:underline">
-                            View History
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <!-- Records: stacked cards on mobile -->
+        <div class="space-y-4">
+            <div v-for="record in immunizations" :key="record.id"
+                class="bg-gray-50 p-4 rounded-lg shadow hover:shadow-md flex flex-col sm:flex-row justify-between sm:items-center">
+                <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-1 sm:space-y-0">
+                    <p class="text-sm font-semibold text-gray-700">Date: <span class="font-normal">{{ record.date
+                    }}</span></p>
+                    <p class="text-sm font-semibold text-gray-700">Resident: <span class="font-normal">{{
+                        record.residentName }}</span></p>
+                    <p class="text-sm font-bold text-green-700">Vaccine: {{ record.vaccine }}</p>
+                    <p class="text-sm font-semibold text-gray-700">Dose: <span class="font-normal">{{ record.dose
+                    }}</span></p>
+                    <p class="text-sm font-semibold text-gray-700">Administered By: <span class="font-normal">{{
+                        record.administeredBy }}</span></p>
+                </div>
+                <div class="mt-2 sm:mt-0 flex justify-end">
+                    <button class="text-green-700 font-semibold hover:underline text-sm">View History</button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
-
-<!-- <style scoped>
-.form-input {
-    @apply rounded-lg shadow-inner p-2 bg-gray-50 border border-gray-200;
-}
-
-.action-button-green {
-    @apply bg-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 flex items-center gap-2;
-}
-</style> -->

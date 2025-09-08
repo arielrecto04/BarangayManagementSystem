@@ -9,27 +9,26 @@ const router = useRouter();
 
 <template>
   <AuthLayout>
-    <!-- Header Row -->
-    <div class="m-4 flex items-center justify-between bg-white p-6 shadow-md rounded-lg">
-      <!-- Official Manager Info (LEFT) -->
-      <div>
-        <h1 class="uppercase font-bold text-xl mb-1">Official Manager</h1>
-        <p class="text-gray-600">Manage and View Official Information</p>
-      </div>
-
-      <!-- Add Official Button (RIGHT) -->
-      <div>
-        <router-link to="/officials/add-official">
-          <button
-            class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-5 rounded-lg shadow transition-colors flex items-center gap-2">
-            <PlusIcon class="w-6 h-6" />
-            Add Official
-          </button>
+    <div class="p-2 sm:p-5 lg:p-6">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-6 gap-2 sm:gap-0">
+        <div>
+          <h1 class="text-base sm:text-xl lg:text-2xl font-semibold text-gray-900">
+            Official Management
+          </h1>
+          <p class="text-gray-600">
+            Manage and View Official Information
+          </p>
+        </div>
+        <router-link to="/officials/add-official"
+          class="bg-green-700 text-white px-3 py-1.5 sm:py-2 rounded-md hover:bg-green-800 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm font-medium">
+          <PlusIcon class="w-3 h-3 sm:w-4 sm:h-4" />
+          <span>New Official</span>
         </router-link>
       </div>
-    </div>
 
-    <!-- Page Content -->
-    <router-view></router-view>
+      <!-- Nested List Official View -->
+      <router-view />
+    </div>
   </AuthLayout>
 </template>

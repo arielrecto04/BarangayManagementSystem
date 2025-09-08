@@ -10,43 +10,37 @@ const children = ref([
 </script>
 
 <template>
-    <div>
-        <div class="flex justify-end mb-4">
+    <div class="space-y-4">
+        <!-- Add Measurement Button -->
+        <div class="flex justify-end">
             <button
-                class="bg-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 flex items-center gap-2">
+                class="bg-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 flex items-center gap-2 w-full sm:w-auto justify-center">
                 <PlusIcon class="w-5 h-5" />
                 Log New Measurement
             </button>
         </div>
-        <table class="w-full text-left">
-            <thead class="text-sm text-gray-600 uppercase">
-                <tr>
-                    <th class="p-3">Child's Name</th>
-                    <th class="p-3">Age</th>
-                    <th class="p-3">Parent/Guardian</th>
-                    <th class="p-3">Last Weight</th>
-                    <th class="p-3">Last Height</th>
-                    <th class="p-3 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="child in children" :key="child.id" class="border-t hover:bg-gray-50">
-                    <td class="p-3 font-semibold">{{ child.name }}</td>
-                    <td class="p-3">{{ child.age }}</td>
-                    <td class="p-3">{{ child.parent }}</td>
-                    <td class="p-3">{{ child.last_weight }}</td>
-                    <td class="p-3">{{ child.last_height }}</td>
-                    <td class="p-3 text-right">
-                        <button class="text-green-700 font-semibold hover:underline">View Growth Chart</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+
+        <!-- Records: stacked cards on mobile -->
+        <div class="space-y-4">
+            <div v-for="child in children" :key="child.id"
+                class="bg-gray-50 p-4 rounded-lg shadow hover:shadow-md flex flex-col sm:flex-row justify-between sm:items-center">
+                <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-1 sm:space-y-0">
+                    <p class="text-sm font-semibold text-gray-700">Name: <span class="font-normal">{{ child.name
+                    }}</span></p>
+                    <p class="text-sm font-semibold text-gray-700">Age: <span class="font-normal">{{ child.age }}</span>
+                    </p>
+                    <p class="text-sm font-semibold text-gray-700">Parent: <span class="font-normal">{{ child.parent
+                    }}</span></p>
+                    <p class="text-sm font-semibold text-gray-700">Weight: <span class="font-normal">{{
+                        child.last_weight }}</span></p>
+                    <p class="text-sm font-semibold text-gray-700">Height: <span class="font-normal">{{
+                        child.last_height }}</span></p>
+                </div>
+                <div class="mt-2 sm:mt-0 flex justify-end">
+                    <button class="text-green-700 font-semibold hover:underline text-sm sm:text-base">View Growth
+                        Chart</button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
-<!-- 
-<style scoped>
-.action-button-green {
-    @apply bg-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 flex items-center gap-2;
-}
-</style> -->

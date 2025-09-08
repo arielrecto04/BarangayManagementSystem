@@ -10,9 +10,17 @@ class OfficialController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $officials = Official::all();
+        // Always include resident data by default, or if explicitly requested
+        $query = Official::query();
+
+        if (!$request->has('include') || str_contains($request->get('include', ''), 'resident')) {
+            $query->with('resident');
+        }
+
+        $officials = $query->get();
+
         return response()->json([
             'data' => $officials
         ]);
@@ -45,6 +53,11 @@ class OfficialController extends Controller
 
         $official = Official::create($validated);
 
+        // Load resident relationship if it exists
+        if ($official->resident_id) {
+            $official->load('resident');
+        }
+
         return response()->json([
             'message' => 'Official created successfully',
             'data' => $official,
@@ -56,7 +69,8 @@ class OfficialController extends Controller
      */
     public function show(string $id)
     {
-        return Official::findOrFail($id);
+        $official = Official::with('resident')->findOrFail($id);
+        return response()->json($official);
     }
 
     /**
@@ -72,7 +86,6 @@ class OfficialController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // Fixed validation rules - made most fields nullable to match frontend behavior
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
@@ -80,13 +93,18 @@ class OfficialController extends Controller
             'terms' => 'nullable|string',
             'no_of_per_term' => 'nullable|integer',
             'elected_date' => 'nullable|date',
-            'start_date' => 'nullable|date', // Added missing field
+            'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'resident_id' => 'nullable|integer|exists:residents,id',
         ]);
 
         $official = Official::findOrFail($id);
-        $official->update($validated); // Use validated data instead of $request->all()
+        $official->update($validated);
+
+        // Load resident relationship if it exists
+        if ($official->resident_id) {
+            $official->load('resident');
+        }
 
         return response()->json([
             'message' => 'Official updated successfully',

@@ -140,7 +140,7 @@ const createOfficial = async () => {
       start_date: officialDataForm.value.start_date,
       end_date: officialDataForm.value.end_date,
       description: officialDataForm.value.description,
-      resident_id: officialDataForm.value.resident_id
+      resident_id: selectedResident.value?.id // Fix: Add resident_id
     })
     showToast({ icon: 'success', title: 'Official created successfully' })
     router.push('/officials')
@@ -156,28 +156,19 @@ const createOfficial = async () => {
 
 
 <template>
-  <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
-    <form @submit.prevent="createOfficial" class="w-full max-w-6xl">
+  <div class="min-h-screen bg-gray-100 flex justify-center items-start p-4 md:p-10">
+    <form @submit.prevent="createOfficial" class="w-full max-w-4xl">
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
 
         <!-- Left Column -->
         <div
-          class="bg-gradient-to-b from-blue-50 to-white p-8 md:w-1/3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
-          <h1 class="text-2xl font-bold mb-4 text-center">Add New Official</h1>
-          <h2 class="text-base font-medium mb-6 text-center text-gray-600">Official Profile Information</h2>
-
-          <!-- Image Placeholder -->
-          <div
-            class="w-40 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition">
-            <div class="text-center">
-              <div class="text-4xl text-gray-400 mb-2">📸</div>
-              <p class="text-sm text-gray-500">Upload Photo</p>
-            </div>
-          </div>
+          class="bg-gradient-to-b from-blue-50 to-white p-6 md:p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200">
+          <h1 class="text-2xl font-bold mb-2 text-center">Add New Official</h1>
+          <h2 class="text-sm md:text-base font-medium mb-4 text-center text-gray-600">Official Profile Information</h2>
         </div>
 
         <!-- Right Column (Form) -->
-        <div class="p-8 md:w-2/3">
+        <div class="p-4 md:p-8 flex-1">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Full Name Searchable Dropdown -->
             <div>
@@ -192,7 +183,7 @@ const createOfficial = async () => {
             <div>
               <label class="text-sm font-semibold text-gray-700">Position *</label>
               <select v-model="officialDataForm.position" required
-                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                class="border border-gray-300 rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 :class="{ 'border-red-500': !positionValidation.canAdd }">
                 <option value="">Select Position</option>
                 <optgroup v-for="(positions, section) in groupedPositions" :key="section" :label="section">
@@ -209,49 +200,47 @@ const createOfficial = async () => {
           </div>
 
           <!-- Terms -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-            <!-- Term From (Year) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            <!-- Term From -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Term From (Year)</label>
               <input type="number" v-model="officialDataForm.termFrom" min="2000" max="2099" placeholder="2022"
-                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
 
-            <!-- Term To (Year) -->
+            <!-- Term To -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Term To (Year)</label>
               <input type="number" v-model="officialDataForm.termTo" min="2000" max="2099" placeholder="2025"
-                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
 
-            <!-- Number of Terms -->
+            <!-- Term Count -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Term Count</label>
               <input type="number" v-model="officialDataForm.no_of_per_term" min="1" placeholder="1"
-                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
 
             <!-- Elected Date -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Elected Date</label>
               <input type="date" v-model="officialDataForm.elected_date"
-                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
           </div>
 
-          <!-- Dates -->
+          <!-- Start & End Dates -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <!-- Start Date -->
             <div>
               <label class="text-sm font-semibold text-gray-700">Start Date</label>
               <input type="date" v-model="officialDataForm.start_date"
-                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
-            <!-- End Date -->
             <div>
               <label class="text-sm font-semibold text-gray-700">End Date</label>
               <input type="date" v-model="officialDataForm.end_date"
-                class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
             </div>
           </div>
 
@@ -260,26 +249,23 @@ const createOfficial = async () => {
             <label class="text-sm font-semibold text-gray-700">Description</label>
             <textarea v-model="officialDataForm.description" placeholder="Enter details about the official's role..."
               rows="4"
-              class="resize-y border border-gray-300 rounded-lg px-4 py-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></textarea>
+              class="resize-y border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></textarea>
           </div>
 
           <!-- Buttons -->
-          <div class="flex justify-center mt-8 gap-4">
+          <div class="flex flex-col sm:flex-row justify-center mt-6 gap-4">
             <button type="submit" :disabled="!positionValidation.canAdd"
               :class="positionValidation.canAdd ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'"
-              class="text-white px-8 py-3 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105">
-              <span class="flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                Save Official
-              </span>
+              class="text-white px-6 py-2 rounded-xl shadow-lg font-semibold transition-all transform hover:scale-105 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Save Official
             </button>
+
             <router-link to="/officials"
-              class="bg-white border-2 border-gray-300 hover:border-gray-400 px-8 py-3 rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-105 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg">
+              class="bg-white border-2 border-gray-300 hover:border-gray-400 px-6 py-2 rounded-xl shadow-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
               Cancel

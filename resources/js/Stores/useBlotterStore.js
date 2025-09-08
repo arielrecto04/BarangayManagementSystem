@@ -60,29 +60,75 @@ export const useBlotterStore = defineStore("blotter", {
             this._isLoading = true;
             this._error = null;
             try {
+                console.log("Store: Sending blotter creation request...");
+
+                // Log FormData contents for debugging
+                console.log("FormData being sent:");
+                for (let pair of formData.entries()) {
+                    if (pair[1] instanceof File) {
+                        console.log(
+                            `${pair[0]}: File - ${pair[1].name} (${pair[1].type}, ${pair[1].size} bytes)`
+                        );
+                    } else {
+                        console.log(`${pair[0]}: ${pair[1]}`);
+                    }
+                }
+
                 const response = await axios.post("/blotters", formData, {
                     headers: {
                         "Content-Type": "multipart/form-data",
                     },
                 });
 
+                console.log("Store: Received response:", response.data);
+
                 if (response.data?.data) {
+                    // FIXED: Add the new blotter to the beginning of the array
                     this._blotters.unshift(response.data.data);
+                    console.log(
+                        "Store: Added new blotter to store, total count:",
+                        this._blotters.length
+                    );
                     return response.data;
+                } else {
+                    console.error(
+                        "Store: Invalid server response structure:",
+                        response.data
+                    );
+                    throw new Error("Invalid server response structure");
                 }
-                throw new Error("Invalid server response");
             } catch (error) {
-                console.error("Error creating blotter:", error);
+                console.error("Store: Error creating blotter:", error);
                 this._error = error;
 
-                if (error.response?.status === 422) {
+                // FIXED: Enhanced error handling with better messages
+                if (
+                    error.response?.status === 422 &&
+                    error.response?.data?.errors
+                ) {
                     const errors = error.response.data.errors;
-                    const errorMessages = Object.values(errors)
-                        .flat()
+                    console.error("Validation errors:", errors);
+
+                    const errorMessages = Object.entries(errors)
+                        .map(
+                            ([field, messages]) =>
+                                `${field}: ${
+                                    Array.isArray(messages)
+                                        ? messages.join(", ")
+                                        : messages
+                                }`
+                        )
                         .join("\n");
                     throw new Error(`Validation failed:\n${errorMessages}`);
+                } else if (error.response?.data?.message) {
+                    throw new Error(error.response.data.message);
+                } else if (error.message) {
+                    throw new Error(error.message);
+                } else {
+                    throw new Error(
+                        "Unknown error occurred while creating blotter"
+                    );
                 }
-                throw error;
             } finally {
                 this._isLoading = false;
             }
@@ -122,15 +168,25 @@ export const useBlotterStore = defineStore("blotter", {
                     response = await axios.patch(url, payload);
                 }
 
-                // Update local state
-                const index = this._blotters.findIndex((b) => b.id == id);
+                // FIXED: Update local state with fresh data from server
+                const updatedBlotter = response.data.data;
+
+                // Update the blotters array
+                const index = this._blotters.findIndex(
+                    (b) => Number(b.id) === Number(id)
+                );
                 if (index !== -1) {
-                    this._blotters[index] = response.data.data;
+                    this._blotters[index] = updatedBlotter;
+                    console.log("Updated blotter in store:", updatedBlotter);
                 }
 
                 // Update current blotter if it's the one being edited
-                if (this._blotter?.id == id) {
-                    this._blotter = response.data.data;
+                if (this._blotter && Number(this._blotter.id) === Number(id)) {
+                    this._blotter = updatedBlotter;
+                    console.log(
+                        "Updated current blotter in store:",
+                        updatedBlotter
+                    );
                 }
 
                 return response.data;
@@ -197,7 +253,34 @@ export const useBlotterStore = defineStore("blotter", {
         },
 
         resetBlotter() {
+            console.log("Resetting blotter store state");
             this._blotter = null;
+            this._error = null;
+            this._isLoading = false;
+
+            // Clear any pending operations
+            if (this._currentRequest) {
+                this._currentRequest = null;
+            }
+        },
+
+        // Add a complete reset function
+        resetStore() {
+            console.log("Complete store reset");
+            this._blotters = [];
+            this._blotter = null;
+            this._paginate = null;
+            this._isLoading = false;
+            this._error = null;
+        },
+
+        // Add proper cancellation for ongoing requests
+        cancelOngoingRequests() {
+            if (this._currentRequest) {
+                // If using axios with cancel tokens, cancel here
+                this._currentRequest = null;
+            }
+            this._isLoading = false;
         },
     },
 });

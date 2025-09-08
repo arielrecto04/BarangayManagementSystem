@@ -115,18 +115,44 @@ watch(selectedRespondent, (val) => {
 // Methods
 const handleFileUpload = (event) => {
     const newFiles = Array.from(event.target.files);
+
+    console.log('Files selected:', newFiles.map(f => ({
+        name: f.name,
+        size: f.size,
+        type: f.type
+    })));
+
+    // Check for duplicates
     const existingNames = new Set(
         blotterDataForm.value.supporting_documents.map(file => file.name)
     );
-    const uniqueNewFiles = newFiles.filter(file => !existingNames.has(file.name));
 
+    const uniqueNewFiles = newFiles.filter(file => {
+        if (existingNames.has(file.name)) {
+            console.warn('Duplicate file detected:', file.name);
+            return false;
+        }
+        return true;
+    });
+
+    if (uniqueNewFiles.length !== newFiles.length) {
+        showToast({
+            icon: 'warning',
+            title: 'Some duplicate files were skipped'
+        });
+    }
+
+    // Add unique files to form
     blotterDataForm.value.supporting_documents = [
         ...blotterDataForm.value.supporting_documents,
         ...uniqueNewFiles
     ];
+
+    console.log('Total files after upload:', blotterDataForm.value.supporting_documents.length);
+
+    // Clear input to allow re-selecting the same file
     event.target.value = '';
 };
-
 const validateForm = () => {
     errors.value = {};
     let isValid = true;
@@ -192,32 +218,86 @@ const createBlotter = async () => {
 
         console.log('✅ Validation passed, creating FormData...');
 
+        // FIXED: Use the store's prepareFormData method or create FormData properly
         const formData = new FormData();
 
-        // Append all form fields
-        Object.entries(blotterDataForm.value).forEach(([key, value]) => {
-            if (key === 'supporting_documents' && Array.isArray(value)) {
-                console.log(`Adding ${value.length} files for supporting_documents`);
-                value.forEach(file => {
-                    formData.append('supporting_documents[]', file);
-                });
+        // Add required fields that might be missing
+        const formDataWithDefaults = {
+            ...blotterDataForm.value,
+            complainants_type: 'App\\Models\\Resident',
+            respondents_type: 'App\\Models\\Resident',
+            total_cases: '0',
+            witness: blotterDataForm.value.witness || ''
+        };
+
+        // Append all form fields except supporting_documents
+        Object.entries(formDataWithDefaults).forEach(([key, value]) => {
+            if (key === 'supporting_documents') {
+                // Handle files separately
+                if (Array.isArray(value) && value.length > 0) {
+                    console.log(`Adding ${value.length} files for supporting_documents`);
+                    value.forEach((file, index) => {
+                        formData.append('supporting_documents[]', file);
+                        console.log(`File ${index}:`, file.name, file.type, file.size);
+                    });
+                } else {
+                    console.log('No supporting documents to add');
+                }
             } else {
                 console.log(`Adding form field: ${key} = ${value}`);
-                formData.append(key, value);
+                formData.append(key, value || '');
             }
         });
 
         // Debug FormData contents
         console.log('FormData contents:');
         for (let pair of formData.entries()) {
-            console.log(pair[0], pair[1]);
+            if (pair[1] instanceof File) {
+                console.log(pair[0], 'File:', pair[1].name, pair[1].type, pair[1].size);
+            } else {
+                console.log(pair[0], pair[1]);
+            }
         }
 
         console.log('Calling blotterStore.addBlotter...');
-        await blotterStore.addBlotter(formData);
+        const result = await blotterStore.addBlotter(formData);
 
-        console.log('✅ Blotter created successfully!');
+        console.log('✅ Blotter created successfully!', result);
         showToast({ icon: 'success', title: 'Blotter created successfully' });
+
+        // Clear form after successful creation
+        const resetForm = () => {
+            blotterDataForm.value = {
+                complainants_name: '',
+                respondents_name: '',
+                blotter_no: '',
+                filing_date: '',
+                title_case: '',
+                nature_of_case: '',
+                complainants_id: '',
+                respondents_id: '',
+                incident_location: '',
+                datetime_of_incident: '',
+                blotter_type: '',
+                barangay_case_no: '',
+                status: '',
+                description: '',
+                witness: '',
+                supporting_documents: []
+            };
+
+            selectedComplainant.value = null;
+            selectedRespondent.value = null;
+            errors.value = {};
+
+            // Clear file input
+            if (fileInput.value) {
+                fileInput.value.value = '';
+            }
+        };
+
+
+        // Navigate back to list
         router.push('/blotter/list-blotter');
 
     } catch (error) {
@@ -228,17 +308,33 @@ const createBlotter = async () => {
             status: error.response?.status,
             statusText: error.response?.statusText
         });
-        showToast({ icon: 'error', title: error.message || 'Failed to create blotter' });
+
+        // Show specific error message if available
+        let errorMessage = 'Failed to create blotter';
+        if (error.response?.data?.errors) {
+            const errors = Object.values(error.response.data.errors).flat();
+            errorMessage = errors.join(', ');
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        showToast({ icon: 'error', title: errorMessage });
     }
+};
+
+const removeFile = (index) => {
+    console.log('Removing file at index:', index);
+    blotterDataForm.value.supporting_documents.splice(index, 1);
+    console.log('Remaining files:', blotterDataForm.value.supporting_documents.length);
 };
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100 flex justify-center items-center p-10">
-        <form @submit.prevent="createBlotter" class="bg-white p-10 rounded-xl shadow-md w-full max-w-4xl">
-            <h1 class="text-2xl font-bold mb-6">Add New Blotter</h1>
+    <div class="min-h-screen bg-gray-100 px-4 py-6 md:flex md:justify-center md:items-center md:p-10">
+        <form @submit.prevent="createBlotter" class="bg-white p-4 md:p-10 rounded-xl shadow-md w-full md:max-w-4xl">
+            <h1 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center md:text-left">Add New Blotter</h1>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <!-- Complainant Searchable Dropdown -->
                 <div class="flex flex-col">
                     <label class="font-semibold text-sm mb-1">Complainant</label>
@@ -246,7 +342,8 @@ const createBlotter = async () => {
                         :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
                         placeholder="Search or select complainant" :searchable="true" :show-labels="false"
                         :allow-empty="true" @select="val => blotterDataForm.complainants_id = val?.id" />
-                    <p v-if="errors.complainants_id" class="text-red-500 text-sm mt-1">{{ errors.complainants_id }}</p>
+                    <p v-if="errors.complainants_id" class="text-red-500 text-xs md:text-sm mt-1">{{
+                        errors.complainants_id }}</p>
                     <!-- Debug info (remove after fixing) -->
                     <p class="text-xs text-gray-500 mt-1">Available complainants: {{ filteredComplainants.length }}</p>
                 </div>
@@ -258,126 +355,136 @@ const createBlotter = async () => {
                         :custom-label="resident => `${resident.first_name} ${resident.last_name}`" track-by="id"
                         placeholder="Search or select respondent" :searchable="true" :show-labels="false"
                         :allow-empty="true" @select="val => blotterDataForm.respondents_id = val?.id" />
-                    <p v-if="errors.respondents_id" class="text-red-500 text-sm mt-1">{{ errors.respondents_id }}</p>
+                    <p v-if="errors.respondents_id" class="text-red-500 text-xs md:text-sm mt-1">{{
+                        errors.respondents_id }}</p>
                     <!-- Debug info (remove after fixing) -->
                     <p class="text-xs text-gray-500 mt-1">Available respondents: {{ filteredRespondents.length }}</p>
                 </div>
 
                 <!-- Nature of Case -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Nature of Case</label>
-                    <select v-model="blotterDataForm.nature_of_case" class="border rounded-md p-2">
+                    <label class="font-semibold text-sm mb-1">Nature of Case</label>
+                    <select v-model="blotterDataForm.nature_of_case" class="border rounded-md p-2 text-sm md:text-base">
                         <option value="" disabled selected>Select Nature of Case</option>
                         <option value="civil case">Civil Case</option>
                         <option value="criminal case">Criminal Case</option>
                     </select>
-                    <p v-if="errors.nature_of_case" class="text-red-500 text-sm mt-1">{{ errors.nature_of_case }}</p>
+                    <p v-if="errors.nature_of_case" class="text-red-500 text-xs md:text-sm mt-1">{{
+                        errors.nature_of_case }}</p>
                 </div>
 
                 <!-- Blotter Type -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Blotter Type</label>
-                    <select v-model="blotterDataForm.blotter_type" class="border rounded-md p-2">
+                    <label class="font-semibold text-sm mb-1">Blotter Type</label>
+                    <select v-model="blotterDataForm.blotter_type" class="border rounded-md p-2 text-sm md:text-base">
                         <option value="" disabled selected>Select Blotter Type</option>
                         <option value="Incident">Incident</option>
                         <option value="Complaint">Complaint</option>
                         <option value="Request">Request</option>
                     </select>
-                    <p v-if="errors.blotter_type" class="text-red-500 text-sm mt-1">{{ errors.blotter_type }}</p>
+                    <p v-if="errors.blotter_type" class="text-red-500 text-xs md:text-sm mt-1">{{ errors.blotter_type }}
+                    </p>
                 </div>
 
                 <!-- Blotter No -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Blotter No</label>
-                    <input v-model="blotterDataForm.blotter_no" type="text" class="border rounded-md p-2"
-                        placeholder="Enter Blotter No" />
-                    <p v-if="errors.blotter_no" class="text-red-500 text-sm mt-1">{{ errors.blotter_no }}</p>
+                    <label class="font-semibold text-sm mb-1">Blotter No</label>
+                    <input v-model="blotterDataForm.blotter_no" type="text"
+                        class="border rounded-md p-2 text-sm md:text-base" placeholder="Enter Blotter No" />
+                    <p v-if="errors.blotter_no" class="text-red-500 text-xs md:text-sm mt-1">{{ errors.blotter_no }}</p>
                 </div>
 
                 <!-- Barangay Case No -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Barangay Case No</label>
-                    <input v-model="blotterDataForm.barangay_case_no" type="text" class="border rounded-md p-2"
-                        placeholder="Enter Case No" />
-                    <p v-if="errors.barangay_case_no" class="text-red-500 text-sm mt-1">{{ errors.barangay_case_no }}
-                    </p>
+                    <label class="font-semibold text-sm mb-1">Barangay Case No</label>
+                    <input v-model="blotterDataForm.barangay_case_no" type="text"
+                        class="border rounded-md p-2 text-sm md:text-base" placeholder="Enter Case No" />
+                    <p v-if="errors.barangay_case_no" class="text-red-500 text-xs md:text-sm mt-1">{{
+                        errors.barangay_case_no }}</p>
                 </div>
 
                 <!-- Title Case -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Title Case</label>
-                    <input v-model="blotterDataForm.title_case" type="text" class="border rounded-md p-2"
-                        placeholder="Enter Title Case" />
-                    <p v-if="errors.title_case" class="text-red-500 text-sm mt-1">{{ errors.title_case }}</p>
+                    <label class="font-semibold text-sm mb-1">Title Case</label>
+                    <input v-model="blotterDataForm.title_case" type="text"
+                        class="border rounded-md p-2 text-sm md:text-base" placeholder="Enter Title Case" />
+                    <p v-if="errors.title_case" class="text-red-500 text-xs md:text-sm mt-1">{{ errors.title_case }}</p>
                 </div>
 
                 <!-- Location of Incident -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Location of Incident</label>
-                    <input v-model="blotterDataForm.incident_location" type="text" class="border rounded-md p-2"
-                        placeholder="Enter Location of Incident" />
-                    <p v-if="errors.place" class="text-red-500 text-sm mt-1">{{ errors.incident_location }}</p>
+                    <label class="font-semibold text-sm mb-1">Location of Incident</label>
+                    <input v-model="blotterDataForm.incident_location" type="text"
+                        class="border rounded-md p-2 text-sm md:text-base" placeholder="Enter Location of Incident" />
+                    <p v-if="errors.place" class="text-red-500 text-xs md:text-sm mt-1">{{ errors.incident_location }}
+                    </p>
                 </div>
 
                 <!-- Description -->
-                <div class="flex flex-col col-span-2">
-                    <label class="font-semibold text-sm">Description</label>
-                    <textarea v-model="blotterDataForm.description" class="border rounded-md p-2"
-                        placeholder="Enter Description" rows="4"></textarea>
-                    <p v-if="errors.description" class="text-red-500 text-sm mt-1">{{ errors.description }}</p>
+                <div class="flex flex-col col-span-1 md:col-span-2">
+                    <label class="font-semibold text-sm mb-1">Description</label>
+                    <textarea v-model="blotterDataForm.description"
+                        class="border rounded-md p-2 text-sm md:text-base resize-none" placeholder="Enter Description"
+                        rows="3" />
+                    <p v-if="errors.description" class="text-red-500 text-xs md:text-sm mt-1">{{ errors.description }}
+                    </p>
                 </div>
 
                 <!-- Date & Time of Incident -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Date & Time of Incident</label>
+                    <label class="font-semibold text-sm mb-1">Date & Time of Incident</label>
                     <input type="datetime-local" v-model="blotterDataForm.datetime_of_incident"
-                        class="border rounded-md p-2" />
-                    <p v-if="errors.datetime_of_incident" class="text-red-500 text-sm mt-1">{{
+                        class="border rounded-md p-2 text-sm md:text-base" />
+                    <p v-if="errors.datetime_of_incident" class="text-red-500 text-xs md:text-sm mt-1">{{
                         errors.datetime_of_incident }}</p>
                 </div>
 
                 <!-- Filing Date -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Filing Date & Time</label>
-                    <input type="datetime-local" v-model="blotterDataForm.filing_date" class="border rounded-md p-2" />
-                    <p v-if="errors.filing_date" class="text-red-500 text-sm mt-1">{{ errors.filing_date }}</p>
+                    <label class="font-semibold text-sm mb-1">Filing Date & Time</label>
+                    <input type="datetime-local" v-model="blotterDataForm.filing_date"
+                        class="border rounded-md p-2 text-sm md:text-base" />
+                    <p v-if="errors.filing_date" class="text-red-500 text-xs md:text-sm mt-1">{{ errors.filing_date }}
+                    </p>
                 </div>
 
                 <!-- Status -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Status</label>
-                    <select v-model="blotterDataForm.status" class="border rounded-md p-2">
+                    <label class="font-semibold text-sm mb-1">Status</label>
+                    <select v-model="blotterDataForm.status" class="border rounded-md p-2 text-sm md:text-base">
                         <option value="" disabled selected>Select Status</option>
                         <option value="Open">Open</option>
                         <option value="In Progress">In Progress</option>
                         <option value="Resolved">Resolved</option>
                     </select>
-                    <p v-if="errors.status" class="text-red-500 text-sm mt-1">{{ errors.status }}</p>
+                    <p v-if="errors.status" class="text-red-500 text-xs md:text-sm mt-1">{{ errors.status }}</p>
                 </div>
 
                 <!-- Witness -->
                 <div class="flex flex-col">
-                    <label class="font-semibold text-sm">Witness/es</label>
-                    <textarea v-model="blotterDataForm.witness" class="border rounded-md p-2"
-                        placeholder="Enter Witness Name"></textarea>
-                    <p v-if="errors.witness" class="text-red-500 text-sm mt-1">{{ errors.witness }}</p>
+                    <label class="font-semibold text-sm mb-1">Witness/es</label>
+                    <textarea v-model="blotterDataForm.witness"
+                        class="border rounded-md p-2 text-sm md:text-base resize-none" placeholder="Enter Witness Name"
+                        rows="2" />
+                    <p v-if="errors.witness" class="text-red-500 text-xs md:text-sm mt-1">{{ errors.witness }}</p>
                 </div>
 
                 <!-- Supporting Document -->
-                <div class="flex flex-col">
+                <div class="flex flex-col col-span-1 md:col-span-2">
                     <label class="font-semibold text-sm mb-1">Supporting Documents</label>
                     <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileUpload"
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                    <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-fit"
+                    <button type="button"
+                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md w-full sm:w-fit text-sm md:text-base"
                         @click="$refs.fileInput.click()">
                         Upload Files
                     </button>
                     <div v-if="blotterDataForm.supporting_documents.length"
-                        class="mt-2 space-y-1 text-sm text-gray-700">
+                        class="mt-2 space-y-1 text-xs md:text-sm text-gray-700">
                         <div v-for="(file, index) in blotterDataForm.supporting_documents" :key="index"
-                            class="flex items-center gap-2">
-                            <span>{{ file.name }}</span>
-                            <button type="button" class="text-red-500 hover:underline"
+                            class="flex items-center justify-between gap-2 p-2 bg-gray-50 rounded">
+                            <span class="flex-1 truncate">{{ file.name }}</span>
+                            <button type="button" class="text-red-500 hover:text-red-700 flex-shrink-0"
                                 @click="blotterDataForm.supporting_documents.splice(index, 1)">
                                 ✖
                             </button>
@@ -387,11 +494,21 @@ const createBlotter = async () => {
             </div>
 
             <!-- Buttons -->
-            <div class="mt-6 flex justify-end gap-4">
+            <!-- Buttons -->
+            <div class="mt-4 md:mt-6 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+                <!-- Save on top (mobile), left (desktop) -->
                 <button type="submit"
-                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">Save</button>
-                <router-link to="/blotter" class="bg-gray-300 px-4 py-2 rounded-md">Cancel</router-link>
+                    class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm md:text-base order-1 sm:order-none">
+                    Save
+                </button>
+
+                <!-- Cancel below Save (mobile), right of Save (desktop) -->
+                <router-link to="/blotter"
+                    class="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded-md text-center text-sm md:text-base order-2 sm:order-none">
+                    Cancel
+                </router-link>
             </div>
+
         </form>
     </div>
 </template>

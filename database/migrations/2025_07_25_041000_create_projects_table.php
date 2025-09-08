@@ -15,10 +15,22 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->longText('description')->nullable();
-            $table->string('attachments')->nullable();
-            $table->dateTime('start_date');
-            $table->dateTime('end_date');
+            $table->string('category')->nullable();
             $table->string('status')->default('pending');
+            $table->dateTime('start_date')->nullable();
+            $table->dateTime('target_completion')->nullable();
+            $table->dateTime('actual_completion')->nullable();
+            $table->string('funding_source')->nullable();
+            $table->string('barangay_zone')->nullable();
+            $table->unsignedInteger('completion_percentage')->default(0);
+            $table->text('milestone_achieved')->nullable();
+            $table->json('files')->nullable(); // store multiple files as JSON
+            $table->string('project_lead')->nullable();
+            $table->text('assigned_organizations')->nullable(); // can store JSON or comma-separated
+            $table->unsignedInteger('number_of_members')->nullable();
+            $table->string('site_address')->nullable();
+            $table->text('disbursement_schedule')->nullable();
+            $table->text('challenges_encountered')->nullable();
             $table->timestamps();
         });
     }

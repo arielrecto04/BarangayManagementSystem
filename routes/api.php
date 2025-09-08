@@ -19,6 +19,9 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [AuthenticationController::class, 'login']);
 
+// ✅ Public routes for home page
+Route::get('/announcement-events/home', [AnnouncementEventController::class, 'home']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',  [AuthenticationController::class, 'logout']);
 
@@ -38,6 +41,29 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get-resident-by-number/{number}', [ResidentController::class, 'getResidentByNumber']);
     });
 
+    // ✅ Refresh statuses route for Announcement Events
+    Route::post('/announcement-events/refresh-statuses', [AnnouncementEventController::class, 'refreshStatuses']);
+    // ✅ Count route for Announcement Events
+    Route::get('/announcement-events/count', [AnnouncementEventController::class, 'count']);
+
+    /*
+     * Upload resident image (multipart/form-data)
+     * Endpoint: POST /api/upload-resident-image
+     * Field name: "image"
+     */
+    Route::post('/upload-resident-image', function (Request $request) {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $imageName = 'resident_' . time() . '.' . $request->image->extension();
+        $path = $request->image->storeAs('resident_images', $imageName, 'public');
+
+        return response()->json([
+            'imageUrl' => asset('storage/' . $path)
+        ]);
+    });
+
     // API Resources
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('officials', OfficialController::class);
@@ -48,7 +74,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('document-requests', DocumentRequestController::class);
     Route::apiResource('clinic-visits', ClinicVisitController::class);
     Route::apiResource('announcement-events', AnnouncementEventController::class);
-
-    // ✅ Refresh statuses route for Announcement Events
-    Route::post('/announcement-events/refresh-statuses', [AnnouncementEventController::class, 'refreshStatuses']);
 });

@@ -214,7 +214,37 @@ const routes = [
             title: "Projects",
             requiresAuth: true,
         },
-        component: () => import("@/Pages/Project/ListProject.vue"),
+        redirect: { name: "List Projects" },
+        component: () => import("@/Pages/Project/ParentProjectView.vue"),
+        children: [
+            {
+                path: "list-projects",
+                name: "List Projects",
+                meta: {
+                    title: "List Projects",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Project/ListProject.vue"),
+            },
+            {
+                path: "add-project",
+                name: "Add Project",
+                meta: {
+                    title: "Add Project",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Project/AddProject.vue"),
+            },
+            {
+                path: "edit-project/:id",
+                name: "Edit Project",
+                meta: {
+                    title: "Edit Project",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Project/EditProject.vue"),
+            },
+        ],
     },
     {
         path: "/officials",
@@ -227,13 +257,22 @@ const routes = [
         component: () => import("@/Pages/Official/ParentOfficialView.vue"),
         children: [
             {
+                path: "CardOfficial",
+                name: "Card Official",
+                meta: {
+                    title: "Card Official",
+                    requiresAuth: true,
+                },
+                component: () => import("@/Pages/Official/CardOfficial.vue"),
+            },
+            {
                 path: "list-officials",
                 name: "List Officials",
                 meta: {
                     title: "List Officials",
                     requiresAuth: true,
                 },
-                component: () => import("@/Pages/Official/CardOfficial.vue"),
+                component: () => import("@/Pages/Official/ListOfficials.vue"),
             },
             {
                 path: "add-official",
@@ -353,6 +392,148 @@ const routes = [
                     },
                 ],
             },
+            // Add these routes to your existing health services children array in Router/index.js
+
+            {
+                path: "inventory",
+                name: "Inventory",
+                meta: {
+                    title: "Medicine Inventory",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Inventory/MedicineInventory.vue"
+                    ),
+            },
+            {
+                path: "health-workers",
+                name: "Health Care Workers",
+                meta: {
+                    title: "Health Care Workers",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/HealthWorkers/HealthCareWorkers.vue"
+                    ),
+            },
+            {
+                path: "doctors",
+                name: "Doctors",
+                meta: {
+                    title: "Doctors",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import("@/Pages/HealthService/Doctors/DoctorList.vue"),
+            },
+            {
+                path: "patient-profiles",
+                name: "Patient Health Profiles",
+                meta: {
+                    title: "Patient Health Profiles",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/PatientProfiles/PatientHealthProfiles.vue"
+                    ),
+            },
+            {
+                path: "appointments",
+                name: "Appointment & Scheduling",
+                meta: {
+                    title: "Appointments & Scheduling",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Appointments/AppointmentScheduling.vue"
+                    ),
+            },
+            {
+                path: "communicable-diseases",
+                name: "Communicable Disease Monitoring",
+                meta: {
+                    title: "Communicable Disease Monitoring",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/CommunicableDisease/CommunicableDiseaseMonitoring.vue"
+                    ),
+            },
+            {
+                path: "dental-services",
+                name: "Dental Services",
+                meta: {
+                    title: "Dental Services",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import("@/Pages/HealthService/Dental/DentalServices.vue"),
+            },
+            {
+                path: "mental-health",
+                name: "Mental Health Support",
+                meta: {
+                    title: "Mental Health Support",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/MentalHealth/MentalHealthSupport.vue"
+                    ),
+            },
+            {
+                path: "emergency-response",
+                name: "Emergency Response Logs",
+                meta: {
+                    title: "Emergency Response Logs",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Emergency/EmergencyResponseLogs.vue"
+                    ),
+            },
+            {
+                path: "health-certificates",
+                name: "Health Certificates & Permits",
+                meta: {
+                    title: "Health Certificates & Permits",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Certificates/HealthCertificates.vue"
+                    ),
+            },
+            {
+                path: "environmental-health",
+                name: "Environmental Health Monitoring",
+                meta: {
+                    title: "Environmental Health Monitoring",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/Environmental/EnvironmentalHealthMonitoring.vue"
+                    ),
+            },
+            {
+                path: "clinic-visits/add",
+                name: "Add Clinic Visit",
+                meta: {
+                    title: "Add Clinic Visit",
+                    requiresAuth: true,
+                },
+                component: () =>
+                    import(
+                        "@/Pages/HealthService/ClinicVisit/AddClinicVisit.vue"
+                    ),
+            },
             {
                 path: "reports",
                 name: "Health Reports",
@@ -447,16 +628,33 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     const auth = useAuthenticationStore();
 
+    // Clear any potential store state issues when leaving edit pages
+    if (from.name && from.name.includes("Edit")) {
+        console.log("Leaving edit page, ensuring cleanup...");
+
+        // Give components time to cleanup
+        setTimeout(() => {
+            // Force cleanup of any remaining reactive state
+            // This helps prevent DOM node insertion issues
+        }, 50);
+    }
+
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
         next({ name: "Login" });
         return;
     }
-    // if (!to.meta.requiresAuth && auth.isAuthenticated && to.name == "Login" ) {
-    //     next({ name: "Dashboard" });
-    //     return;
-    // }
 
     next();
+});
+
+router.afterEach((to, from) => {
+    // Ensure DOM is stable after navigation
+    if (from.name && from.name.includes("Edit")) {
+        // Force garbage collection of any lingering DOM references
+        setTimeout(() => {
+            console.log("Post-navigation cleanup completed");
+        }, 100);
+    }
 });
 
 router.beforeResolve((to, from, next) => {

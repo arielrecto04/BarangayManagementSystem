@@ -41,7 +41,7 @@ const props = defineProps({
         type: Boolean,
         default: true
     },
-    clazz : {
+    clazz: {
         type: String,
         default: ''
     }
@@ -157,7 +157,7 @@ const handleRowClick = (row, event) => {
         return;
     }
 
-    emits('row-click', row );
+    emits('row-click', row);
 };
 
 const clearFilters = () => {
@@ -265,21 +265,21 @@ const clearFilters = () => {
                             </th>
 
                             <!-- Actions Header -->
-                            <th scope="col"
+                            <!-- <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
-                            </th>
+                            </th> -->
                         </tr>
                     </thead>
 
                     <tbody class="bg-white divide-y divide-gray-200">
                         <!-- Rows -->
-                        <tr  v-for="row in paginatedRows" :key="row.id" @click="handleRowClick(row, $event)"
+                        <tr v-for="row in paginatedRows" :key="row.id" @click="handleRowClick(row, $event)"
                             class="transition-colors duration-150" :class="{
                                 clazz,
                                 'bg-blue-50': selectedRows.includes(row.id),
                                 'hover:bg-gray-50': hoverEffect && !selectedRows.includes(row.id)
-                            }" >
+                            }">
                             <!-- Row Checkbox -->
                             <td v-if="selectable" class="px-6 py-4 whitespace-nowrap">
                                 <input type="checkbox" :value="row.id" v-model="selectedRows"
@@ -296,13 +296,15 @@ const clearFilters = () => {
                                     'text-center': column.align === 'center'
                                 }">
                                 <slot :name="`cell(${column.key})`" :row="row" :value="getObjectValue(row, column.key)">
-                                    {{ column.formatter ? column.formatter(getObjectValue(row, column.key)) : getObjectValue(row, column.key) }}
+                                    {{ column.formatter ? column.formatter(getObjectValue(row, column.key)) :
+                                        getObjectValue(row, column.key) }}
 
                                 </slot>
                             </td>
 
                             <!-- Actions Cell -->
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                            <td v-if="$slots.actions"
+                                class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                 <div class="flex justify-center space-x-2" @click.stop>
                                     <slot name="actions" :row="row"></slot>
                                 </div>

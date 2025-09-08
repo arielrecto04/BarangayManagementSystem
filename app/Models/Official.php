@@ -16,9 +16,12 @@ class Official extends Model
         'start_date',
         'end_date',
         'resident_id',
-
     ]);
-    public function firstName()
+
+    /**
+     * Get the resident associated with the official
+     */
+    public function resident()
     {
         return $this->belongsTo(Resident::class);
     }
